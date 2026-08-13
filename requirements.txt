@@ -1,0 +1,61 @@
+# ============================================================
+# NSBM EduSphere — Python Dependencies
+# ============================================================
+
+# Core Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.18
+jinja2>=3.1.4
+aiofiles>=24.1.0
+
+# Database
+sqlalchemy>=2.0.30
+aiosqlite>=0.20.0
+alembic>=1.14.0
+
+# Auth & Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt>=4.0.0
+
+# Pydantic & Settings
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.1
+
+# AI / RAG / LangChain
+langchain>=0.3.0
+langchain-google-genai>=2.0.0
+langchain-community>=0.3.0
+langchain-chroma>=0.1.4
+chromadb>=0.5.0
+google-generativeai>=0.8.0
+
+# MCP (Model Context Protocol)
+mcp>=1.0.0
+
+# WebSockets & Real-time
+websockets>=13.0
+
+# HTTP Client
+httpx>=0.27.0
+
+# File handling
+pillow>=10.0.0
+
+# Utilities
+email-validator>=2.2.0
+python-slugify>=8.0.0
+pytz>=2024.1
+
+# Data export
+openpyxl>=3.1.0
+reportlab>=4.2.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
+
+# Development
+rich>=13.0.0
