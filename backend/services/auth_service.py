@@ -8,11 +8,19 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
+from sqlalchemy.orm.attributes import flag_modified
 
 from backend.config import settings
 from backend.models import User, UserRole, UserSession, RefreshToken
 from backend.repositories.user_repository import UserRepository
-from backend.schemas import UserCreate, Token, TokenPair, UserSessionOut
+from backend.schemas import (
+    UserCreate,
+    Token,
+    TokenPair,
+    UserSessionOut,
+    MFASetupResponse,
+    MFAEnableResponse,
+)
 from backend.utils.security import (
     hash_password,
     verify_password,
@@ -21,6 +29,11 @@ from backend.utils.security import (
     decode_refresh_token,
     hash_token,
     validate_password_strength,
+    generate_mfa_secret,
+    get_mfa_uri,
+    verify_totp,
+    generate_backup_codes,
+    decode_mfa_token,
 )
 from backend.core.exceptions import (
     UnauthorizedException,
@@ -41,11 +54,11 @@ class AuthService:
         password: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ) -> Tuple[User, UserSession]:
+    ) -> Tuple[User, Optional[UserSession], bool]:
         """
         Authenticate user credentials with brute-force protection and lockout enforcement.
-        Creates an active UserSession upon success.
-        Returns: (user, session)
+        If MFA is enabled, returns (user, None, True) indicating MFA step-up required.
+        Otherwise creates an active UserSession and returns (user, session, False).
         """
         user = await self.user_repo.get_by_username(username)
         if not user:
@@ -74,6 +87,11 @@ class AuthService:
         user.locked_until = None
         user.last_login = now
 
+        # If MFA is enabled, require second factor step-up
+        if user.is_mfa_enabled:
+            await self.db.commit()
+            return user, None, True
+
         # Create active session record
         session = UserSession(
             user_id=user.id,
@@ -87,7 +105,98 @@ class AuthService:
         self.db.add(session)
         await self.db.commit()
         await self.db.refresh(session)
-        return user, session
+        return user, session, False
+
+    async def setup_mfa(self, user: User) -> MFASetupResponse:
+        """Initiates MFA setup by generating a TOTP secret and provisioning URI"""
+        secret = generate_mfa_secret()
+        user.mfa_secret = secret
+        user.is_mfa_enabled = False  # Not active until verified
+        await self.db.commit()
+        uri = get_mfa_uri(secret, user.username)
+        return MFASetupResponse(secret=secret, provisioning_uri=uri)
+
+    async def enable_mfa(self, user: User, code: str) -> MFAEnableResponse:
+        """Verifies code against secret and activates MFA with 10 backup recovery codes"""
+        if not user.mfa_secret:
+            raise ValidationException("MFA setup has not been initiated. Call /mfa/setup first.")
+
+        if not verify_totp(user.mfa_secret, code):
+            raise ValidationException("Invalid 6-digit TOTP verification code.")
+
+        plain_codes, hashed_codes = generate_backup_codes(10)
+        user.is_mfa_enabled = True
+        user.mfa_backup_codes = hashed_codes
+        flag_modified(user, "mfa_backup_codes")
+        await self.db.commit()
+        return MFAEnableResponse(
+            message="Multi-Factor Authentication enabled successfully.",
+            backup_codes=plain_codes,
+        )
+
+    async def verify_mfa_login(
+        self,
+        mfa_token: str,
+        code: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> TokenPair:
+        """Verifies MFA step-up code (TOTP or backup code) and issues TokenPair"""
+        user_id = decode_mfa_token(mfa_token)
+        user = await self.user_repo.get_by_id(user_id)
+        if not user or not user.is_active:
+            raise UnauthorizedException("User account not found or disabled.")
+
+        if not user.is_mfa_enabled or not user.mfa_secret:
+            raise UnauthorizedException("MFA is not enabled for this user.")
+
+        is_valid = False
+        if verify_totp(user.mfa_secret, code):
+            is_valid = True
+        else:
+            # Check backup codes
+            code_hash = hash_token(code.strip().upper())
+            if user.mfa_backup_codes and code_hash in user.mfa_backup_codes:
+                is_valid = True
+                # Remove used backup code
+                remaining = [h for h in user.mfa_backup_codes if h != code_hash]
+                user.mfa_backup_codes = remaining
+                flag_modified(user, "mfa_backup_codes")
+
+        if not is_valid:
+            raise UnauthorizedException("Invalid MFA verification code or backup code.")
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        session = UserSession(
+            user_id=user.id,
+            session_token=secrets.token_urlsafe(32),
+            ip_address=ip_address,
+            user_agent=user_agent,
+            is_active=True,
+            expires_at=now + timedelta(days=7),
+            last_activity_at=now,
+        )
+        self.db.add(session)
+        await self.db.commit()
+        await self.db.refresh(session)
+        return await self.issue_token_pair(user, session)
+
+    async def disable_mfa(self, user: User, password: str, code: str) -> None:
+        """Disables MFA after validating current password and TOTP code"""
+        if not verify_password(password, user.hashed_password):
+            raise ValidationException("Incorrect current password.")
+
+        if not user.is_mfa_enabled or not user.mfa_secret:
+            raise ValidationException("MFA is not enabled for this user.")
+
+        if not verify_totp(user.mfa_secret, code):
+            raise ValidationException("Invalid TOTP verification code.")
+
+        user.is_mfa_enabled = False
+        user.mfa_secret = None
+        user.mfa_backup_codes = None
+        flag_modified(user, "mfa_backup_codes")
+        await self.db.commit()
 
     async def issue_token_pair(
         self,

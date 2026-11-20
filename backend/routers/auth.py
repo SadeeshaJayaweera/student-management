@@ -9,7 +9,13 @@ from backend.models import User
 from backend.schemas import (
     Token,
     TokenPair,
+    LoginResponse,
     RefreshTokenRequest,
+    MFASetupResponse,
+    MFAEnableRequest,
+    MFAEnableResponse,
+    MFAVerifyRequest,
+    MFADisableRequest,
     UserCreate,
     UserOut,
     UserSessionOut,
@@ -22,11 +28,12 @@ from backend.core.exceptions import (
     NotFoundException,
 )
 from backend.core.dependencies import get_current_user
+from backend.utils.security import create_mfa_token
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
-@router.post("/login", response_model=TokenPair)
+@router.post("/login", response_model=LoginResponse)
 async def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -36,12 +43,82 @@ async def login(
     client_ip = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
     try:
-        user, session = await service.authenticate(
+        user, session, mfa_required = await service.authenticate(
             form_data.username, form_data.password, ip_address=client_ip, user_agent=user_agent
         )
-        return await service.issue_token_pair(user, session)
+        if mfa_required:
+            mfa_token = create_mfa_token(user.id)
+            return LoginResponse(
+                mfa_required=True,
+                mfa_token=mfa_token,
+            )
+        token_pair = await service.issue_token_pair(user, session)
+        return LoginResponse(
+            mfa_required=False,
+            access_token=token_pair.access_token,
+            refresh_token=token_pair.refresh_token,
+            token_type=token_pair.token_type,
+            expires_in=token_pair.expires_in,
+            role=token_pair.role,
+            user_id=token_pair.user_id,
+            full_name=token_pair.full_name,
+        )
     except UnauthorizedException as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)
+
+
+@router.post("/mfa/setup", response_model=MFASetupResponse)
+async def setup_mfa(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = AuthService(db)
+    return await service.setup_mfa(current_user)
+
+
+@router.post("/mfa/enable", response_model=MFAEnableResponse)
+async def enable_mfa(
+    payload: MFAEnableRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = AuthService(db)
+    try:
+        return await service.enable_mfa(current_user, payload.code)
+    except ValidationException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+
+
+@router.post("/mfa/verify", response_model=TokenPair)
+async def verify_mfa_login(
+    request: Request,
+    payload: MFAVerifyRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    service = AuthService(db)
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
+    try:
+        return await service.verify_mfa_login(
+            payload.mfa_token, payload.code, ip_address=client_ip, user_agent=user_agent
+        )
+    except (UnauthorizedException, HTTPException) as e:
+        detail = e.detail if isinstance(e, HTTPException) else e.message
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
+
+
+@router.post("/mfa/disable")
+async def disable_mfa(
+    payload: MFADisableRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    service = AuthService(db)
+    try:
+        await service.disable_mfa(current_user, payload.password, payload.code)
+        return {"message": "Multi-Factor Authentication disabled successfully."}
+    except ValidationException as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
 
 
 @router.post("/refresh", response_model=TokenPair)

@@ -6,7 +6,7 @@ from typing import Optional, List, Any, Dict
 from pydantic import BaseModel, EmailStr, Field, validator
 
 
-# ─── Token Schemas ────────────────────────────────────────────────────────────
+# ─── Token & MFA Schemas ──────────────────────────────────────────────────────
 
 class Token(BaseModel):
     access_token: str
@@ -20,8 +20,38 @@ class Token(BaseModel):
 class TokenPair(Token):
     refresh_token: str
 
+class LoginResponse(BaseModel):
+    mfa_required: bool = False
+    mfa_token: Optional[str] = None
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: Optional[str] = "bearer"
+    expires_in: Optional[int] = 900
+    role: Optional[str] = None
+    user_id: Optional[int] = None
+    full_name: Optional[str] = None
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+class MFASetupResponse(BaseModel):
+    secret: str
+    provisioning_uri: str
+
+class MFAEnableRequest(BaseModel):
+    code: str
+
+class MFAEnableResponse(BaseModel):
+    message: str
+    backup_codes: List[str]
+
+class MFAVerifyRequest(BaseModel):
+    mfa_token: str
+    code: str
+
+class MFADisableRequest(BaseModel):
+    password: str
+    code: str
 
 class UserSessionOut(BaseModel):
     id: int
