@@ -15,7 +15,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 from backend.config import settings
 from backend.database import init_db
-from backend.core.middleware import CorrelationIdMiddleware
+from backend.core.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
+from backend.core.logging import setup_logging, logger
 from backend.core.responses import APIResponse, APIErrorResponse
 from backend.core.exceptions import EduSphereException
 from fastapi.exceptions import RequestValidationError
@@ -89,8 +90,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configure centralized logging
+setup_logging(level="DEBUG" if settings.debug else "INFO", json_logs=settings.is_production)
+
 # ── Middleware ─────────────────────────────────────────────────────────────────
 
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
