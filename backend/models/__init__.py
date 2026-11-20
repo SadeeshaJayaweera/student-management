@@ -21,6 +21,9 @@ class UserRole(str, enum.Enum):
     LECTURER = "lecturer"
     ALUMNI = "alumni"
     LIBRARIAN = "librarian"
+    REGISTRAR = "registrar"
+    DEAN = "dean"
+    GUARDIAN = "guardian"
 
 class BookStatus(str, enum.Enum):
     AVAILABLE = "available"
@@ -92,6 +95,7 @@ class User(Base):
     alumni = relationship("Alumni", back_populates="user", uselist=False, cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+    assigned_roles = relationship("UserRoleAssignment", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
 
@@ -129,6 +133,58 @@ class RefreshToken(Base):
 
     user = relationship("User", back_populates="refresh_tokens")
     session = relationship("UserSession", back_populates="refresh_tokens")
+
+
+# ─── RBAC Models ─────────────────────────────────────────────────────────────
+
+class Permission(Base):
+    __tablename__ = "permissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(100), unique=True, index=True, nullable=False)
+    name = Column(String(100), nullable=False)
+    description = Column(String(255), nullable=True)
+    module = Column(String(50), index=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    role_permissions = relationship("RolePermission", back_populates="permission", cascade="all, delete-orphan")
+
+
+class Role(Base):
+    __tablename__ = "roles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(50), unique=True, index=True, nullable=False)
+    description = Column(String(255), nullable=True)
+    is_system = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    role_permissions = relationship("RolePermission", back_populates="role", cascade="all, delete-orphan")
+    user_assignments = relationship("UserRoleAssignment", back_populates="role", cascade="all, delete-orphan")
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permissions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, index=True)
+    permission_id = Column(Integer, ForeignKey("permissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    role = relationship("Role", back_populates="role_permissions")
+    permission = relationship("Permission", back_populates="role_permissions")
+
+
+class UserRoleAssignment(Base):
+    __tablename__ = "user_role_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    role_id = Column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="assigned_roles")
+    role = relationship("Role", back_populates="user_assignments")
 
 
 # ─── Student Model ────────────────────────────────────────────────────────────

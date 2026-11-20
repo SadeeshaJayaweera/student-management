@@ -9,6 +9,7 @@ from backend.routers.auth import router as auth_router
 from backend.routers.students import router as students_router
 from backend.routers.lecturers import router as lecturers_router
 from backend.routers.ai_assistant import router as ai_router
+from backend.routers.rbac import router as rbac_router
 from backend.routers.portals import (
     alumni_router, library_router, sports_router,
     news_router, admin_router
@@ -19,7 +20,8 @@ v1_router = APIRouter(prefix="/api/v1")
 # Mirror routes from domain routers under /api/v1 prefix
 for domain_router in [
     auth_router, students_router, lecturers_router, alumni_router,
-    library_router, sports_router, news_router, admin_router, ai_router
+    library_router, sports_router, news_router, admin_router, ai_router,
+    rbac_router
 ]:
     for route in domain_router.routes:
         if isinstance(route, APIRoute):
