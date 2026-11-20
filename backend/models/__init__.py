@@ -80,6 +80,9 @@ class User(Base):
     failed_login_attempts = Column(Integer, default=0, nullable=False)
     locked_until = Column(DateTime, nullable=True)
     password_changed_at = Column(DateTime, default=func.now(), nullable=False)
+    is_mfa_enabled = Column(Boolean, default=False, nullable=False)
+    mfa_secret = Column(String(255), nullable=True)
+    mfa_backup_codes = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

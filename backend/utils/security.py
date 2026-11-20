@@ -7,8 +7,9 @@ import re
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import bcrypt
+import pyotp
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -128,6 +129,68 @@ def decode_token(token: str) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+# ─── Multi-Factor Authentication (MFA) Helpers ───────────────────────────────
+
+def generate_mfa_secret() -> str:
+    """Generates an RFC 6238 base32 TOTP secret"""
+    return pyotp.random_base32()
+
+
+def get_mfa_uri(secret: str, username: str, issuer: str = "NSBM EduSphere") -> str:
+    """Generates a standard otpauth:// URI for authenticator apps"""
+    return pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name=issuer)
+
+
+def verify_totp(secret: str, code: str) -> bool:
+    """Verifies a 6-digit TOTP code against the secret with a 1-step clock skew window"""
+    if not secret or not code:
+        return False
+    totp = pyotp.totp.TOTP(secret)
+    return bool(totp.verify(code.strip(), valid_window=1))
+
+
+def generate_backup_codes(count: int = 10) -> Tuple[List[str], List[str]]:
+    """
+    Generates single-use emergency backup recovery codes.
+    Returns: (plain_codes, hashed_codes)
+    """
+    plain_codes = []
+    hashed_codes = []
+    for _ in range(count):
+        code = secrets.token_hex(4).upper()  # 8-character hex code e.g. 'A1B2C3D4'
+        plain_codes.append(code)
+        hashed_codes.append(hash_token(code))
+    return plain_codes, hashed_codes
+
+
+def create_mfa_token(user_id: int) -> str:
+    """Creates a temporary short-lived JWT token valid for 5 minutes during 2FA step-up"""
+    expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=5)
+    payload = {
+        "sub": str(user_id),
+        "type": "mfa_pending",
+        "exp": expire,
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_mfa_token(token: str) -> int:
+    """Decodes a temporary MFA login token and returns the user id"""
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        if payload.get("type") != "mfa_pending":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type: expected MFA pending token",
+            )
+        return int(payload["sub"])
+    except (JWTError, KeyError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="MFA session expired or invalid. Please log in again.",
         )
 
 
