@@ -30,6 +30,7 @@ from backend.routers.portals import (
     alumni_router, library_router, sports_router,
     news_router, admin_router, ws_router
 )
+from backend.routers.rbac import router as rbac_router
 from backend.routers.v1 import v1_router
 
 
@@ -121,6 +122,7 @@ app.include_router(library_router)
 app.include_router(sports_router)
 app.include_router(news_router)
 app.include_router(admin_router)
+app.include_router(rbac_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

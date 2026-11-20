@@ -53,6 +53,42 @@ class MFADisableRequest(BaseModel):
     password: str
     code: str
 
+
+# ─── RBAC Schemas ─────────────────────────────────────────────────────────────
+
+class PermissionOut(BaseModel):
+    id: int
+    code: str
+    name: str
+    description: Optional[str] = None
+    module: str
+
+    class Config:
+        from_attributes = True
+
+class RoleOut(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    is_system: bool
+    permissions: List[str] = []
+
+    class Config:
+        from_attributes = True
+
+class RoleCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=50)
+    description: Optional[str] = None
+    permission_codes: List[str] = []
+
+class RolePermissionUpdateRequest(BaseModel):
+    permission_codes: List[str]
+
+class UserPermissionsResponse(BaseModel):
+    user_id: int
+    role: str
+    permissions: List[str]
+
 class UserSessionOut(BaseModel):
     id: int
     ip_address: Optional[str] = None
