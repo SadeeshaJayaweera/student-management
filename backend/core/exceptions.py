@@ -22,6 +22,9 @@ class EntityNotFoundException(EduSphereException):
         self.identifier = identifier
 
 
+NotFoundException = EntityNotFoundException
+
+
 class UnauthorizedException(EduSphereException):
     """Raised when authentication is missing or invalid"""
     def __init__(self, message: str = "Authentication required or invalid credentials"):

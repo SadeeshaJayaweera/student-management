@@ -1,20 +1,33 @@
 """
 NSBM EduSphere — Secure Authentication Service
 Enterprise authentication service with brute-force defense, lockout management,
-password complexity enforcement, and session tracking
+password complexity enforcement, session tracking, and cryptographic token lifecycle management
 """
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, List, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update
 
-from backend.models import User, UserRole, UserSession
+from backend.config import settings
+from backend.models import User, UserRole, UserSession, RefreshToken
 from backend.repositories.user_repository import UserRepository
-from backend.schemas import UserCreate, Token
+from backend.schemas import UserCreate, Token, TokenPair, UserSessionOut
 from backend.utils.security import (
-    hash_password, verify_password, create_access_token, validate_password_strength
+    hash_password,
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
+    hash_token,
+    validate_password_strength,
 )
-from backend.core.exceptions import UnauthorizedException, ConflictException, ValidationException
+from backend.core.exceptions import (
+    UnauthorizedException,
+    ConflictException,
+    ValidationException,
+    NotFoundException,
+)
 
 
 class AuthService:
@@ -28,10 +41,11 @@ class AuthService:
         password: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-    ) -> User:
+    ) -> Tuple[User, UserSession]:
         """
         Authenticate user credentials with brute-force protection and lockout enforcement.
         Creates an active UserSession upon success.
+        Returns: (user, session)
         """
         user = await self.user_repo.get_by_username(username)
         if not user:
@@ -72,7 +86,206 @@ class AuthService:
         )
         self.db.add(session)
         await self.db.commit()
-        return user
+        await self.db.refresh(session)
+        return user, session
+
+    async def issue_token_pair(
+        self,
+        user: User,
+        session: Optional[UserSession] = None,
+        family_id: Optional[str] = None,
+    ) -> TokenPair:
+        """
+        Generates access token and refresh token, persisting the hashed refresh token.
+        """
+        raw_refresh, jti, family, expires_at = create_refresh_token(
+            user_id=user.id, family_id=family_id
+        )
+        refresh_record = RefreshToken(
+            user_id=user.id,
+            session_id=session.id if session else None,
+            jti=jti,
+            token_hash=hash_token(raw_refresh),
+            family_id=family,
+            is_revoked=False,
+            expires_at=expires_at,
+        )
+        self.db.add(refresh_record)
+        await self.db.commit()
+
+        access_token = create_access_token({"sub": str(user.id), "role": user.role})
+        return TokenPair(
+            access_token=access_token,
+            refresh_token=raw_refresh,
+            token_type="bearer",
+            expires_in=settings.access_token_expire_minutes * 60,
+            role=user.role,
+            user_id=user.id,
+            full_name=user.full_name,
+        )
+
+    async def rotate_refresh_token(
+        self,
+        refresh_token_str: str,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+    ) -> TokenPair:
+        """
+        Rotates refresh token using cryptographic family tracking and replay attack detection.
+        """
+        payload = decode_refresh_token(refresh_token_str)
+        token_hash = hash_token(refresh_token_str)
+        user_id = int(payload.get("sub"))
+        family_id = payload.get("family")
+
+        result = await self.db.execute(
+            select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+        )
+        token_record = result.scalar_one_or_none()
+        if not token_record:
+            raise UnauthorizedException("Invalid refresh token.")
+
+        # Replay Attack Detection:
+        # If an already revoked token is submitted, the token family has been compromised!
+        if token_record.is_revoked:
+            await self.db.execute(
+                update(RefreshToken)
+                .where(RefreshToken.family_id == family_id)
+                .values(is_revoked=True)
+            )
+            if token_record.session_id:
+                await self.db.execute(
+                    update(UserSession)
+                    .where(UserSession.id == token_record.session_id)
+                    .values(is_active=False)
+                )
+            await self.db.commit()
+            raise UnauthorizedException(
+                "Refresh token reuse detected. Token family invalidated for security."
+            )
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if token_record.expires_at < now:
+            token_record.is_revoked = True
+            await self.db.commit()
+            raise UnauthorizedException("Refresh token has expired.")
+
+        # Invalidate current token
+        token_record.is_revoked = True
+
+        # Generate new token in the same family
+        user = await self.user_repo.get_by_id(user_id)
+        if not user or not user.is_active:
+            raise UnauthorizedException("User account not found or disabled.")
+
+        new_raw_refresh, new_jti, family, expires_at = create_refresh_token(
+            user_id=user.id, family_id=family_id
+        )
+        token_record.replaced_by = new_jti
+
+        new_refresh_record = RefreshToken(
+            user_id=user.id,
+            session_id=token_record.session_id,
+            jti=new_jti,
+            token_hash=hash_token(new_raw_refresh),
+            family_id=family,
+            is_revoked=False,
+            expires_at=expires_at,
+        )
+        self.db.add(new_refresh_record)
+
+        # Update session activity
+        if token_record.session_id:
+            sess_result = await self.db.execute(
+                select(UserSession).where(UserSession.id == token_record.session_id)
+            )
+            session = sess_result.scalar_one_or_none()
+            if session:
+                session.last_activity_at = now
+                if ip_address:
+                    session.ip_address = ip_address
+                if user_agent:
+                    session.user_agent = user_agent
+
+        await self.db.commit()
+
+        access_token = create_access_token({"sub": str(user.id), "role": user.role})
+        return TokenPair(
+            access_token=access_token,
+            refresh_token=new_raw_refresh,
+            token_type="bearer",
+            expires_in=settings.access_token_expire_minutes * 60,
+            role=user.role,
+            user_id=user.id,
+            full_name=user.full_name,
+        )
+
+    async def logout(self, user_id: int, refresh_token_str: Optional[str] = None) -> None:
+        """Revokes the given refresh token and deactivates its session"""
+        if refresh_token_str:
+            token_hash = hash_token(refresh_token_str)
+            result = await self.db.execute(
+                select(RefreshToken).where(
+                    RefreshToken.token_hash == token_hash,
+                    RefreshToken.user_id == user_id,
+                )
+            )
+            token_record = result.scalar_one_or_none()
+            if token_record:
+                token_record.is_revoked = True
+                if token_record.session_id:
+                    sess_res = await self.db.execute(
+                        select(UserSession).where(UserSession.id == token_record.session_id)
+                    )
+                    sess = sess_res.scalar_one_or_none()
+                    if sess:
+                        sess.is_active = False
+                await self.db.commit()
+
+    async def revoke_session(self, user_id: int, session_id: int) -> bool:
+        """Revokes a specific session and its associated refresh tokens"""
+        sess_res = await self.db.execute(
+            select(UserSession).where(
+                UserSession.id == session_id,
+                UserSession.user_id == user_id,
+            )
+        )
+        session = sess_res.scalar_one_or_none()
+        if not session:
+            return False
+
+        session.is_active = False
+        await self.db.execute(
+            update(RefreshToken)
+            .where(RefreshToken.session_id == session_id)
+            .values(is_revoked=True)
+        )
+        await self.db.commit()
+        return True
+
+    async def revoke_all_sessions(self, user_id: int) -> int:
+        """Revokes all sessions and refresh tokens for user"""
+        await self.db.execute(
+            update(UserSession)
+            .where(UserSession.user_id == user_id)
+            .values(is_active=False)
+        )
+        await self.db.execute(
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user_id)
+            .values(is_revoked=True)
+        )
+        await self.db.commit()
+        return True
+
+    async def list_user_sessions(self, user_id: int) -> List[UserSession]:
+        """Lists active user sessions"""
+        res = await self.db.execute(
+            select(UserSession)
+            .where(UserSession.user_id == user_id, UserSession.is_active == True)
+            .order_by(UserSession.last_activity_at.desc())
+        )
+        return list(res.scalars().all())
 
     async def register(self, payload: UserCreate) -> User:
         """

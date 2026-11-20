@@ -2,9 +2,12 @@
 NSBM EduSphere — Security Utilities
 JWT token creation, verification, and password hashing
 """
+import hashlib
 import re
-from datetime import datetime, timedelta
-from typing import Optional
+import secrets
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
 import bcrypt
 from jose import JWTError, jwt
 from fastapi import Depends, HTTPException, status
@@ -58,11 +61,62 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
+def hash_token(token: str) -> str:
+    """Computes a SHA-256 cryptographic digest of a token string"""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
-    to_encode.update({"exp": expire})
+    expire = datetime.now(timezone.utc).replace(tzinfo=None) + (
+        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
+    )
+    to_encode.update({"exp": expire, "type": "access"})
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+
+
+def create_refresh_token(
+    user_id: int,
+    family_id: Optional[str] = None,
+    expires_delta: Optional[timedelta] = None,
+) -> Tuple[str, str, str, datetime]:
+    """
+    Creates a cryptographically unique refresh token and associated family identifier.
+    Returns: (raw_token_str, jti, family_id, expires_at)
+    """
+    jti = uuid.uuid4().hex
+    family = family_id or uuid.uuid4().hex
+    expire = datetime.now(timezone.utc).replace(tzinfo=None) + (
+        expires_delta or timedelta(days=7)
+    )
+    payload = {
+        "sub": str(user_id),
+        "jti": jti,
+        "family": family,
+        "type": "refresh",
+        "exp": expire,
+    }
+    raw_token = jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return raw_token, jti, family, expire
+
+
+def decode_refresh_token(token: str) -> dict:
+    """Decodes and validates a refresh token payload"""
+    try:
+        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token type: expected refresh token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return payload
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def decode_token(token: str) -> dict:

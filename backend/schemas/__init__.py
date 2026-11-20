@@ -11,9 +11,30 @@ from pydantic import BaseModel, EmailStr, Field, validator
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    refresh_token: Optional[str] = None
+    expires_in: int = 900
     role: str
     user_id: int
     full_name: str
+
+class TokenPair(Token):
+    refresh_token: str
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+class UserSessionOut(BaseModel):
+    id: int
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    expires_at: datetime
+    last_activity_at: Optional[datetime] = None
+    is_current: bool = False
+
+    class Config:
+        from_attributes = True
 
 class TokenData(BaseModel):
     user_id: Optional[int] = None
