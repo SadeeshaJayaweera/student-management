@@ -166,6 +166,8 @@ class StudentOut(BaseModel):
     semester: int
     gpa: float
     credits_earned: int
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
     user: UserOut
     class Config:
         from_attributes = True
