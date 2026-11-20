@@ -88,6 +88,7 @@ class User(Base):
     lecturer = relationship("Lecturer", back_populates="user", uselist=False, cascade="all, delete-orphan")
     alumni = relationship("Alumni", back_populates="user", uselist=False, cascade="all, delete-orphan")
     sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
 
@@ -106,6 +107,25 @@ class UserSession(Base):
     last_activity_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     user = relationship("User", back_populates="sessions")
+    refresh_tokens = relationship("RefreshToken", back_populates="session", cascade="all, delete-orphan")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("user_sessions.id", ondelete="CASCADE"), nullable=True, index=True)
+    jti = Column(String(64), unique=True, index=True, nullable=False)
+    token_hash = Column(String(64), unique=True, index=True, nullable=False)
+    family_id = Column(String(64), index=True, nullable=False)
+    is_revoked = Column(Boolean, default=False, nullable=False)
+    replaced_by = Column(String(64), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User", back_populates="refresh_tokens")
+    session = relationship("UserSession", back_populates="refresh_tokens")
 
 
 # ─── Student Model ────────────────────────────────────────────────────────────
