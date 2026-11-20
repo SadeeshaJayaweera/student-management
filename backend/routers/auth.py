@@ -1,5 +1,5 @@
 """NSBM EduSphere — Authentication Router"""
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,12 +15,17 @@ router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 @router.post("/login", response_model=Token)
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
     service = AuthService(db)
+    client_ip = request.client.host if request.client else None
+    user_agent = request.headers.get("user-agent")
     try:
-        user = await service.authenticate(form_data.username, form_data.password)
+        user = await service.authenticate(
+            form_data.username, form_data.password, ip_address=client_ip, user_agent=user_agent
+        )
         return service.generate_token(user)
     except UnauthorizedException as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=e.message)

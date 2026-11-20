@@ -77,6 +77,9 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime, nullable=True)
+    password_changed_at = Column(DateTime, default=func.now(), nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -84,8 +87,25 @@ class User(Base):
     student = relationship("Student", back_populates="user", uselist=False, cascade="all, delete-orphan")
     lecturer = relationship("Lecturer", back_populates="user", uselist=False, cascade="all, delete-orphan")
     alumni = relationship("Alumni", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    sessions = relationship("UserSession", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
+
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_token = Column(String(255), unique=True, index=True, nullable=False)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    last_activity_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    user = relationship("User", back_populates="sessions")
 
 
 # ─── Student Model ────────────────────────────────────────────────────────────

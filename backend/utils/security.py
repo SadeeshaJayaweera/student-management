@@ -2,6 +2,7 @@
 NSBM EduSphere — Security Utilities
 JWT token creation, verification, and password hashing
 """
+import re
 from datetime import datetime, timedelta
 from typing import Optional
 import bcrypt
@@ -19,11 +20,31 @@ from backend.models import User
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
+def validate_password_strength(password: str) -> None:
+    """
+    Validates enterprise password complexity:
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one digit
+    - At least one special symbol
+    """
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long.")
+    if not re.search(r"[A-Z]", password):
+        raise ValueError("Password must contain at least one uppercase letter.")
+    if not re.search(r"[a-z]", password):
+        raise ValueError("Password must contain at least one lowercase letter.")
+    if not re.search(r"\d", password):
+        raise ValueError("Password must contain at least one digit.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>_\-+=]", password):
+        raise ValueError("Password must contain at least one special character.")
+
+
 def hash_password(password: str) -> str:
-    """Hash password using bcrypt directly"""
-    # Truncate at 72 bytes to adhere to bcrypt standard
+    """Hash password using bcrypt with work factor 12"""
     pwd_bytes = password.encode('utf-8')[:72]
-    salt = bcrypt.gensalt()
+    salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 
