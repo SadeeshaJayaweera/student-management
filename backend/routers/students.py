@@ -1,21 +1,25 @@
 """NSBM EduSphere — Student Portal Router"""
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
-    User, Student, Enrollment, Grade, Attendance, Assignment,
+    User, UserRole, Student, Enrollment, Grade, Attendance, Assignment,
     AssignmentSubmission, Notification, BorrowRecord, ClubMembership,
     ClubEvent, Course
 )
 from backend.schemas import (
-    StudentOut, GradeOut, CourseOut, AssignmentOut, NotificationOut,
+    StudentOut, StudentUpdate, GradeOut, CourseOut, AssignmentOut, NotificationOut,
     SubmissionCreate, StudentDashboard
 )
 from backend.utils.security import get_current_user, require_roles
+from backend.core.authorization import (
+    StudentProfilePolicy, assert_can_read, assert_can_write
+)
+from backend.core.exceptions import ForbiddenException
 
 router = APIRouter(prefix="/api/students", tags=["Students"])
 
@@ -283,6 +287,91 @@ async def get_assignments(
     ]
 
 
+@router.get("/{student_ref}", response_model=StudentOut)
+async def get_student_by_id(
+    student_ref: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get student profile by ID or Student ID.
+    Enforces resource-level authorization (BOLA defense):
+    - Students can only view their own profile.
+    - Staff / faculty can view student profiles.
+    """
+    query = select(Student).options(selectinload(Student.user))
+    if student_ref.isdigit():
+        query = query.where(or_(Student.id == int(student_ref), Student.student_id == student_ref))
+    else:
+        query = query.where(Student.student_id == student_ref)
+
+    res = await db.execute(query)
+    student = res.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    try:
+        assert_can_read(current_user, StudentProfilePolicy(), student, "student profile")
+    except ForbiddenException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=e.message)
+
+    return student
+
+
+@router.put("/{student_ref}", response_model=StudentOut)
+async def update_student_profile(
+    student_ref: str,
+    payload: StudentUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update student profile details.
+    Enforces resource-level authorization:
+    - Students can only update their own emergency contact and address.
+    - Academic fields (year, semester) can only be altered by Admins or Registrars.
+    """
+    query = select(Student).options(selectinload(Student.user))
+    if student_ref.isdigit():
+        query = query.where(or_(Student.id == int(student_ref), Student.student_id == student_ref))
+    else:
+        query = query.where(Student.student_id == student_ref)
+
+    res = await db.execute(query)
+    student = res.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    try:
+        assert_can_write(current_user, StudentProfilePolicy(), student, "student profile")
+    except ForbiddenException as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=e.message)
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_staff = role_val in {UserRole.ADMIN.value, UserRole.REGISTRAR.value}
+
+    if payload.address is not None:
+        student.address = payload.address
+    if payload.emergency_contact is not None:
+        student.emergency_contact = payload.emergency_contact
+
+    # Privilege escalation defense: students cannot alter academic status
+    if (payload.year_of_study is not None or payload.semester is not None) and not is_staff:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only academic staff (Admin/Registrar) can update year of study or semester."
+        )
+
+    if payload.year_of_study is not None and is_staff:
+        student.year_of_study = payload.year_of_study
+    if payload.semester is not None and is_staff:
+        student.semester = payload.semester
+
+    await db.commit()
+    await db.refresh(student)
+    return student
+
+
 @router.post("/assignments/{assignment_id}/submit")
 async def submit_assignment(
     assignment_id: int,
@@ -294,6 +383,28 @@ async def submit_assignment(
     student = result.scalar_one_or_none()
     if not student:
         raise HTTPException(404, "Student not found")
+
+    # Verify assignment exists
+    assignment_res = await db.execute(select(Assignment).where(Assignment.id == assignment_id))
+    assignment = assignment_res.scalar_one_or_none()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+
+    # Verify student is actively enrolled in this course
+    enroll_res = await db.execute(
+        select(Enrollment).where(
+            and_(
+                Enrollment.student_id == student.id,
+                Enrollment.course_id == assignment.course_id,
+                Enrollment.status == "active",
+            )
+        )
+    )
+    if not enroll_res.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You are not actively enrolled in the course for this assignment."
+        )
 
     # Check existing submission
     existing = await db.execute(
