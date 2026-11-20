@@ -15,6 +15,10 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 
 from backend.config import settings
 from backend.database import init_db
+from backend.core.middleware import CorrelationIdMiddleware
+from backend.core.responses import APIResponse, APIErrorResponse
+from backend.core.exceptions import EduSphereException
+from fastapi.exceptions import RequestValidationError
 
 # Import all routers
 from backend.routers.auth import router as auth_router
@@ -25,6 +29,7 @@ from backend.routers.portals import (
     alumni_router, library_router, sports_router,
     news_router, admin_router, ws_router
 )
+from backend.routers.v1 import v1_router
 
 
 @asynccontextmanager
@@ -86,11 +91,12 @@ app = FastAPI(
 
 # ── Middleware ─────────────────────────────────────────────────────────────────
 
+app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*", "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:8000"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -98,6 +104,10 @@ app.add_middleware(
 
 # ── API Routers ────────────────────────────────────────────────────────────────
 
+# Versioned API v1 Router
+app.include_router(v1_router)
+
+# Legacy / Non-versioned Routers for backward compatibility
 app.include_router(auth_router)
 app.include_router(students_router)
 app.include_router(lecturers_router)
@@ -112,14 +122,18 @@ app.include_router(ws_router)
 # ── Health Check ───────────────────────────────────────────────────────────────
 
 @app.get("/api/health", tags=["System"])
-async def health_check():
-    return {
+@app.get("/api/v1/health", tags=["System"])
+async def health_check(request: Request):
+    cid = getattr(request.state, "correlation_id", None)
+    payload = {
         "status": "healthy",
         "app": settings.app_name,
         "version": settings.app_version,
+        "environment": settings.environment.value,
         "ai_enabled": settings.ai_enabled,
-        "institution": settings.institution_name
+        "institution": settings.institution_name,
     }
+    return APIResponse.ok(data=payload, correlation_id=cid)
 
 # ── Static Files & Production React SPA Serving ────────────────────────────────
 
@@ -148,19 +162,64 @@ async def serve_react_app(full_path: str):
 
 # ── Global Exception Handlers ──────────────────────────────────────────────────
 
+@app.exception_handler(EduSphereException)
+async def edusphere_exception_handler(request: Request, exc: EduSphereException):
+    cid = getattr(request.state, "correlation_id", None)
+    return JSONResponse(
+        status_code=400,
+        content=APIErrorResponse.build(
+            code="DOMAIN_ERROR", message=exc.message, details=exc.details, correlation_id=cid
+        ).model_dump(),
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    cid = getattr(request.state, "correlation_id", None)
+    return JSONResponse(
+        status_code=422,
+        content=APIErrorResponse.build(
+            code="VALIDATION_ERROR",
+            message="Invalid request payload or query parameters.",
+            details={"errors": exc.errors()},
+            correlation_id=cid,
+        ).model_dump(),
+    )
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
+    cid = getattr(request.state, "correlation_id", None)
+    code = "HTTP_ERROR"
+    if exc.status_code == 401:
+        code = "UNAUTHORIZED"
+    elif exc.status_code == 403:
+        code = "FORBIDDEN"
+    elif exc.status_code == 404:
+        code = "NOT_FOUND"
+    elif exc.status_code == 400:
+        code = "BAD_REQUEST"
+
+    detail_str = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail, "status_code": exc.status_code}
+        content=APIErrorResponse.build(
+            code=code, message=detail_str, correlation_id=cid
+        ).model_dump(),
     )
 
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
+    cid = getattr(request.state, "correlation_id", None)
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error", "error": str(exc) if settings.debug else "Contact admin"}
+        content=APIErrorResponse.build(
+            code="INTERNAL_SERVER_ERROR",
+            message="An unexpected internal server error occurred.",
+            details={"debug_info": str(exc)} if settings.debug else None,
+            correlation_id=cid,
+        ).model_dump(),
     )
 
 

@@ -11,7 +11,9 @@ async def test_health_check(client: AsyncClient):
     """Verify system health endpoint returns 200 and valid JSON"""
     response = await client.get("/api/health")
     assert response.status_code == 200
-    data = response.json()
+    body = response.json()
+    assert body["success"] is True
+    data = body["data"]
     assert data["status"] == "healthy"
     assert "version" in data
     assert "app" in data
