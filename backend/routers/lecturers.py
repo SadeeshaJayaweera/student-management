@@ -1,19 +1,139 @@
-"""NSBM EduSphere — Lecturer Portal Router"""
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+"""NSBM EduSphere — Lecturer and Staff Management Router"""
+from typing import List, Optional, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
-    User, Lecturer, Course, Student, Enrollment, Grade, Assignment,
-    AssignmentSubmission, Attendance, CourseMaterial, Notification
+    User, UserRole, Lecturer, Course, Student, Enrollment, Grade, Assignment,
+    AssignmentSubmission, Attendance, CourseMaterial, Notification,
+    Campus, Faculty, Department
 )
-from backend.schemas import AssignmentCreate, GradeUpdate
+from backend.schemas import (
+    AssignmentCreate, GradeUpdate,
+    LecturerCreate, LecturerUpdate, LecturerOut, LecturerWorkloadSummary
+)
 from backend.utils.security import require_roles, get_current_user
 
 router = APIRouter(prefix="/api/lecturers", tags=["Lecturers"])
+
+
+@router.get("", response_model=List[LecturerOut])
+async def list_lecturers(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    campus_id: Optional[int] = None,
+    faculty_id: Optional[int] = None,
+    department_id: Optional[int] = None,
+    employment_status: Optional[str] = None,
+    designation: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List academic staff and faculty members with filtering, search, and pagination.
+    Accessible to all authenticated users.
+    """
+    query = select(Lecturer).options(selectinload(Lecturer.user))
+
+    # Multi-tenant isolation
+    if current_user.institution_id is not None:
+        query = query.where(Lecturer.institution_id == current_user.institution_id)
+
+    if campus_id is not None:
+        query = query.where(Lecturer.campus_id == campus_id)
+    if faculty_id is not None:
+        query = query.where(Lecturer.faculty_id == faculty_id)
+    if department_id is not None:
+        query = query.where(Lecturer.department_id == department_id)
+    if employment_status is not None:
+        query = query.where(Lecturer.employment_status == employment_status)
+    if designation is not None:
+        query = query.where(Lecturer.designation == designation)
+
+    if search:
+        search_filter = f"%{search}%"
+        query = query.join(Lecturer.user).where(
+            or_(
+                Lecturer.lecturer_id.ilike(search_filter),
+                Lecturer.specialization.ilike(search_filter),
+                User.full_name.ilike(search_filter),
+                User.email.ilike(search_filter)
+            )
+        )
+
+    query = query.offset(skip).limit(limit)
+    res = await db.execute(query)
+    return res.scalars().all()
+
+
+@router.post("", response_model=LecturerOut, status_code=status.HTTP_201_CREATED)
+async def create_lecturer_profile(
+    payload: LecturerCreate,
+    current_user: User = Depends(require_roles("admin", "dean", "registrar")),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Provision an academic faculty / lecturer profile for an existing staff user.
+    Restricted to Admins, Deans, and Registrars.
+    """
+    # Verify user exists and has faculty-capable role
+    user_res = await db.execute(select(User).where(User.id == payload.user_id))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Target user account not found")
+
+    user_role = user.role.value if hasattr(user.role, "value") else str(user.role)
+    ALLOWED_FACULTY_ROLES = {UserRole.LECTURER.value, UserRole.DEAN.value, UserRole.ADMIN.value}
+    if user_role not in ALLOWED_FACULTY_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Lecturer profiles can only be provisioned for staff with roles: {sorted(list(ALLOWED_FACULTY_ROLES))}"
+        )
+
+    # Check for existing profile
+    existing = await db.execute(
+        select(Lecturer).where(or_(Lecturer.user_id == payload.user_id, Lecturer.lecturer_id == payload.lecturer_id))
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A lecturer profile already exists for this user or lecturer ID"
+        )
+
+    institution_id = current_user.institution_id or user.institution_id
+
+    lecturer = Lecturer(
+        user_id=payload.user_id,
+        institution_id=institution_id,
+        lecturer_id=payload.lecturer_id,
+        faculty=payload.faculty,
+        department=payload.department,
+        specialization=payload.specialization,
+        qualification=payload.qualification,
+        designation=payload.designation,
+        employment_status=payload.employment_status,
+        campus_id=payload.campus_id,
+        faculty_id=payload.faculty_id,
+        department_id=payload.department_id,
+        office_location=payload.office_location,
+        office_hours=payload.office_hours,
+        research_interests=payload.research_interests,
+        bio=payload.bio,
+        max_teaching_load_hours=payload.max_teaching_load_hours,
+        current_teaching_load_hours=0,
+        joined_date=payload.joined_date
+    )
+    db.add(lecturer)
+    await db.commit()
+
+    refreshed = await db.execute(
+        select(Lecturer).where(Lecturer.id == lecturer.id).options(selectinload(Lecturer.user))
+    )
+    return refreshed.scalar_one()
 
 
 @router.get("/dashboard")
@@ -278,4 +398,176 @@ async def get_analytics(
     }
 
 
-from typing import Optional
+@router.get("/{lecturer_ref}", response_model=LecturerOut)
+async def get_lecturer_by_id(
+    lecturer_ref: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get lecturer profile by ID or Lecturer ID.
+    Accessible to all authenticated users.
+    """
+    query = select(Lecturer).options(selectinload(Lecturer.user))
+    if lecturer_ref.isdigit():
+        query = query.where(or_(Lecturer.id == int(lecturer_ref), Lecturer.lecturer_id == lecturer_ref))
+    else:
+        query = query.where(Lecturer.lecturer_id == lecturer_ref)
+
+    res = await db.execute(query)
+    lecturer = res.scalar_one_or_none()
+    if not lecturer:
+        raise HTTPException(status_code=404, detail="Lecturer profile not found")
+
+    return lecturer
+
+
+@router.put("/{lecturer_ref}", response_model=LecturerOut)
+async def update_lecturer_profile(
+    lecturer_ref: str,
+    payload: LecturerUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update lecturer details.
+    Enforces authorization:
+    - Admins and Deans can alter appointments, workloads, and department assignments.
+    - Lecturers can update their own personal/office profile.
+    - Privilege escalation defense: Lecturers cannot change their employment status or workload limits.
+    """
+    query = select(Lecturer).options(selectinload(Lecturer.user))
+    if lecturer_ref.isdigit():
+        query = query.where(or_(Lecturer.id == int(lecturer_ref), Lecturer.lecturer_id == lecturer_ref))
+    else:
+        query = query.where(Lecturer.lecturer_id == lecturer_ref)
+
+    res = await db.execute(query)
+    lecturer = res.scalar_one_or_none()
+    if not lecturer:
+        raise HTTPException(status_code=404, detail="Lecturer profile not found")
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin_or_dean = role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}
+    is_owner = current_user.id == lecturer.user_id
+
+    if not (is_admin_or_dean or is_owner):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You do not have permission to modify this lecturer profile."
+        )
+
+    # Check for privilege escalation attempts
+    restricted_fields_attempted = any([
+        payload.employment_status is not None,
+        payload.designation is not None,
+        payload.max_teaching_load_hours is not None,
+        payload.campus_id is not None,
+        payload.faculty_id is not None,
+        payload.department_id is not None,
+    ])
+
+    if restricted_fields_attempted and not is_admin_or_dean:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only administrators and academic deans can alter academic appointments, employment status, or teaching load limits."
+        )
+
+    # Permitted self-updates
+    if payload.specialization is not None:
+        lecturer.specialization = payload.specialization
+    if payload.qualification is not None:
+        lecturer.qualification = payload.qualification
+    if payload.office_location is not None:
+        lecturer.office_location = payload.office_location
+    if payload.office_hours is not None:
+        lecturer.office_hours = payload.office_hours
+    if payload.research_interests is not None:
+        lecturer.research_interests = payload.research_interests
+    if payload.bio is not None:
+        lecturer.bio = payload.bio
+    if payload.publications is not None:
+        lecturer.publications = payload.publications
+
+    # Privileged updates
+    if is_admin_or_dean:
+        if payload.faculty is not None:
+            lecturer.faculty = payload.faculty
+        if payload.department is not None:
+            lecturer.department = payload.department
+        if payload.campus_id is not None:
+            lecturer.campus_id = payload.campus_id
+        if payload.faculty_id is not None:
+            lecturer.faculty_id = payload.faculty_id
+        if payload.department_id is not None:
+            lecturer.department_id = payload.department_id
+        if payload.employment_status is not None:
+            lecturer.employment_status = payload.employment_status
+        if payload.designation is not None:
+            lecturer.designation = payload.designation
+        if payload.max_teaching_load_hours is not None:
+            lecturer.max_teaching_load_hours = payload.max_teaching_load_hours
+
+    await db.commit()
+    await db.refresh(lecturer)
+    return lecturer
+
+
+@router.get("/{lecturer_ref}/workload", response_model=LecturerWorkloadSummary)
+async def get_lecturer_workload(
+    lecturer_ref: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get detailed teaching workload analysis for a lecturer, including assigned courses,
+    total contact hours, and enrollment figures.
+    """
+    query = select(Lecturer).options(
+        selectinload(Lecturer.user),
+        selectinload(Lecturer.courses).selectinload(Course.enrollments)
+    )
+    if lecturer_ref.isdigit():
+        query = query.where(or_(Lecturer.id == int(lecturer_ref), Lecturer.lecturer_id == lecturer_ref))
+    else:
+        query = query.where(Lecturer.lecturer_id == lecturer_ref)
+
+    res = await db.execute(query)
+    lecturer = res.scalar_one_or_none()
+    if not lecturer:
+        raise HTTPException(status_code=404, detail="Lecturer profile not found")
+
+    courses_summary = []
+    total_contact_hours = 0
+    total_students = 0
+
+    for c in lecturer.courses:
+        active_enrollments = len([e for e in c.enrollments if e.status == "active"])
+        total_students += active_enrollments
+        total_contact_hours += c.credits  # credit hours equate to weekly teaching load
+        courses_summary.append({
+            "course_id": c.id,
+            "course_code": c.course_code,
+            "title": c.title,
+            "credits": c.credits,
+            "semester": c.semester,
+            "year": c.year,
+            "active_enrollments": active_enrollments,
+            "max_students": c.max_students
+        })
+
+    # Update current teaching load on the model
+    lecturer.current_teaching_load_hours = total_contact_hours
+    await db.commit()
+
+    return LecturerWorkloadSummary(
+        lecturer_id=lecturer.lecturer_id,
+        full_name=lecturer.user.full_name,
+        designation=lecturer.designation,
+        employment_status=lecturer.employment_status,
+        max_teaching_load_hours=lecturer.max_teaching_load_hours,
+        current_teaching_load_hours=total_contact_hours,
+        assigned_courses_count=len(lecturer.courses),
+        total_enrolled_students=total_students,
+        courses=courses_summary
+    )

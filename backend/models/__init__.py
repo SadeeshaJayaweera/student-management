@@ -106,6 +106,7 @@ class Institution(Base):
     academic_years = relationship("AcademicYear", back_populates="institution", cascade="all, delete-orphan")
     semesters = relationship("Semester", back_populates="institution", cascade="all, delete-orphan")
     programs = relationship("Program", back_populates="institution", cascade="all, delete-orphan")
+    lecturers = relationship("Lecturer", back_populates="institution", cascade="all, delete-orphan")
 
 
 class Campus(Base):
@@ -504,9 +505,21 @@ class Lecturer(Base):
     bio = Column(Text, nullable=True)
     publications = Column(Integer, default=0)
     joined_date = Column(Date, nullable=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True, index=True)
+    campus_id = Column(Integer, ForeignKey("campuses.id", ondelete="SET NULL"), nullable=True, index=True)
+    faculty_id = Column(Integer, ForeignKey("faculties.id", ondelete="SET NULL"), nullable=True, index=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    employment_status = Column(String(50), default="full_time", nullable=False)
+    designation = Column(String(100), default="Lecturer", nullable=False)
+    max_teaching_load_hours = Column(Integer, default=15, nullable=False)
+    current_teaching_load_hours = Column(Integer, default=0, nullable=False)
 
     # Relationships
+    institution = relationship("Institution", back_populates="lecturers")
     user = relationship("User", back_populates="lecturer")
+    campus = relationship("Campus")
+    faculty_ref = relationship("Faculty")
+    department_ref = relationship("Department")
     courses = relationship("Course", back_populates="lecturer")
 
 
