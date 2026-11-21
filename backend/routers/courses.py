@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
-    Course, CoursePrerequisite, CourseModule, CourseLesson, LessonContentVersion, Institution, Program, Lecturer,
+    Course, CoursePrerequisite, CourseModule, CourseLesson, LessonContentVersion, CourseAnnouncement, Institution, Program, Lecturer,
     User, UserRole, Enrollment, Assignment, Student
 )
 from backend.schemas import (
@@ -928,6 +928,7 @@ async def get_course_workspace(
         selectinload(Course.lecturer).selectinload(Lecturer.user),
         selectinload(Course.modules).selectinload(CourseModule.lessons),
         selectinload(Course.assignments),
+        selectinload(Course.announcements).selectinload(CourseAnnouncement.author),
         selectinload(Course.enrollments).selectinload(Enrollment.student)
     )
     res = await db.execute(q)
@@ -1011,6 +1012,21 @@ async def get_course_workspace(
             "office_hours": course.lecturer.office_hours
         }
 
+    now = datetime.utcnow()
+    recent_announcements = [
+        {
+            "id": ann.id,
+            "title": ann.title,
+            "content": ann.content[:200],
+            "priority": ann.priority,
+            "is_pinned": ann.is_pinned,
+            "published_at": ann.published_at.isoformat() if ann.published_at else None,
+            "author_name": ann.author.full_name if ann.author else "Instructor",
+        }
+        for ann in course.announcements[:5]
+        if is_admin or is_instructor or (ann.published_at and ann.published_at <= now)
+    ]
+
     return CourseWorkspaceOut(
         course_id=course.id,
         course_code=course.course_code,
@@ -1036,7 +1052,7 @@ async def get_course_workspace(
             "enrollment_status": enrollment_status
         },
         modules=modules_data,
-        recent_announcements=[],
+        recent_announcements=recent_announcements,
         active_assignments=assignments_data
     )
 

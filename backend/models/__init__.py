@@ -626,6 +626,7 @@ class Course(Base):
     materials = relationship("CourseMaterial", back_populates="course", cascade="all, delete-orphan")
     documents = relationship("CourseDocument", back_populates="course", cascade="all, delete-orphan")
     videos = relationship("CourseVideo", back_populates="course", cascade="all, delete-orphan")
+    announcements = relationship("CourseAnnouncement", back_populates="course", cascade="all, delete-orphan", order_by="desc(CourseAnnouncement.is_pinned), desc(CourseAnnouncement.published_at)")
 
 
 class CoursePrerequisite(Base):
@@ -813,6 +814,40 @@ class StudentModuleProgress(Base):
 
     student = relationship("Student", back_populates="module_progress")
     module = relationship("CourseModule", back_populates="progress_records")
+
+
+class CourseAnnouncement(Base):
+    __tablename__ = "course_announcements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    cohort_id = Column(Integer, ForeignKey("cohorts.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    priority = Column(String(20), default="normal", nullable=False)  # normal, important, urgent
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    requires_acknowledgement = Column(Boolean, default=False, nullable=False)
+    published_at = Column(DateTime, default=func.now(), nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="announcements")
+    author = relationship("User")
+    cohort = relationship("Cohort")
+    acknowledgements = relationship("AnnouncementAcknowledgement", back_populates="announcement", cascade="all, delete-orphan")
+
+
+class AnnouncementAcknowledgement(Base):
+    __tablename__ = "announcement_acknowledgements"
+
+    id = Column(Integer, primary_key=True, index=True)
+    announcement_id = Column(Integer, ForeignKey("course_announcements.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    acknowledged_at = Column(DateTime, default=func.now(), nullable=False)
+
+    announcement = relationship("CourseAnnouncement", back_populates="acknowledgements")
+    student = relationship("Student")
 
 
 class Enrollment(Base):
