@@ -5,7 +5,7 @@ export interface User {
   email: string;
   username: string;
   full_name: string;
-  role: 'admin' | 'student' | 'lecturer' | 'alumni' | 'librarian';
+  role: 'admin' | 'student' | 'lecturer' | 'alumni' | 'librarian' | 'accountant';
   avatar_url?: string;
   phone?: string;
   is_active: boolean;
@@ -807,6 +807,83 @@ export interface WellbeingResourceItem {
   is_featured: boolean;
   created_at: string;
 }
+
+// ── Student Billing & Fee Management ──────────────────────────
+
+export interface InvoiceItem {
+  id: number;
+  invoice_id: number;
+  component_name: string;
+  amount: number;
+}
+
+export interface InvoiceInstallment {
+  id: number;
+  invoice_id: number;
+  installment_number: number;
+  amount: number;
+  due_date: string;
+  status: 'pending' | 'paid' | 'overdue';
+  paid_at?: string | null;
+}
+
+export interface StudentInvoice {
+  id: number;
+  invoice_number: string;
+  institution_id?: number | null;
+  student_id: number;
+  student_name?: string | null;
+  student_number?: string | null;
+  fee_structure_id?: number | null;
+  academic_term: string;
+  total_amount: number;
+  discount_amount: number;
+  paid_amount: number;
+  balance_due: number;
+  currency: string;
+  issue_date: string;
+  due_date: string;
+  status: 'unpaid' | 'partially_paid' | 'paid' | 'overdue' | 'cancelled';
+  payment_plan_type: 'full' | 'installment_2' | 'installment_3';
+  notes?: string | null;
+  created_at: string;
+  items: InvoiceItem[];
+  installments: InvoiceInstallment[];
+}
+
+export interface FeeComponent {
+  id: number;
+  fee_structure_id: number;
+  name: string;
+  amount: number;
+  is_optional: boolean;
+  description?: string | null;
+}
+
+export interface FeeStructure {
+  id: number;
+  institution_id?: number | null;
+  program_id?: number | null;
+  name: string;
+  term_type: string;
+  total_amount: number;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+  components: FeeComponent[];
+}
+
+export interface BillingSummary {
+  total_invoiced: number;
+  total_collected: number;
+  total_outstanding: number;
+  total_overdue: number;
+  invoices_count: number;
+  paid_invoices_count: number;
+  overdue_invoices_count: number;
+  currency: string;
+}
+
 
 
 

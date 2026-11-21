@@ -69,6 +69,7 @@ from backend.routers.messaging import router as messaging_router
 from backend.routers.notifications import router as notifications_router
 from backend.routers.course_evaluations import router as course_evaluations_router
 from backend.routers.wellbeing import router as wellbeing_router
+from backend.routers.billing import router as billing_router
 from backend.routers.v1 import v1_router
 
 
@@ -199,6 +200,7 @@ app.include_router(messaging_router)
 app.include_router(notifications_router)
 app.include_router(course_evaluations_router)
 app.include_router(wellbeing_router)
+app.include_router(billing_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

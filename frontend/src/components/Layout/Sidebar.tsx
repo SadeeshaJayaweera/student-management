@@ -17,6 +17,7 @@ function studentNav(): NavItem[] {
     { to: '/timetable',    icon: '⏰', label: 'Timetable' },
     { to: '/evaluations',  icon: '⭐', label: 'Course Feedback' },
     { to: '/wellbeing',    icon: '💚', label: 'Student Wellbeing' },
+    { to: '/billing',      icon: '💳', label: 'Fees & Billing' },
     { to: '/calendar',     icon: '📆', label: 'Calendar & Tasks' },
     { to: '/collaboration', icon: '👥', label: 'Study Groups' },
     { to: '/messages',     icon: '💬', label: 'Messages' },
@@ -48,6 +49,7 @@ function adminNav(): NavItem[] {
     { to: '/dashboard',     icon: '🏠', label: 'Dashboard' },
     { to: '/manage-users',  icon: '👥', label: 'Users' },
     { to: '/manage-courses',icon: '📖', label: 'Courses' },
+    { to: '/billing',       icon: '💳', label: 'Fees & Billing' },
   ]
 }
 

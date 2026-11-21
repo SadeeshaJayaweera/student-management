@@ -3311,6 +3311,122 @@ class WellbeingResourceOut(BaseModel):
         from_attributes = True
 
 
+# ─── Student Billing and Fee Management Schemas ──────────────────────────────
+
+class FeeComponentCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=255)
+    amount: float = Field(..., ge=0)
+    is_optional: bool = False
+    description: Optional[str] = None
+
+class FeeComponentOut(BaseModel):
+    id: int
+    fee_structure_id: int
+    name: str
+    amount: float
+    is_optional: bool
+    description: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class FeeStructureCreate(BaseModel):
+    name: str = Field(..., min_length=3, max_length=255)
+    program_id: Optional[int] = None
+    term_type: str = "semester"  # semester, annual, modular
+    total_amount: float = Field(..., ge=0)
+    currency: str = "LKR"
+    components: Optional[List[FeeComponentCreate]] = None
+
+class FeeStructureOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    program_id: Optional[int] = None
+    name: str
+    term_type: str
+    total_amount: float
+    currency: str
+    is_active: bool
+    created_at: datetime
+    components: List[FeeComponentOut] = []
+
+    class Config:
+        from_attributes = True
+
+class InvoiceItemCreate(BaseModel):
+    component_name: str
+    amount: float
+
+class InvoiceItemOut(BaseModel):
+    id: int
+    invoice_id: int
+    component_name: str
+    amount: float
+
+    class Config:
+        from_attributes = True
+
+class InvoiceInstallmentOut(BaseModel):
+    id: int
+    invoice_id: int
+    installment_number: int
+    amount: float
+    due_date: date
+    status: str
+    paid_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class StudentInvoiceCreate(BaseModel):
+    student_id: int
+    fee_structure_id: Optional[int] = None
+    academic_term: str
+    total_amount: float = Field(..., ge=0)
+    discount_amount: float = 0.0
+    due_date: date
+    payment_plan_type: str = "full"  # full, installment_2, installment_3
+    notes: Optional[str] = None
+    items: Optional[List[InvoiceItemCreate]] = None
+
+class StudentInvoiceOut(BaseModel):
+    id: int
+    invoice_number: str
+    institution_id: Optional[int] = None
+    student_id: int
+    student_name: Optional[str] = None
+    student_number: Optional[str] = None
+    fee_structure_id: Optional[int] = None
+    academic_term: str
+    total_amount: float
+    discount_amount: float
+    paid_amount: float
+    balance_due: float
+    currency: str
+    issue_date: date
+    due_date: date
+    status: str
+    payment_plan_type: str
+    notes: Optional[str] = None
+    created_at: datetime
+    items: List[InvoiceItemOut] = []
+    installments: List[InvoiceInstallmentOut] = []
+
+    class Config:
+        from_attributes = True
+
+class BillingSummaryOut(BaseModel):
+    total_invoiced: float
+    total_collected: float
+    total_outstanding: float
+    total_overdue: float
+    invoices_count: int
+    paid_invoices_count: int
+    overdue_invoices_count: int
+    currency: str
+
+
+
 
 
 
