@@ -840,6 +840,76 @@ class CourseDocumentUpdate(BaseModel):
     lesson_id: Optional[int] = None
     is_published: Optional[bool] = None
 
+class VideoPlaybackProgressUpdate(BaseModel):
+    position_seconds: int = Field(..., ge=0)
+    watch_percentage: Optional[float] = None
+    is_completed: Optional[bool] = None
+    add_bookmark: Optional[Dict[str, Any]] = None
+    add_note: Optional[Dict[str, Any]] = None
+
+class VideoPlaybackProgressOut(BaseModel):
+    id: int
+    video_id: int
+    student_id: int
+    last_position_seconds: int
+    max_watched_seconds: int
+    watch_percentage: float
+    is_completed: bool
+    completed_at: Optional[datetime] = None
+    bookmarks: Optional[List[Dict[str, Any]]] = None
+    notes: Optional[List[Dict[str, Any]]] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class CourseVideoCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    provider: str = "self_hosted"
+    video_url: str = Field(..., min_length=5, max_length=1024)
+    duration_seconds: int = 0
+    thumbnail_url: Optional[str] = None
+    module_id: Optional[int] = None
+    lesson_id: Optional[int] = None
+    captions_track: Optional[List[Dict[str, Any]]] = None
+    chapters: Optional[List[Dict[str, Any]]] = None
+    is_published: bool = True
+
+class CourseVideoUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    provider: Optional[str] = None
+    video_url: Optional[str] = None
+    duration_seconds: Optional[int] = None
+    thumbnail_url: Optional[str] = None
+    module_id: Optional[int] = None
+    lesson_id: Optional[int] = None
+    captions_track: Optional[List[Dict[str, Any]]] = None
+    chapters: Optional[List[Dict[str, Any]]] = None
+    is_published: Optional[bool] = None
+
+class CourseVideoOut(BaseModel):
+    id: int
+    course_id: int
+    module_id: Optional[int] = None
+    lesson_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    provider: str
+    video_url: str
+    duration_seconds: int
+    thumbnail_url: Optional[str] = None
+    captions_track: Optional[List[Dict[str, Any]]] = None
+    chapters: Optional[List[Dict[str, Any]]] = None
+    is_published: bool
+    playback_progress: Optional[VideoPlaybackProgressOut] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)

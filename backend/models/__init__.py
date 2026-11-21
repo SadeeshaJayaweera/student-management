@@ -623,6 +623,7 @@ class Course(Base):
     attendances = relationship("Attendance", back_populates="course", cascade="all, delete-orphan")
     materials = relationship("CourseMaterial", back_populates="course", cascade="all, delete-orphan")
     documents = relationship("CourseDocument", back_populates="course", cascade="all, delete-orphan")
+    videos = relationship("CourseVideo", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -660,6 +661,7 @@ class CourseModule(Base):
     prerequisite = relationship("CourseModule", remote_side=[id])
     lessons = relationship("CourseLesson", back_populates="module", cascade="all, delete-orphan", order_by="CourseLesson.order_index")
     documents = relationship("CourseDocument", back_populates="module")
+    videos = relationship("CourseVideo", back_populates="module")
 
 
 class CourseLesson(Base):
@@ -682,6 +684,7 @@ class CourseLesson(Base):
     module = relationship("CourseModule", back_populates="lessons")
     content_versions = relationship("LessonContentVersion", back_populates="lesson", cascade="all, delete-orphan", order_by="desc(LessonContentVersion.version_number)")
     documents = relationship("CourseDocument", back_populates="lesson")
+    videos = relationship("CourseVideo", back_populates="lesson")
 
 
 class LessonContentVersion(Base):
@@ -727,6 +730,51 @@ class CourseDocument(Base):
     module = relationship("CourseModule", back_populates="documents")
     lesson = relationship("CourseLesson", back_populates="documents")
     uploader = relationship("User")
+
+
+class CourseVideo(Base):
+    __tablename__ = "course_videos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("course_lessons.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    provider = Column(String(50), default="self_hosted", nullable=False)  # self_hosted, youtube, vimeo, hls, custom_embed
+    video_url = Column(String(1024), nullable=False)
+    duration_seconds = Column(Integer, default=0, nullable=False)
+    thumbnail_url = Column(String(1024), nullable=True)
+    captions_track = Column(JSON, nullable=True)  # [{"label": "English", "srclang": "en", "src": "..."}]
+    chapters = Column(JSON, nullable=True)  # [{"timestamp_seconds": 0, "title": "Intro"}]
+    is_published = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="videos")
+    module = relationship("CourseModule", back_populates="videos")
+    lesson = relationship("CourseLesson", back_populates="videos")
+    playback_records = relationship("VideoPlaybackProgress", back_populates="video", cascade="all, delete-orphan")
+
+
+class VideoPlaybackProgress(Base):
+    __tablename__ = "video_playback_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    video_id = Column(Integer, ForeignKey("course_videos.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    last_position_seconds = Column(Integer, default=0, nullable=False)
+    max_watched_seconds = Column(Integer, default=0, nullable=False)
+    watch_percentage = Column(Float, default=0.0, nullable=False)
+    is_completed = Column(Boolean, default=False, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    bookmarks = Column(JSON, nullable=True)  # [{"timestamp_seconds": 45, "title": "Key point"}]
+    notes = Column(JSON, nullable=True)  # [{"timestamp_seconds": 120, "note": "Study for quiz"}]
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    video = relationship("CourseVideo", back_populates="playback_records")
+    student = relationship("Student")
 
 
 class Enrollment(Base):
