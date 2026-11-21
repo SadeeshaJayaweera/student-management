@@ -393,3 +393,53 @@ export interface EventSummary {
   date: string;
   location: string;
 }
+
+// ── Timetable ──────────────────────────────────────────────────
+
+export interface TimetableSlot {
+  id: number;
+  course_id: number | null;
+  lecturer_id: number | null;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  title: string;
+  slot_type: string;
+  room: string;
+  building: string | null;
+  recurrence_pattern: string;
+  is_active: boolean;
+  color: string;
+  notes: string | null;
+  course_code?: string | null;
+  course_title?: string | null;
+  lecturer_name?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface TimetableDay {
+  day_of_week: number;
+  day_name: string;
+  slots: TimetableSlot[];
+}
+
+export interface TimetableConflict {
+  conflict_type: string;
+  slot_id?: number | null;
+  title: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  room: string;
+  description: string;
+}
+
+export interface StudentTimetableData {
+  student_id: string;
+  student_name: string;
+  schedule: TimetableDay[];
+  total_slots: number;
+  conflicts_detected: TimetableConflict[];
+}
+

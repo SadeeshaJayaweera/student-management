@@ -2592,3 +2592,87 @@ class PersonalizedStudentDashboardOut(BaseModel):
     recommendations: List[PersonalizedRecommendation]
 
 
+# ─── Timetable Schemas ────────────────────────────────────────────────────────
+
+class TimetableSlotBase(BaseModel):
+    course_id: Optional[int] = None
+    lecturer_id: Optional[int] = None
+    day_of_week: int = Field(..., ge=0, le=6)  # 0=Monday, 6=Sunday
+    start_time: str = Field(..., pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    end_time: str = Field(..., pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    title: str
+    slot_type: str = "lecture"
+    room: str
+    building: Optional[str] = None
+    recurrence_pattern: str = "weekly"
+    is_active: bool = True
+    color: str = "#4F46E5"
+    notes: Optional[str] = None
+
+class TimetableSlotCreate(TimetableSlotBase):
+    allow_conflicts: bool = False
+
+class TimetableSlotUpdate(BaseModel):
+    course_id: Optional[int] = None
+    lecturer_id: Optional[int] = None
+    day_of_week: Optional[int] = Field(None, ge=0, le=6)
+    start_time: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    end_time: Optional[str] = Field(None, pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    title: Optional[str] = None
+    slot_type: Optional[str] = None
+    room: Optional[str] = None
+    building: Optional[str] = None
+    recurrence_pattern: Optional[str] = None
+    is_active: Optional[bool] = None
+    color: Optional[str] = None
+    notes: Optional[str] = None
+    allow_conflicts: bool = False
+
+class TimetableSlotOut(TimetableSlotBase):
+    id: int
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    lecturer_name: Optional[str] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ScheduleConflict(BaseModel):
+    conflict_type: str  # "room_double_booked", "lecturer_overlap", "student_overlap"
+    slot_id: Optional[int] = None
+    title: str
+    day_of_week: int
+    start_time: str
+    end_time: str
+    room: str
+    description: str
+
+class ConflictCheckPayload(BaseModel):
+    course_id: Optional[int] = None
+    lecturer_id: Optional[int] = None
+    room: str
+    day_of_week: int
+    start_time: str
+    end_time: str
+    exclude_slot_id: Optional[int] = None
+
+class ConflictCheckResponse(BaseModel):
+    has_conflict: bool
+    conflicts: List[ScheduleConflict]
+
+class StudentTimetableDay(BaseModel):
+    day_of_week: int
+    day_name: str
+    slots: List[TimetableSlotOut]
+
+class StudentTimetableResponse(BaseModel):
+    student_id: str
+    student_name: str
+    schedule: List[StudentTimetableDay]
+    total_slots: int
+    conflicts_detected: List[ScheduleConflict]
+
+
+
