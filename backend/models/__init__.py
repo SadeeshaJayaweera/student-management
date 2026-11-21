@@ -486,6 +486,8 @@ class Student(Base):
     assignments = relationship("AssignmentSubmission", back_populates="student", cascade="all, delete-orphan")
     borrow_records = relationship("BorrowRecord", back_populates="student", cascade="all, delete-orphan")
     club_memberships = relationship("ClubMembership", back_populates="student", cascade="all, delete-orphan")
+    lesson_progress = relationship("StudentLessonProgress", back_populates="student", cascade="all, delete-orphan")
+    module_progress = relationship("StudentModuleProgress", back_populates="student", cascade="all, delete-orphan")
 
 
 # ─── Lecturer Model ───────────────────────────────────────────────────────────
@@ -662,6 +664,7 @@ class CourseModule(Base):
     lessons = relationship("CourseLesson", back_populates="module", cascade="all, delete-orphan", order_by="CourseLesson.order_index")
     documents = relationship("CourseDocument", back_populates="module")
     videos = relationship("CourseVideo", back_populates="module")
+    progress_records = relationship("StudentModuleProgress", back_populates="module", cascade="all, delete-orphan")
 
 
 class CourseLesson(Base):
@@ -685,6 +688,7 @@ class CourseLesson(Base):
     content_versions = relationship("LessonContentVersion", back_populates="lesson", cascade="all, delete-orphan", order_by="desc(LessonContentVersion.version_number)")
     documents = relationship("CourseDocument", back_populates="lesson")
     videos = relationship("CourseVideo", back_populates="lesson")
+    progress_records = relationship("StudentLessonProgress", back_populates="lesson", cascade="all, delete-orphan")
 
 
 class LessonContentVersion(Base):
@@ -775,6 +779,40 @@ class VideoPlaybackProgress(Base):
 
     video = relationship("CourseVideo", back_populates="playback_records")
     student = relationship("Student")
+
+
+class StudentLessonProgress(Base):
+    __tablename__ = "student_lesson_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    lesson_id = Column(Integer, ForeignKey("course_lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String(30), default="in_progress", nullable=False) # in_progress, completed
+    time_spent_seconds = Column(Integer, default=0, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student", back_populates="lesson_progress")
+    lesson = relationship("CourseLesson", back_populates="progress_records")
+
+
+class StudentModuleProgress(Base):
+    __tablename__ = "student_module_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="CASCADE"), nullable=False, index=True)
+    status = Column(String(30), default="in_progress", nullable=False) # in_progress, completed
+    completed_items_count = Column(Integer, default=0, nullable=False)
+    total_items_count = Column(Integer, default=0, nullable=False)
+    progress_percentage = Column(Float, default=0.0, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student", back_populates="module_progress")
+    module = relationship("CourseModule", back_populates="progress_records")
 
 
 class Enrollment(Base):
