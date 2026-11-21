@@ -100,6 +100,69 @@ class Institution(Base):
     users = relationship("User", back_populates="institution")
     students = relationship("Student", back_populates="institution")
     courses = relationship("Course", back_populates="institution")
+    campuses = relationship("Campus", back_populates="institution", cascade="all, delete-orphan")
+    faculties = relationship("Faculty", back_populates="institution", cascade="all, delete-orphan")
+    departments = relationship("Department", back_populates="institution", cascade="all, delete-orphan")
+
+
+class Campus(Base):
+    __tablename__ = "campuses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    address = Column(String(255), nullable=True)
+    city = Column(String(100), nullable=True)
+    state = Column(String(100), nullable=True)
+    country = Column(String(100), default="Sri Lanka", nullable=False)
+    contact_email = Column(String(255), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="campuses")
+    faculties = relationship("Faculty", back_populates="campus")
+
+
+class Faculty(Base):
+    __tablename__ = "faculties"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    campus_id = Column(Integer, ForeignKey("campuses.id", ondelete="SET NULL"), nullable=True, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    dean_name = Column(String(255), nullable=True)
+    contact_email = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="faculties")
+    campus = relationship("Campus", back_populates="faculties")
+    departments = relationship("Department", back_populates="faculty", cascade="all, delete-orphan")
+
+
+class Department(Base):
+    __tablename__ = "departments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(Integer, ForeignKey("faculties.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    head_of_department = Column(String(255), nullable=True)
+    contact_email = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="departments")
+    faculty = relationship("Faculty", back_populates="departments")
 
 
 # ─── Core User Model ──────────────────────────────────────────────────────────

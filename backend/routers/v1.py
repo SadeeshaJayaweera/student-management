@@ -13,6 +13,7 @@ from backend.routers.rbac import router as rbac_router
 from backend.routers.tenants import router as tenants_router
 from backend.routers.accounts import router as accounts_router
 from backend.routers.audit import router as audit_router
+from backend.routers.institutions import router as institutions_router
 from backend.routers.portals import (
     alumni_router, library_router, sports_router,
     news_router, admin_router
@@ -24,7 +25,7 @@ v1_router = APIRouter(prefix="/api/v1")
 for domain_router in [
     auth_router, students_router, lecturers_router, alumni_router,
     library_router, sports_router, news_router, admin_router, ai_router,
-    rbac_router, tenants_router, accounts_router, audit_router
+    rbac_router, tenants_router, accounts_router, audit_router, institutions_router
 ]:
     for route in domain_router.routes:
         if isinstance(route, APIRoute):

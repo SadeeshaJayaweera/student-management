@@ -119,6 +119,117 @@ class InstitutionUpdate(BaseModel):
     is_active: Optional[bool] = None
     settings: Optional[Dict[str, Any]] = None
 
+
+# ─── Campus, Faculty, Department Schemas ──────────────────────────────────────
+
+class CampusCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: str = "Sri Lanka"
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    is_active: bool = True
+
+class CampusUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    contact_phone: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class CampusOut(BaseModel):
+    id: int
+    institution_id: int
+    code: str
+    name: str
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    country: str
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class FacultyCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    campus_id: Optional[int] = None
+    description: Optional[str] = None
+    dean_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    is_active: bool = True
+
+class FacultyUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    campus_id: Optional[int] = None
+    description: Optional[str] = None
+    dean_name: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+
+class FacultyOut(BaseModel):
+    id: int
+    institution_id: int
+    campus_id: Optional[int] = None
+    code: str
+    name: str
+    description: Optional[str] = None
+    dean_name: Optional[str] = None
+    contact_email: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class DepartmentCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    head_of_department: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    is_active: bool = True
+
+class DepartmentUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    head_of_department: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    is_active: Optional[bool] = None
+
+class DepartmentOut(BaseModel):
+    id: int
+    institution_id: int
+    faculty_id: int
+    code: str
+    name: str
+    description: Optional[str] = None
+    head_of_department: Optional[str] = None
+    contact_email: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 class UserSessionOut(BaseModel):
     id: int
     ip_address: Optional[str] = None
