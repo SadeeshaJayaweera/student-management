@@ -60,6 +60,7 @@ from backend.routers.proctoring import router as proctoring_router
 from backend.routers.integrity import router as integrity_router
 from backend.routers.grading import router as grading_router
 from backend.routers.gradebook import router as gradebook_router
+from backend.routers.student_dashboard import router as student_dashboard_router
 from backend.routers.v1 import v1_router
 
 
@@ -181,6 +182,7 @@ app.include_router(proctoring_router)
 app.include_router(integrity_router)
 app.include_router(grading_router)
 app.include_router(gradebook_router)
+app.include_router(student_dashboard_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
