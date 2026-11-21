@@ -1594,16 +1594,84 @@ class GradeOut(BaseModel):
 
 class AssignmentCreate(BaseModel):
     course_id: int
+    module_id: Optional[int] = None
+    title: str = Field(..., min_length=2, max_length=300)
+    description: Optional[str] = None
+    due_date: datetime
+    available_from: Optional[datetime] = None
+    cutoff_date: Optional[datetime] = None
+    max_marks: float = Field(100.0, gt=0)
+    weightage_percentage: float = Field(10.0, ge=0, le=100)
+    assignment_type: str = "assignment"  # assignment, quiz, project, lab, essay
+    grading_type: str = "points"  # points, percentage, letter_grade, rubric
+    status: str = "published"  # draft, published, open, closed, grading, graded, archived
+    allow_late_submissions: bool = True
+    late_penalty_percentage_per_day: float = Field(0.0, ge=0, le=100)
+    submission_types: Optional[List[str]] = ["file", "text"]
+    allowed_file_extensions: Optional[List[str]] = [".pdf", ".zip", ".docx"]
+    max_file_size_mb: int = Field(50, gt=0, le=500)
+    max_attempts: int = Field(1, ge=-1)
+    anonymous_grading: bool = False
+    peer_review_enabled: bool = False
+    group_assignment: bool = False
+    file_url: Optional[str] = None
+
+class AssignmentUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    module_id: Optional[int] = None
+    due_date: Optional[datetime] = None
+    available_from: Optional[datetime] = None
+    cutoff_date: Optional[datetime] = None
+    max_marks: Optional[float] = None
+    weightage_percentage: Optional[float] = None
+    assignment_type: Optional[str] = None
+    grading_type: Optional[str] = None
+    status: Optional[str] = None
+    allow_late_submissions: Optional[bool] = None
+    late_penalty_percentage_per_day: Optional[float] = None
+    submission_types: Optional[List[str]] = None
+    allowed_file_extensions: Optional[List[str]] = None
+    max_file_size_mb: Optional[int] = None
+    max_attempts: Optional[int] = None
+    anonymous_grading: Optional[bool] = None
+    peer_review_enabled: Optional[bool] = None
+    group_assignment: Optional[bool] = None
+    file_url: Optional[str] = None
+
+class AssignmentOut(BaseModel):
+    id: int
+    course_id: int
+    creator_id: Optional[int] = None
+    module_id: Optional[int] = None
     title: str
     description: Optional[str] = None
     due_date: datetime
-    max_marks: float = 100.0
-    assignment_type: str = "assignment"
-
-class AssignmentOut(AssignmentCreate):
-    id: int
+    available_from: Optional[datetime] = None
+    cutoff_date: Optional[datetime] = None
+    max_marks: float
+    weightage_percentage: float
+    assignment_type: str
+    grading_type: str
+    status: str
+    allow_late_submissions: bool
+    late_penalty_percentage_per_day: float
+    submission_types: Optional[List[str]] = None
+    allowed_file_extensions: Optional[List[str]] = None
+    max_file_size_mb: int
+    max_attempts: int
+    anonymous_grading: bool
+    peer_review_enabled: bool
+    group_assignment: bool
     file_url: Optional[str] = None
+    published_at: Optional[datetime] = None
+    submissions_count: int = 0
+    is_available: bool = True
+    is_past_due: bool = False
+    is_past_cutoff: bool = False
     created_at: datetime
+    updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 

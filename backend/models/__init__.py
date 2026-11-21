@@ -1248,16 +1248,36 @@ class Assignment(Base):
     __tablename__ = "assignments"
 
     id = Column(Integer, primary_key=True, index=True)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    creator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String(300), nullable=False)
     description = Column(Text, nullable=True)
     due_date = Column(DateTime, nullable=False)
-    max_marks = Column(Float, default=100.0)
-    assignment_type = Column(String(50), default="assignment")  # assignment, quiz, project
+    available_from = Column(DateTime, nullable=True)
+    cutoff_date = Column(DateTime, nullable=True)
+    max_marks = Column(Float, default=100.0, nullable=False)
+    weightage_percentage = Column(Float, default=10.0, nullable=False)
+    assignment_type = Column(String(50), default="assignment", nullable=False)  # assignment, quiz, project, lab, essay
+    grading_type = Column(String(30), default="points", nullable=False)  # points, percentage, letter_grade, rubric
+    status = Column(String(30), default="published", nullable=False)  # draft, published, open, closed, grading, graded, archived
+    allow_late_submissions = Column(Boolean, default=True, nullable=False)
+    late_penalty_percentage_per_day = Column(Float, default=0.0, nullable=False)
+    submission_types = Column(JSON, nullable=True)  # ["file", "text", "url"]
+    allowed_file_extensions = Column(JSON, nullable=True)  # [".pdf", ".zip", ".docx"]
+    max_file_size_mb = Column(Integer, default=50, nullable=False)
+    max_attempts = Column(Integer, default=1, nullable=False)
+    anonymous_grading = Column(Boolean, default=False, nullable=False)
+    peer_review_enabled = Column(Boolean, default=False, nullable=False)
+    group_assignment = Column(Boolean, default=False, nullable=False)
     file_url = Column(String(500), nullable=True)
-    created_at = Column(DateTime, default=func.now())
+    published_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     course = relationship("Course", back_populates="assignments")
+    creator = relationship("User", foreign_keys=[creator_id])
+    module = relationship("CourseModule")
     submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
 
 
