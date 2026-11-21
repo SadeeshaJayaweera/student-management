@@ -224,6 +224,24 @@ dist_path = Path(__file__).parent / "static_dist"
 if (dist_path / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(dist_path / "assets")), name="assets")
 
+@app.get("/manifest.json", include_in_schema=False)
+async def get_manifest():
+    manifest_file = dist_path / "manifest.json"
+    if not manifest_file.exists():
+        manifest_file = Path(__file__).parent.parent / "frontend" / "public" / "manifest.json"
+    return FileResponse(manifest_file, media_type="application/manifest+json")
+
+@app.get("/sw.js", include_in_schema=False)
+async def get_service_worker():
+    sw_file = dist_path / "sw.js"
+    if not sw_file.exists():
+        sw_file = Path(__file__).parent.parent / "frontend" / "public" / "sw.js"
+    return FileResponse(
+        sw_file,
+        media_type="application/javascript",
+        headers={"Service-Worker-Allowed": "/"},
+    )
+
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_react_app(full_path: str):
     """Fallback handler to serve built React SPA for any non-API routes"""

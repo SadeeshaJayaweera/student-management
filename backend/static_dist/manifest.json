@@ -1,0 +1,20 @@
+{
+  "name": "NSBM EduSphere LMS",
+  "short_name": "EduSphere",
+  "description": "NSBM EduSphere — Enterprise Learning Management System",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050510",
+  "theme_color": "#050510",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
