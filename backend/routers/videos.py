@@ -29,8 +29,9 @@ def check_course_admin_or_faculty_access(current_user: User, course: Optional[Co
     role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
     if role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}:
         return
-    if course and hasattr(current_user, "lecturer_profile") and current_user.lecturer_profile:
-        if course.lecturer_id == current_user.lecturer_profile.id:
+    if course and role_val == UserRole.LECTURER.value:
+        lec = getattr(current_user, "lecturer", None) or getattr(current_user, "lecturer_profile", None)
+        if lec and course.lecturer_id == lec.id:
             return
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,

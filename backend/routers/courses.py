@@ -12,7 +12,7 @@ from sqlalchemy.orm import selectinload
 from backend.database import get_db
 from backend.models import (
     Course, CoursePrerequisite, CourseModule, CourseLesson, LessonContentVersion, CourseAnnouncement, Institution, Program, Lecturer,
-    User, UserRole, Enrollment, Assignment, Student
+    User, UserRole, Enrollment, Assignment, Student, StudentModuleProgress
 )
 from backend.schemas import (
     CourseCreate, CourseUpdate, CourseOut,
@@ -30,13 +30,14 @@ router = APIRouter(tags=["Course & Module Management"])
 
 
 def check_course_admin_or_faculty_access(current_user: User, course: Optional[Course] = None):
-    """Allows Admins or assigned Lecturers to edit course content"""
+    """Allows Admins, Deans or assigned Lecturers to edit course content"""
     role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
-    if role_val == UserRole.ADMIN.value:
+    if role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}:
         return
     # If course provided, check if current user is the assigned lecturer
-    if course and hasattr(current_user, "lecturer_profile") and current_user.lecturer_profile:
-        if course.lecturer_id == current_user.lecturer_profile.id:
+    if course and role_val == UserRole.LECTURER.value:
+        lec = getattr(current_user, "lecturer", None) or getattr(current_user, "lecturer_profile", None)
+        if lec and course.lecturer_id == lec.id:
             return
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -328,11 +329,26 @@ async def list_course_modules(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
     role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
-    is_admin = role_val == UserRole.ADMIN.value
-    is_instructor = bool(
-        course.lecturer_id and hasattr(current_user, "lecturer_profile") and
-        current_user.lecturer_profile and current_user.lecturer_profile.id == course.lecturer_id
-    )
+    is_admin = role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}
+    lec = getattr(current_user, "lecturer", None) or getattr(current_user, "lecturer_profile", None)
+    is_instructor = bool(course.lecturer_id and lec and lec.id == course.lecturer_id)
+
+    completed_mod_ids = set()
+    if role_val == UserRole.STUDENT.value:
+        stu = getattr(current_user, "student", None)
+        if not stu:
+            s_res = await db.execute(select(Student.id).where(Student.user_id == current_user.id))
+            stu_id = s_res.scalar_one_or_none()
+        else:
+            stu_id = stu.id
+        if stu_id:
+            smp_res = await db.execute(
+                select(StudentModuleProgress.module_id).where(
+                    StudentModuleProgress.student_id == stu_id,
+                    StudentModuleProgress.status == "completed"
+                )
+            )
+            completed_mod_ids = set(smp_res.scalars().all())
 
     q = (
         select(CourseModule)
@@ -359,8 +375,9 @@ async def list_course_modules(
                 is_locked = True
                 lock_reason = f"Unlocks on {mod.unlock_at.strftime('%Y-%m-%d %H:%M')}"
             elif mod.prerequisite_module_id and mod.prerequisite:
-                is_locked = True
-                lock_reason = f"Requires completion of prerequisite module: {mod.prerequisite.title}"
+                if mod.prerequisite_module_id not in completed_mod_ids:
+                    is_locked = True
+                    lock_reason = f"Requires completion of prerequisite module: {mod.prerequisite.title}"
 
         # Lessons filtering
         lessons_data = []
