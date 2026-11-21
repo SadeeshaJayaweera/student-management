@@ -60,7 +60,7 @@ async def verify_course_assignment_access(
     if role_val == UserRole.STUDENT.value:
         for enr in course.enrollments:
             if enr.student and enr.student.user_id == current_user.id:
-                if enr.status in {"active", "completed"}:
+                if enr.status in {"enrolled", "active", "completed"}:
                     is_enrolled_student = True
                 break
 

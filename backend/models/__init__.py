@@ -633,6 +633,8 @@ class Course(Base):
     question_categories = relationship("QuestionCategory", back_populates="course", cascade="all, delete-orphan", order_by="QuestionCategory.display_order")
     question_bank_items = relationship("QuestionBankItem", back_populates="course", cascade="all, delete-orphan")
     quizzes = relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
+    gradebook_categories = relationship("GradebookCategory", back_populates="course", cascade="all, delete-orphan", order_by="GradebookCategory.id")
+    grade_scales = relationship("GradeScale", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -1277,6 +1279,7 @@ class Assignment(Base):
     file_url = Column(String(500), nullable=True)
     published_at = Column(DateTime, nullable=True)
     rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True, index=True)
+    category_id = Column(Integer, ForeignKey("gradebook_categories.id", ondelete="SET NULL"), nullable=True, index=True)
     grades_released = Column(Boolean, default=True, nullable=False)
     grades_released_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
@@ -1286,6 +1289,7 @@ class Assignment(Base):
     creator = relationship("User", foreign_keys=[creator_id])
     module = relationship("CourseModule")
     rubric = relationship("Rubric", foreign_keys=[rubric_id])
+    category = relationship("GradebookCategory", foreign_keys=[category_id])
     submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
     rubric_evaluations = relationship("RubricEvaluation", back_populates="assignment", cascade="all, delete-orphan")
     appeals = relationship("GradeAppeal", back_populates="assignment", cascade="all, delete-orphan")
@@ -1546,6 +1550,7 @@ class Quiz(Base):
     show_correct_answers = Column(Boolean, default=True, nullable=False)
     allow_backtracking = Column(Boolean, default=True, nullable=False)
     total_points = Column(Float, default=0.0, nullable=False)
+    category_id = Column(Integer, ForeignKey("gradebook_categories.id", ondelete="SET NULL"), nullable=True, index=True)
     status = Column(String(30), default="published", nullable=False)  # draft, published, closed
     available_from = Column(DateTime, nullable=True)
     due_date = Column(DateTime, nullable=False)
@@ -1555,6 +1560,7 @@ class Quiz(Base):
     course = relationship("Course", back_populates="quizzes")
     module = relationship("CourseModule")
     creator = relationship("User", foreign_keys=[creator_id])
+    category = relationship("GradebookCategory", foreign_keys=[category_id])
     questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan", order_by="QuizQuestion.order_index")
     attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
     proctoring_sessions = relationship("ExamProctoringSession", back_populates="quiz", cascade="all, delete-orphan")
@@ -1860,3 +1866,53 @@ class Message(Base):
     sent_at = Column(DateTime, default=func.now())
 
     sender = relationship("User", foreign_keys=[sender_id], back_populates="messages")
+
+
+# ─── Gradebook and Calculation Engine Models ──────────────────────────────────
+
+class GradebookCategory(Base):
+    __tablename__ = "gradebook_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)  # e.g., Assignments, Quizzes, Midterm, Final
+    weight_percentage = Column(Float, default=25.0, nullable=False)
+    drop_lowest_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="gradebook_categories")
+
+
+class GradeScale(Base):
+    __tablename__ = "grade_scales"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(100), default="Standard Letter Scale", nullable=False)
+    is_default = Column(Boolean, default=False, nullable=False)
+    scale_brackets = Column(JSON, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="grade_scales")
+
+
+class GradebookOverride(Base):
+    __tablename__ = "gradebook_overrides"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    overridden_percentage = Column(Float, nullable=True)
+    overridden_letter_grade = Column(String(10), nullable=True)
+    overridden_gpa_points = Column(Float, nullable=True)
+    override_reason = Column(Text, nullable=False)
+    overridden_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course")
+    student = relationship("Student")
+    overridden_by = relationship("User", foreign_keys=[overridden_by_id])
+
