@@ -576,6 +576,53 @@ class StudentOut(BaseModel):
 
 # ─── Lecturer Schemas ─────────────────────────────────────────────────────────
 
+class LecturerCreate(BaseModel):
+    user_id: int
+    lecturer_id: str
+    faculty: str = "Computing"
+    department: str = "Software Engineering"
+    specialization: Optional[str] = None
+    qualification: Optional[str] = None
+    designation: str = "Lecturer"
+    employment_status: str = "full_time"
+    campus_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    office_location: Optional[str] = None
+    office_hours: Optional[Dict[str, Any]] = None
+    research_interests: Optional[str] = None
+    bio: Optional[str] = None
+    max_teaching_load_hours: int = 15
+    joined_date: Optional[date] = None
+
+class LecturerUpdate(BaseModel):
+    faculty: Optional[str] = None
+    department: Optional[str] = None
+    specialization: Optional[str] = None
+    qualification: Optional[str] = None
+    office_location: Optional[str] = None
+    office_hours: Optional[Dict[str, Any]] = None
+    research_interests: Optional[str] = None
+    bio: Optional[str] = None
+    publications: Optional[int] = None
+    campus_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    employment_status: Optional[str] = None
+    designation: Optional[str] = None
+    max_teaching_load_hours: Optional[int] = None
+
+class LecturerWorkloadSummary(BaseModel):
+    lecturer_id: str
+    full_name: str
+    designation: str
+    employment_status: str
+    max_teaching_load_hours: int
+    current_teaching_load_hours: int
+    assigned_courses_count: int
+    total_enrolled_students: int
+    courses: List[Dict[str, Any]]
+
 class LecturerOut(BaseModel):
     id: int
     lecturer_id: str
@@ -584,8 +631,19 @@ class LecturerOut(BaseModel):
     specialization: Optional[str] = None
     qualification: Optional[str] = None
     office_location: Optional[str] = None
+    office_hours: Optional[Dict[str, Any]] = None
     bio: Optional[str] = None
     research_interests: Optional[str] = None
+    publications: int = 0
+    institution_id: Optional[int] = None
+    campus_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    employment_status: str = "full_time"
+    designation: str = "Lecturer"
+    max_teaching_load_hours: int = 15
+    current_teaching_load_hours: int = 0
+    joined_date: Optional[date] = None
     user: UserOut
     class Config:
         from_attributes = True
