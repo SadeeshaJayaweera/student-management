@@ -1317,6 +1317,7 @@ class AssignmentSubmission(Base):
     grader = relationship("User", foreign_keys=[graded_by_id])
     rubric_evaluation = relationship("RubricEvaluation", back_populates="submission", uselist=False, cascade="all, delete-orphan")
     versions = relationship("AssignmentSubmissionVersion", back_populates="submission", cascade="all, delete-orphan", order_by="AssignmentSubmissionVersion.version_number")
+    plagiarism_report = relationship("PlagiarismScanReport", back_populates="submission", uselist=False, cascade="all, delete-orphan")
 
 
 class AssignmentSubmissionVersion(Base):
@@ -1334,6 +1335,32 @@ class AssignmentSubmissionVersion(Base):
     submitted_at = Column(DateTime, default=func.now(), nullable=False)
 
     submission = relationship("AssignmentSubmission", back_populates="versions")
+
+
+# ─── Academic Integrity and Plagiarism Check Models ───────────────────────────
+
+class PlagiarismScanReport(Base):
+    __tablename__ = "plagiarism_scan_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    assignment_id = Column(Integer, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    similarity_score = Column(Float, nullable=False, default=0.0)  # 0.0 to 100.0
+    status = Column(String(30), default="completed", nullable=False)  # pending, scanning, completed, failed
+    integrity_flag = Column(String(30), default="clean", nullable=False)  # clean, suspicious, flagged, resolved
+    matched_sources = Column(JSON, nullable=True)  # [{"source_submission_id": 1, "matched_percentage": 50.0, "matched_words": 120}]
+    scanned_content_hash = Column(String(64), nullable=True)
+    instructor_notes = Column(Text, nullable=True)
+    reviewed_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    submission = relationship("AssignmentSubmission", back_populates="plagiarism_report")
+    assignment = relationship("Assignment")
+    student = relationship("Student")
+    reviewer = relationship("User", foreign_keys=[reviewed_by_id])
 
 
 # ─── Rubric-Based Assessment Models ──────────────────────────────────────────

@@ -2094,6 +2094,38 @@ class ProctoringHeartbeatOut(BaseModel):
     fullscreen_exit_count: int
     server_time: datetime
 
+# ─── Academic Integrity and Plagiarism Schemas ────────────────────────────────
+
+class PlagiarismReportReview(BaseModel):
+    integrity_flag: str  # clean, suspicious, flagged, resolved, false_positive
+    instructor_notes: Optional[str] = None
+
+class PlagiarismReportOut(BaseModel):
+    id: int
+    submission_id: int
+    assignment_id: int
+    student_id: int
+    similarity_score: float
+    status: str
+    integrity_flag: str
+    matched_sources: Optional[List[dict]] = None
+    scanned_content_hash: Optional[str] = None
+    instructor_notes: Optional[str] = None
+    reviewed_by_id: Optional[int] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class PlagiarismBulkScanResult(BaseModel):
+    assignment_id: int
+    submissions_scanned: int
+    flagged_count: int
+    suspicious_count: int
+    clean_count: int
+
 class GradeUpdate(BaseModel):
     assignment_id: int
     submission_id: int
