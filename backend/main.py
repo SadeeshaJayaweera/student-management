@@ -57,6 +57,7 @@ from backend.routers.submissions import router as submissions_router
 from backend.routers.questions import router as questions_router
 from backend.routers.quizzes import router as quizzes_router
 from backend.routers.proctoring import router as proctoring_router
+from backend.routers.integrity import router as integrity_router
 from backend.routers.v1 import v1_router
 
 
@@ -175,6 +176,7 @@ app.include_router(submissions_router)
 app.include_router(questions_router)
 app.include_router(quizzes_router)
 app.include_router(proctoring_router)
+app.include_router(integrity_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
