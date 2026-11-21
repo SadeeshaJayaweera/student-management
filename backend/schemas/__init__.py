@@ -2675,4 +2675,111 @@ class StudentTimetableResponse(BaseModel):
     conflicts_detected: List[ScheduleConflict]
 
 
+# ─── Attendance & Participation Schemas ────────────────────────────────────────
+
+class AttendanceSessionCreate(BaseModel):
+    course_id: int
+    timetable_slot_id: Optional[int] = None
+    session_title: str
+    session_date: date
+    start_time: str = Field(..., pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    end_time: str = Field(..., pattern=r"^([01]\d|2[0-3]):([0-5]\d)$")
+    allow_self_checkin: bool = True
+    code_valid_minutes: int = 120
+
+class AttendanceSessionOut(BaseModel):
+    id: int
+    course_id: int
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    session_title: str
+    session_date: date
+    start_time: str
+    end_time: str
+    checkin_code: Optional[str] = None
+    code_expires_at: Optional[datetime] = None
+    status: str
+    allow_self_checkin: bool
+    attendances_count: int = 0
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AttendanceCheckinPayload(BaseModel):
+    checkin_code: str
+
+class AttendanceRosterItem(BaseModel):
+    student_id: int
+    status: str = "present"  # present, absent, late, excused
+    participation_score: float = Field(0.0, ge=0.0, le=100.0)
+    notes: Optional[str] = None
+
+class AttendanceBatchRosterPayload(BaseModel):
+    items: List[AttendanceRosterItem]
+
+class AttendanceRecordDetail(BaseModel):
+    id: int
+    student_id: int
+    student_reg_id: str
+    student_name: str
+    session_id: Optional[int] = None
+    date: date
+    status: str
+    checkin_method: str
+    checked_in_at: Optional[datetime] = None
+    participation_score: float
+    notes: Optional[str] = None
+    remarks: Optional[str] = None
+
+class AttendanceCorrectionCreate(BaseModel):
+    course_id: int
+    session_id: Optional[int] = None
+    attendance_date: date
+    requested_status: str = "excused"  # excused, present
+    reason: str
+    supporting_document_url: Optional[str] = None
+
+class AttendanceCorrectionResolve(BaseModel):
+    status: str  # approved, rejected
+    review_comment: Optional[str] = None
+
+class AttendanceCorrectionOut(BaseModel):
+    id: int
+    student_id: int
+    student_reg_id: Optional[str] = None
+    student_name: str
+    course_id: int
+    course_code: str
+    course_title: str
+    session_id: Optional[int] = None
+    attendance_date: date
+    requested_status: str
+    reason: str
+    supporting_document_url: Optional[str] = None
+    status: str
+    review_comment: Optional[str] = None
+    reviewed_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CourseAttendanceSummary(BaseModel):
+    course_id: int
+    course_code: str
+    course_title: str
+    total_sessions: int
+    attended_sessions: int
+    present_count: int
+    late_count: int
+    absent_count: int
+    excused_count: int
+    attendance_rate: float
+    policy_threshold: float = 80.0
+    status_level: str  # "good", "warning", "critical"
+    avg_participation_score: float
+
+
+
 

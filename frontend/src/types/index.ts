@@ -159,6 +159,58 @@ export interface AttendanceRecord {
   status: 'present' | 'absent' | 'late' | 'excused';
 }
 
+export interface AttendanceSession {
+  id: number;
+  course_id: number;
+  course_code?: string | null;
+  course_title?: string | null;
+  session_title: string;
+  session_date: string;
+  start_time: string;
+  end_time: string;
+  checkin_code?: string | null;
+  code_expires_at?: string | null;
+  status: string;
+  allow_self_checkin: boolean;
+  attendances_count: number;
+  created_at: string;
+}
+
+export interface AttendanceCorrectionRequest {
+  id: number;
+  student_id: number;
+  student_reg_id?: string | null;
+  student_name: string;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  session_id?: number | null;
+  attendance_date: string;
+  requested_status: string;
+  reason: string;
+  supporting_document_url?: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  review_comment?: string | null;
+  reviewed_at?: string | null;
+  created_at: string;
+}
+
+export interface CourseAttendanceSummary {
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  total_sessions: number;
+  attended_sessions: number;
+  present_count: number;
+  late_count: number;
+  absent_count: number;
+  excused_count: number;
+  attendance_rate: number;
+  policy_threshold: number;
+  status_level: 'good' | 'warning' | 'critical';
+  avg_participation_score: number;
+}
+
 export interface CourseEnrollment {
   id: number;
   course_code: string;

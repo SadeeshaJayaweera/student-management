@@ -636,6 +636,7 @@ class Course(Base):
     gradebook_categories = relationship("GradebookCategory", back_populates="course", cascade="all, delete-orphan", order_by="GradebookCategory.id")
     grade_scales = relationship("GradeScale", back_populates="course", cascade="all, delete-orphan")
     timetable_slots = relationship("TimetableSlot", back_populates="course", cascade="all, delete-orphan", order_by="TimetableSlot.day_of_week, TimetableSlot.start_time")
+    attendance_sessions = relationship("AttendanceSession", back_populates="course", cascade="all, delete-orphan", order_by="desc(AttendanceSession.session_date)")
 
 
 class CoursePrerequisite(Base):
@@ -1243,12 +1244,18 @@ class Attendance(Base):
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    session_id = Column(Integer, ForeignKey("attendance_sessions.id", ondelete="SET NULL"), nullable=True, index=True)
     date = Column(Date, nullable=False)
     status = Column(Enum(AttendanceStatus), default=AttendanceStatus.PRESENT)
+    checkin_method = Column(String(50), default="manual", nullable=False)
+    checked_in_at = Column(DateTime, nullable=True)
+    participation_score = Column(Float, default=0.0, nullable=False)
     notes = Column(String(200), nullable=True)
+    remarks = Column(Text, nullable=True)
 
     student = relationship("Student", back_populates="attendances")
     course = relationship("Course", back_populates="attendances")
+    session = relationship("AttendanceSession", back_populates="attendances")
 
 
 class Assignment(Base):
@@ -1940,4 +1947,53 @@ class TimetableSlot(Base):
 
     course = relationship("Course", back_populates="timetable_slots")
     lecturer = relationship("User", foreign_keys=[lecturer_id])
+
+
+class AttendanceSession(Base):
+    __tablename__ = "attendance_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    timetable_slot_id = Column(Integer, ForeignKey("timetable_slots.id", ondelete="SET NULL"), nullable=True, index=True)
+    session_title = Column(String(200), nullable=False)
+    session_date = Column(Date, nullable=False)
+    start_time = Column(String(10), nullable=False)
+    end_time = Column(String(10), nullable=False)
+    checkin_code = Column(String(10), nullable=True)
+    code_expires_at = Column(DateTime, nullable=True)
+    status = Column(String(30), default="open", nullable=False)  # open, closed, archived
+    allow_self_checkin = Column(Boolean, default=True, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="attendance_sessions")
+    timetable_slot = relationship("TimetableSlot")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    attendances = relationship("Attendance", back_populates="session", cascade="all, delete-orphan")
+
+
+class AttendanceCorrectionRequest(Base):
+    __tablename__ = "attendance_correction_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    session_id = Column(Integer, ForeignKey("attendance_sessions.id", ondelete="SET NULL"), nullable=True, index=True)
+    attendance_date = Column(Date, nullable=False)
+    requested_status = Column(String(30), default="excused", nullable=False)  # excused, present
+    reason = Column(Text, nullable=False)
+    supporting_document_url = Column(String(500), nullable=True)
+    status = Column(String(30), default="pending", nullable=False)  # pending, approved, rejected
+    reviewed_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    review_comment = Column(Text, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student")
+    course = relationship("Course")
+    session = relationship("AttendanceSession")
+    reviewed_by = relationship("User", foreign_keys=[reviewed_by_id])
+
 
