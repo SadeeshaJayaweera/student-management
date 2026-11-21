@@ -908,6 +908,107 @@ class StudentGroupOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Academic Advising and Student Support Schemas ────────────────────────────
+
+class AdvisorAssignmentCreate(BaseModel):
+    student_id: int
+    lecturer_id: int
+    advising_type: str = "academic"  # academic, career, pastoral, research_supervisor
+
+class AdvisorAssignmentOut(BaseModel):
+    id: int
+    institution_id: int
+    student_id: int
+    lecturer_id: int
+    assigned_date: date
+    is_active: bool
+    advising_type: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class AdvisingSessionCreate(BaseModel):
+    student_id: int
+    lecturer_id: int
+    scheduled_at: datetime
+    duration_minutes: int = 30
+    session_type: str = "one_on_one"
+    topic: str
+    student_notes: Optional[str] = None
+    confidential_notes: Optional[str] = None
+    action_items: Optional[List[Dict[str, Any]]] = None
+
+class AdvisingSessionUpdate(BaseModel):
+    status: Optional[str] = None  # scheduled, completed, cancelled, no_show
+    student_notes: Optional[str] = None
+    confidential_notes: Optional[str] = None
+    action_items: Optional[List[Dict[str, Any]]] = None
+
+class AdvisingSessionOut(BaseModel):
+    id: int
+    institution_id: int
+    student_id: int
+    lecturer_id: int
+    scheduled_at: datetime
+    duration_minutes: int
+    session_type: str
+    status: str
+    topic: str
+    student_notes: Optional[str] = None
+    confidential_notes: Optional[str] = None
+    action_items: Optional[List[Dict[str, Any]]] = None
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class StudentSupportCaseCreate(BaseModel):
+    student_id: int
+    category: str = "academic_probation"  # academic_probation, attendance_warning, financial_hardship, well_being, disciplinary
+    priority: str = "medium"  # low, medium, high, critical
+    title: str = Field(..., min_length=3, max_length=255)
+    description: str
+    assigned_staff_id: Optional[int] = None
+
+class StudentSupportCaseUpdate(BaseModel):
+    status: Optional[str] = None  # open, in_progress, escalated, resolved, closed
+    priority: Optional[str] = None
+    assigned_staff_id: Optional[int] = None
+    resolution_summary: Optional[str] = None
+
+class SupportCaseNoteCreate(BaseModel):
+    content: str = Field(..., min_length=1)
+    is_confidential: bool = False
+
+class SupportCaseNoteOut(BaseModel):
+    id: int
+    case_id: int
+    author_id: Optional[int] = None
+    is_confidential: bool
+    content: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class StudentSupportCaseOut(BaseModel):
+    id: int
+    institution_id: int
+    student_id: int
+    assigned_staff_id: Optional[int] = None
+    case_number: str
+    category: str
+    priority: str
+    status: str
+    title: str
+    description: str
+    resolution_summary: Optional[str] = None
+    created_by_id: Optional[int] = None
+    resolved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
 class GradeOut(BaseModel):
     id: int
     course_id: int

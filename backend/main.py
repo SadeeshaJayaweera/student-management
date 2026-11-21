@@ -43,6 +43,7 @@ from backend.routers.programs import router as programs_router
 from backend.routers.courses import router as courses_router
 from backend.routers.enrollments import router as enrollments_router
 from backend.routers.cohorts import router as cohorts_router
+from backend.routers.advising import router as advising_router
 from backend.routers.v1 import v1_router
 
 
@@ -147,6 +148,7 @@ app.include_router(programs_router)
 app.include_router(courses_router)
 app.include_router(enrollments_router)
 app.include_router(cohorts_router)
+app.include_router(advising_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
