@@ -52,6 +52,7 @@ from backend.routers.announcements import router as announcements_router
 from backend.routers.forums import router as forums_router
 from backend.routers.virtual_classroom import router as virtual_classroom_router
 from backend.routers.assignments import router as assignments_router
+from backend.routers.rubrics import router as rubrics_router
 from backend.routers.v1 import v1_router
 
 
@@ -165,6 +166,7 @@ app.include_router(announcements_router)
 app.include_router(forums_router)
 app.include_router(virtual_classroom_router)
 app.include_router(assignments_router)
+app.include_router(rubrics_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

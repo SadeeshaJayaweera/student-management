@@ -109,6 +109,7 @@ def serialize_assignment(assignment: Assignment, submissions_count: int = 0) -> 
         group_assignment=assignment.group_assignment,
         file_url=assignment.file_url,
         published_at=assignment.published_at,
+        rubric_id=assignment.rubric_id,
         submissions_count=submissions_count,
         is_available=is_available,
         is_past_due=is_past_due,
