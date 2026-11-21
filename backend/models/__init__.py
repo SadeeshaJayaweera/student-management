@@ -2305,6 +2305,92 @@ class WellbeingResource(Base):
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
 
+# ─── Student Billing and Fee Management Models ────────────────────────────────
+
+class FeeStructure(Base):
+    __tablename__ = "fee_structures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = Column(String(255), nullable=False)
+    term_type = Column(String(50), default="semester", nullable=False)  # semester, annual, modular
+    total_amount = Column(Float, nullable=False)
+    currency = Column(String(10), default="LKR", nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    program = relationship("Program")
+    components = relationship("FeeComponent", back_populates="fee_structure", cascade="all, delete-orphan")
+
+
+class FeeComponent(Base):
+    __tablename__ = "fee_components"
+
+    id = Column(Integer, primary_key=True, index=True)
+    fee_structure_id = Column(Integer, ForeignKey("fee_structures.id", ondelete="CASCADE"), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    amount = Column(Float, nullable=False)
+    is_optional = Column(Boolean, default=False, nullable=False)
+    description = Column(Text, nullable=True)
+
+    fee_structure = relationship("FeeStructure", back_populates="components")
+
+
+class StudentInvoice(Base):
+    __tablename__ = "student_invoices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_number = Column(String(50), unique=True, index=True, nullable=False)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    fee_structure_id = Column(Integer, ForeignKey("fee_structures.id", ondelete="SET NULL"), nullable=True, index=True)
+    academic_term = Column(String(50), nullable=False)
+    total_amount = Column(Float, nullable=False)
+    discount_amount = Column(Float, default=0.0, nullable=False)
+    paid_amount = Column(Float, default=0.0, nullable=False)
+    balance_due = Column(Float, nullable=False)
+    currency = Column(String(10), default="LKR", nullable=False)
+    issue_date = Column(Date, nullable=False)
+    due_date = Column(Date, nullable=False)
+    status = Column(String(30), default="unpaid", nullable=False)  # unpaid, partially_paid, paid, overdue, cancelled
+    payment_plan_type = Column(String(30), default="full", nullable=False)  # full, installment_2, installment_3
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student")
+    fee_structure = relationship("FeeStructure")
+    items = relationship("InvoiceItem", back_populates="invoice", cascade="all, delete-orphan")
+    installments = relationship("InvoicePaymentInstallment", back_populates="invoice", cascade="all, delete-orphan")
+
+
+class InvoiceItem(Base):
+    __tablename__ = "invoice_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("student_invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+    component_name = Column(String(255), nullable=False)
+    amount = Column(Float, nullable=False)
+
+    invoice = relationship("StudentInvoice", back_populates="items")
+
+
+class InvoicePaymentInstallment(Base):
+    __tablename__ = "invoice_payment_installments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("student_invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+    installment_number = Column(Integer, nullable=False)
+    amount = Column(Float, nullable=False)
+    due_date = Column(Date, nullable=False)
+    status = Column(String(30), default="pending", nullable=False)  # pending, paid, overdue
+    paid_at = Column(DateTime, nullable=True)
+
+    invoice = relationship("StudentInvoice", back_populates="installments")
+
+
+
 
 
 
