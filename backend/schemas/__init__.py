@@ -89,6 +89,36 @@ class UserPermissionsResponse(BaseModel):
     role: str
     permissions: List[str]
 
+
+# ─── Multi-Tenant Institution Schemas ─────────────────────────────────────────
+
+class InstitutionOut(BaseModel):
+    id: int
+    code: str
+    name: str
+    subdomain: Optional[str] = None
+    domain: Optional[str] = None
+    is_active: bool
+    settings: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class InstitutionCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    subdomain: Optional[str] = None
+    domain: Optional[str] = None
+    settings: Optional[Dict[str, Any]] = None
+
+class InstitutionUpdate(BaseModel):
+    name: Optional[str] = None
+    subdomain: Optional[str] = None
+    domain: Optional[str] = None
+    is_active: Optional[bool] = None
+    settings: Optional[Dict[str, Any]] = None
+
 class UserSessionOut(BaseModel):
     id: int
     ip_address: Optional[str] = None

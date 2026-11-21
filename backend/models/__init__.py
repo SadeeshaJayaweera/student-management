@@ -64,12 +64,33 @@ class AssignmentStatus(str, enum.Enum):
     LATE = "late"
 
 
+# ─── Multi-Tenant Institution Model ──────────────────────────────────────────
+
+class Institution(Base):
+    __tablename__ = "institutions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    code = Column(String(50), unique=True, index=True, nullable=False)
+    name = Column(String(255), nullable=False)
+    subdomain = Column(String(100), unique=True, index=True, nullable=True)
+    domain = Column(String(255), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    settings = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    users = relationship("User", back_populates="institution")
+    students = relationship("Student", back_populates="institution")
+    courses = relationship("Course", back_populates="institution")
+
+
 # ─── Core User Model ──────────────────────────────────────────────────────────
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     username = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
@@ -90,6 +111,7 @@ class User(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     # Relationships
+    institution = relationship("Institution", back_populates="users")
     student = relationship("Student", back_populates="user", uselist=False, cascade="all, delete-orphan")
     lecturer = relationship("Lecturer", back_populates="user", uselist=False, cascade="all, delete-orphan")
     alumni = relationship("Alumni", back_populates="user", uselist=False, cascade="all, delete-orphan")
@@ -193,6 +215,7 @@ class Student(Base):
     __tablename__ = "students"
 
     id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     student_id = Column(String(20), unique=True, index=True, nullable=False)
     faculty = Column(String(100), nullable=False)
@@ -210,6 +233,7 @@ class Student(Base):
     scholarship_details = Column(Text, nullable=True)
 
     # Relationships
+    institution = relationship("Institution", back_populates="students")
     user = relationship("User", back_populates="student")
     enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
     grades = relationship("Grade", back_populates="student", cascade="all, delete-orphan")
@@ -304,6 +328,7 @@ class Course(Base):
     __tablename__ = "courses"
 
     id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
     course_code = Column(String(20), unique=True, index=True, nullable=False)
     title = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
@@ -320,6 +345,7 @@ class Course(Base):
     created_at = Column(DateTime, default=func.now())
 
     # Relationships
+    institution = relationship("Institution", back_populates="courses")
     lecturer = relationship("Lecturer", back_populates="courses")
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
     grades = relationship("Grade", back_populates="course", cascade="all, delete-orphan")
