@@ -507,17 +507,42 @@ class UserLogin(BaseModel):
 class StudentCreate(BaseModel):
     user_id: int
     student_id: str
-    faculty: str
-    department: str
-    program: str
+    faculty: Optional[str] = "Computing"
+    department: Optional[str] = "Software Engineering"
+    program: Optional[str] = "BSc in Software Engineering"
     year_of_study: int = 1
     semester: int = 1
+    campus_id: Optional[int] = None
+    program_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    enrollment_date: Optional[date] = None
+    expected_graduation: Optional[date] = None
+    address: Optional[str] = None
+    emergency_contact: Optional[str] = None
+    national_id: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
+    academic_standing: str = "good_standing"
+    enrollment_status: str = "enrolled"
+    scholarship: bool = False
 
 class StudentUpdate(BaseModel):
     address: Optional[str] = None
     emergency_contact: Optional[str] = None
     year_of_study: Optional[int] = None
     semester: Optional[int] = None
+    campus_id: Optional[int] = None
+    program_id: Optional[int] = None
+    academic_standing: Optional[str] = None
+    enrollment_status: Optional[str] = None
+    expected_graduation: Optional[date] = None
+    scholarship: Optional[bool] = None
+
+class StudentStatusUpdate(BaseModel):
+    enrollment_status: Optional[str] = None  # enrolled, on_leave, suspended, graduated, withdrawn, deferred
+    academic_standing: Optional[str] = None  # good_standing, academic_probation, deans_list, suspended, graduated
+    remarks: Optional[str] = None
 
 class StudentOut(BaseModel):
     id: int
@@ -531,6 +556,19 @@ class StudentOut(BaseModel):
     credits_earned: int
     address: Optional[str] = None
     emergency_contact: Optional[str] = None
+    institution_id: Optional[int] = None
+    campus_id: Optional[int] = None
+    program_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    enrollment_date: Optional[date] = None
+    expected_graduation: Optional[date] = None
+    academic_standing: Optional[str] = "good_standing"
+    enrollment_status: Optional[str] = "enrolled"
+    national_id: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
+    scholarship: Optional[bool] = False
     user: UserOut
     class Config:
         from_attributes = True
