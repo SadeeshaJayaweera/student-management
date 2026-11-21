@@ -910,6 +910,54 @@ class CourseVideoOut(BaseModel):
     class Config:
         from_attributes = True
 
+class LessonProgressUpdate(BaseModel):
+    status: str = "completed"
+    time_spent_seconds: int = 0
+
+class LessonProgressOut(BaseModel):
+    id: int
+    student_id: int
+    lesson_id: int
+    status: str
+    time_spent_seconds: int
+    completed_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ModuleProgressSummary(BaseModel):
+    module_id: int
+    module_title: str
+    status: str
+    completed_items_count: int
+    total_items_count: int
+    progress_percentage: float
+    is_locked: bool
+    completed_at: Optional[datetime] = None
+
+class CourseProgressReport(BaseModel):
+    course_id: int
+    student_id: int
+    student_name: str
+    overall_progress_percentage: float
+    completed_lessons_count: int
+    total_lessons_count: int
+    total_time_spent_seconds: int
+    is_course_completed: bool
+    modules: List[ModuleProgressSummary]
+
+class StudentProgressRosterItem(BaseModel):
+    student_id: int
+    student_name: str
+    student_code: str
+    enrollment_status: str
+    progress_percentage: float
+    completed_lessons_count: int
+    total_lessons_count: int
+    is_completed: bool
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)
