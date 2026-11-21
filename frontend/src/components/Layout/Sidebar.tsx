@@ -17,6 +17,7 @@ function studentNav(): NavItem[] {
     { to: '/timetable',    icon: '⏰', label: 'Timetable' },
     { to: '/calendar',     icon: '📆', label: 'Calendar & Tasks' },
     { to: '/collaboration', icon: '👥', label: 'Study Groups' },
+    { to: '/messages',     icon: '💬', label: 'Messages' },
   ]
 }
 
@@ -27,6 +28,7 @@ function lecturerNav(): NavItem[] {
     { to: '/grading',   icon: '✅', label: 'Grading' },
     { to: '/analytics', icon: '📈', label: 'Analytics' },
     { to: '/calendar',  icon: '📆', label: 'Calendar & Tasks' },
+    { to: '/messages',  icon: '💬', label: 'Messages' },
   ]
 }
 

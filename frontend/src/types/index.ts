@@ -602,5 +602,62 @@ export interface CollaborationWorkspaceDetail extends CollaborationWorkspace {
   recent_messages: CollaborationMessage[];
 }
 
+// ── Messaging & Direct Communication ──────────────────────────
+
+export interface ConversationParticipant {
+  id: number;
+  user_id: number;
+  name: string;
+  role: string;
+  email: string;
+  last_read_at?: string | null;
+}
+
+export interface DirectMessage {
+  id: number;
+  conversation_id?: number | null;
+  sender_id: number;
+  sender_name: string;
+  sender_role: string;
+  receiver_id?: number | null;
+  content: string;
+  attachment_url?: string | null;
+  attachment_name?: string | null;
+  is_read: boolean;
+  read_at?: string | null;
+  sent_at: string;
+}
+
+export interface ConversationItem {
+  id: number;
+  subject?: string | null;
+  thread_type: string;
+  course_id?: number | null;
+  course_code?: string | null;
+  participants: ConversationParticipant[];
+  last_message_at: string;
+  latest_message_snippet?: string | null;
+  unread_count: number;
+}
+
+export interface ConversationDetail {
+  id: number;
+  subject?: string | null;
+  thread_type: string;
+  course_id?: number | null;
+  course_code?: string | null;
+  participants: ConversationParticipant[];
+  messages: DirectMessage[];
+}
+
+export interface MessagingContact {
+  user_id: number;
+  name: string;
+  role: string;
+  email: string;
+  context?: string | null;
+}
+
+
 
 

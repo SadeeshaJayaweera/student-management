@@ -1863,17 +1863,60 @@ class Notification(Base):
     user = relationship("User", back_populates="notifications")
 
 
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String(255), nullable=True)
+    thread_type = Column(String(50), default="direct", nullable=False)  # direct, course_inquiry, advising, group
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    last_message_at = Column(DateTime, default=func.now(), nullable=False)
+    status = Column(String(30), default="active", nullable=False)  # active, archived
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    participants = relationship("ConversationParticipant", back_populates="conversation", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan", order_by="Message.sent_at")
+
+
+class ConversationParticipant(Base):
+    __tablename__ = "conversation_participants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    last_read_at = Column(DateTime, nullable=True)
+    is_muted = Column(Boolean, default=False, nullable=False)
+    joined_at = Column(DateTime, default=func.now(), nullable=False)
+
+    conversation = relationship("Conversation", back_populates="participants")
+    user = relationship("User")
+
+
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True, index=True)
     sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    receiver_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    subject = Column(String(255), nullable=True)
     content = Column(Text, nullable=False)
-    is_read = Column(Boolean, default=False)
-    sent_at = Column(DateTime, default=func.now())
+    attachment_url = Column(String(500), nullable=True)
+    attachment_name = Column(String(200), nullable=True)
+    is_read = Column(Boolean, default=False, nullable=False)
+    read_at = Column(DateTime, nullable=True)
+    is_moderated = Column(Boolean, default=False, nullable=False)
+    moderation_flag = Column(String(50), nullable=True)
+    sent_at = Column(DateTime, default=func.now(), nullable=False)
 
     sender = relationship("User", foreign_keys=[sender_id], back_populates="messages")
+    receiver = relationship("User", foreign_keys=[receiver_id])
+    conversation = relationship("Conversation", back_populates="messages")
+
 
 
 # ─── Gradebook and Calculation Engine Models ──────────────────────────────────

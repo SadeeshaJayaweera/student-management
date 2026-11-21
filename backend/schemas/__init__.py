@@ -2967,6 +2967,79 @@ class CollaborationWorkspaceDetailOut(CollaborationWorkspaceOut):
     recent_messages: List[CollaborationWorkspaceMessageOut]
 
 
+# ─── Messaging & Communication Schemas ────────────────────────────────────────
+
+class MessageSendPayload(BaseModel):
+    content: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+
+class ConversationCreate(BaseModel):
+    recipient_id: int
+    subject: Optional[str] = None
+    thread_type: str = "direct"  # direct, course_inquiry, advising, group
+    course_id: Optional[int] = None
+    initial_message: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+
+class ConversationParticipantOut(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    role: str
+    email: str
+    last_read_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class DirectMessageOut(BaseModel):
+    id: int
+    conversation_id: Optional[int] = None
+    sender_id: int
+    sender_name: str
+    sender_role: str
+    receiver_id: Optional[int] = None
+    content: str
+    attachment_url: Optional[str] = None
+    attachment_name: Optional[str] = None
+    is_read: bool
+    read_at: Optional[datetime] = None
+    sent_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ConversationListItemOut(BaseModel):
+    id: int
+    subject: Optional[str] = None
+    thread_type: str
+    course_id: Optional[int] = None
+    course_code: Optional[str] = None
+    participants: List[ConversationParticipantOut]
+    last_message_at: datetime
+    latest_message_snippet: Optional[str] = None
+    unread_count: int = 0
+
+class ConversationDetailOut(BaseModel):
+    id: int
+    subject: Optional[str] = None
+    thread_type: str
+    course_id: Optional[int] = None
+    course_code: Optional[str] = None
+    participants: List[ConversationParticipantOut]
+    messages: List[DirectMessageOut]
+
+class MessagingContactOut(BaseModel):
+    user_id: int
+    name: str
+    role: str
+    email: str
+    context: Optional[str] = None
+
+
+
 
 
 
