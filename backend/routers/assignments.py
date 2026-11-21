@@ -179,6 +179,7 @@ async def create_course_assignment(
         peer_review_enabled=payload.peer_review_enabled,
         group_assignment=payload.group_assignment,
         file_url=payload.file_url,
+        rubric_id=payload.rubric_id,
         published_at=published_at,
     )
     db.add(assignment)
