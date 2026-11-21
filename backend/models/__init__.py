@@ -2246,6 +2246,66 @@ class SurveyAnswer(Base):
     question = relationship("SurveyQuestion", back_populates="answers")
 
 
+# ─── Student Wellbeing and Support Models ──────────────────────────────────────
+
+class WellbeingSupportRequest(Base):
+    __tablename__ = "wellbeing_support_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    request_type = Column(String(50), default="counseling", nullable=False)  # academic_stress, mental_health, counseling, accessibility_accommodation, financial_emergency, peer_support
+    subject = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    urgency = Column(String(30), default="normal", nullable=False)  # low, normal, high, crisis
+    status = Column(String(30), default="submitted", nullable=False)  # submitted, assigned, in_progress, scheduled, resolved, closed
+    assigned_counselor_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_confidential = Column(Boolean, default=True, nullable=False)
+    resolution_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student")
+    assigned_counselor = relationship("User", foreign_keys=[assigned_counselor_id])
+    appointments = relationship("WellbeingAppointment", back_populates="request", cascade="all, delete-orphan")
+
+
+class WellbeingAppointment(Base):
+    __tablename__ = "wellbeing_appointments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    request_id = Column(Integer, ForeignKey("wellbeing_support_requests.id", ondelete="CASCADE"), nullable=False, index=True)
+    counselor_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    appointment_type = Column(String(30), default="virtual", nullable=False)  # virtual, in_person
+    scheduled_at = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, default=45, nullable=False)
+    location_or_link = Column(String(500), nullable=True)
+    status = Column(String(30), default="scheduled", nullable=False)  # scheduled, completed, cancelled, rescheduled
+    meeting_notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    request = relationship("WellbeingSupportRequest", back_populates="appointments")
+    counselor = relationship("User", foreign_keys=[counselor_id])
+    student = relationship("Student", foreign_keys=[student_id])
+
+
+class WellbeingResource(Base):
+    __tablename__ = "wellbeing_resources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    category = Column(String(50), default="mental_health", nullable=False)  # mental_health, stress_management, mindfulness, crisis_hotline, study_habits, accessibility
+    description = Column(Text, nullable=False)
+    content_url = Column(String(500), nullable=True)
+    emergency_phone = Column(String(50), nullable=True)
+    is_crisis_resource = Column(Boolean, default=False, nullable=False)
+    is_featured = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+
+
 
 
 

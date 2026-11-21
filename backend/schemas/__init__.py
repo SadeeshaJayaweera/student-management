@@ -3225,6 +3225,93 @@ class SurveyAnalyticsOut(BaseModel):
     question_analytics: List[QuestionAnalyticsOut]
 
 
+# ─── Student Wellbeing and Support Schemas ───────────────────────────────────
+
+class WellbeingSupportRequestCreate(BaseModel):
+    request_type: str = "counseling"  # academic_stress, mental_health, counseling, accessibility_accommodation, financial_emergency, peer_support
+    subject: str = Field(..., min_length=3, max_length=255)
+    description: str = Field(..., min_length=10)
+    urgency: str = "normal"  # low, normal, high, crisis
+    is_confidential: bool = True
+
+class WellbeingSupportRequestStatusUpdate(BaseModel):
+    status: str  # submitted, assigned, in_progress, scheduled, resolved, closed
+    assigned_counselor_id: Optional[int] = None
+    resolution_notes: Optional[str] = None
+
+class WellbeingAppointmentCreate(BaseModel):
+    scheduled_at: datetime
+    duration_minutes: int = 45
+    appointment_type: str = "virtual"  # virtual, in_person
+    location_or_link: Optional[str] = None
+    meeting_notes: Optional[str] = None
+
+class WellbeingAppointmentOut(BaseModel):
+    id: int
+    request_id: int
+    counselor_id: Optional[int] = None
+    counselor_name: Optional[str] = None
+    student_id: int
+    student_name: Optional[str] = None
+    appointment_type: str
+    scheduled_at: datetime
+    duration_minutes: int
+    location_or_link: Optional[str] = None
+    status: str
+    meeting_notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class WellbeingSupportRequestOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    student_id: int
+    student_name: Optional[str] = None
+    student_number: Optional[str] = None
+    request_type: str
+    subject: str
+    description: str
+    urgency: str
+    status: str
+    assigned_counselor_id: Optional[int] = None
+    assigned_counselor_name: Optional[str] = None
+    is_confidential: bool
+    resolution_notes: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    appointments: List[WellbeingAppointmentOut] = []
+
+    class Config:
+        from_attributes = True
+
+class WellbeingResourceCreate(BaseModel):
+    title: str = Field(..., min_length=3, max_length=255)
+    category: str = "mental_health"
+    description: str = Field(..., min_length=5)
+    content_url: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    is_crisis_resource: bool = False
+    is_featured: bool = True
+
+class WellbeingResourceOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    title: str
+    category: str
+    description: str
+    content_url: Optional[str] = None
+    emergency_phone: Optional[str] = None
+    is_crisis_resource: bool
+    is_featured: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
 
 
 

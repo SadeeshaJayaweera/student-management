@@ -757,6 +757,58 @@ export interface SurveyAnalytics {
   question_analytics: QuestionAnalytics[];
 }
 
+// ── Student Wellbeing & Support ───────────────────────────────
+
+export interface WellbeingAppointmentItem {
+  id: number;
+  request_id: number;
+  counselor_id?: number | null;
+  counselor_name?: string | null;
+  student_id: number;
+  student_name?: string | null;
+  appointment_type: 'virtual' | 'in_person';
+  scheduled_at: string;
+  duration_minutes: number;
+  location_or_link?: string | null;
+  status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled';
+  meeting_notes?: string | null;
+  created_at: string;
+}
+
+export interface WellbeingSupportRequestItem {
+  id: number;
+  institution_id?: number | null;
+  student_id: number;
+  student_name?: string | null;
+  student_number?: string | null;
+  request_type: 'academic_stress' | 'mental_health' | 'counseling' | 'accessibility_accommodation' | 'financial_emergency' | 'peer_support';
+  subject: string;
+  description: string;
+  urgency: 'low' | 'normal' | 'high' | 'crisis';
+  status: 'submitted' | 'assigned' | 'in_progress' | 'scheduled' | 'resolved' | 'closed';
+  assigned_counselor_id?: number | null;
+  assigned_counselor_name?: string | null;
+  is_confidential: boolean;
+  resolution_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  appointments: WellbeingAppointmentItem[];
+}
+
+export interface WellbeingResourceItem {
+  id: number;
+  institution_id?: number | null;
+  title: string;
+  category: 'mental_health' | 'stress_management' | 'mindfulness' | 'crisis_hotline' | 'study_habits' | 'accessibility';
+  description: string;
+  content_url?: string | null;
+  emergency_phone?: string | null;
+  is_crisis_resource: boolean;
+  is_featured: boolean;
+  created_at: string;
+}
+
+
 
 
 
