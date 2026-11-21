@@ -2388,3 +2388,122 @@ class AssignmentGradeReleaseOut(BaseModel):
     grades_released: bool
     grades_released_at: datetime
     submissions_graded_count: int
+
+
+# ─── Gradebook and Calculation Engine Schemas ─────────────────────────────────
+
+class GradeScaleBracket(BaseModel):
+    letter_grade: str
+    min_percentage: float
+    max_percentage: float
+    gpa_points: float
+
+class GradeScaleCreate(BaseModel):
+    name: str = "Standard Letter Scale"
+    is_default: bool = False
+    scale_brackets: List[GradeScaleBracket]
+
+class GradeScaleOut(BaseModel):
+    id: int
+    course_id: Optional[int] = None
+    name: str
+    is_default: bool
+    scale_brackets: List[dict]
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class GradebookCategoryCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    weight_percentage: float = Field(..., ge=0, le=100)
+    drop_lowest_count: int = Field(0, ge=0)
+
+class GradebookCategoryOut(BaseModel):
+    id: int
+    course_id: int
+    name: str
+    weight_percentage: float
+    drop_lowest_count: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class GradebookOverridePayload(BaseModel):
+    student_id: int
+    overridden_percentage: Optional[float] = Field(None, ge=0, le=100)
+    overridden_letter_grade: Optional[str] = None
+    overridden_gpa_points: Optional[float] = Field(None, ge=0, le=4.0)
+    override_reason: str = Field(..., min_length=5)
+
+class GradebookOverrideOut(BaseModel):
+    id: int
+    course_id: int
+    student_id: int
+    overridden_percentage: Optional[float] = None
+    overridden_letter_grade: Optional[str] = None
+    overridden_gpa_points: Optional[float] = None
+    override_reason: str
+    overridden_by_id: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class AssessmentScoreItem(BaseModel):
+    item_id: int
+    item_title: str
+    item_type: str  # "assignment" or "quiz"
+    category_id: Optional[int] = None
+    category_name: Optional[str] = None
+    score: Optional[float] = None
+    max_marks: float
+    percentage: Optional[float] = None
+    is_dropped: bool = False
+    status: str
+
+class CategoryScoreSummary(BaseModel):
+    category_id: Optional[int] = None
+    category_name: str
+    weight_percentage: float
+    drop_lowest_count: int
+    earned_percentage: Optional[float] = None
+    weighted_contribution: Optional[float] = None
+    items: List[AssessmentScoreItem] = []
+
+class StudentGradeSummary(BaseModel):
+    student_id: int
+    student_number: str
+    full_name: str
+    email: str
+    category_scores: List[CategoryScoreSummary] = []
+    calculated_percentage: float
+    letter_grade: str
+    gpa_points: float
+    is_overridden: bool = False
+    override_details: Optional[GradebookOverrideOut] = None
+    final_percentage: float
+    final_letter_grade: str
+    final_gpa_points: float
+
+class CourseGradebookOut(BaseModel):
+    course_id: int
+    course_code: str
+    course_title: str
+    total_enrolled: int
+    average_percentage: float
+    categories: List[GradebookCategoryOut] = []
+    grade_scale: Optional[dict] = None
+    students: List[StudentGradeSummary] = []
+
+class GradebookExportOut(BaseModel):
+    course_code: str
+    exported_at: datetime
+    format: str
+    records_count: int
+    data: List[dict]
+
