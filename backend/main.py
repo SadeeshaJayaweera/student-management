@@ -63,6 +63,7 @@ from backend.routers.gradebook import router as gradebook_router
 from backend.routers.student_dashboard import router as student_dashboard_router
 from backend.routers.timetable import router as timetable_router
 from backend.routers.attendance_management import router as attendance_management_router
+from backend.routers.calendar_tasks import router as calendar_tasks_router
 from backend.routers.v1 import v1_router
 
 
@@ -187,6 +188,7 @@ app.include_router(gradebook_router)
 app.include_router(student_dashboard_router)
 app.include_router(timetable_router)
 app.include_router(attendance_management_router)
+app.include_router(calendar_tasks_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

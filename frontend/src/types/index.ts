@@ -495,3 +495,53 @@ export interface StudentTimetableData {
   conflicts_detected: TimetableConflict[];
 }
 
+// ── Student Tasks & Calendar ──────────────────────────────────
+
+export interface StudentTask {
+  id: number;
+  student_id: number;
+  course_id?: number | null;
+  course_code?: string | null;
+  course_title?: string | null;
+  title: string;
+  description?: string | null;
+  due_date?: string | null;
+  priority: 'urgent' | 'high' | 'medium' | 'low' | string;
+  status: 'todo' | 'in_progress' | 'completed' | 'cancelled' | string;
+  category: 'study' | 'assignment' | 'revision' | 'exam_prep' | 'personal' | 'admin' | string;
+  estimated_minutes: number;
+  completed_at?: string | null;
+  reminder_at?: string | null;
+  is_overdue: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface StudentTaskMetrics {
+  total_tasks: number;
+  completed_tasks: number;
+  pending_tasks: number;
+  overdue_tasks: number;
+  completion_rate: number;
+  due_today_count: number;
+  urgent_priority_count: number;
+}
+
+export interface CalendarEvent {
+  id: number;
+  user_id?: number | null;
+  course_id?: number | null;
+  course_code?: string | null;
+  title: string;
+  description?: string | null;
+  event_type: 'academic' | 'exam' | 'assignment_due' | 'lecture' | 'holiday' | 'campus' | 'personal' | string;
+  start_time: string;
+  end_time: string;
+  all_day: boolean;
+  location?: string | null;
+  color: string;
+  is_system_generated: boolean;
+  created_at: string;
+}
+
+
