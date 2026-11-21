@@ -1777,9 +1777,67 @@ class RubricEvaluationOut(BaseModel):
     class Config:
         from_attributes = True
 
-class SubmissionCreate(BaseModel):
-    assignment_id: int
+class SubmissionVersionOut(BaseModel):
+    id: int
+    submission_id: int
+    version_number: int
+    file_url: Optional[str] = None
     text_content: Optional[str] = None
+    attachments: Optional[List[dict]] = None
+    submission_receipt: str
+    is_late: bool
+    days_late: float
+    submitted_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SubmissionCreate(BaseModel):
+    assignment_id: Optional[int] = None
+    text_content: Optional[str] = None
+    file_url: Optional[str] = None
+    attachments: Optional[List[dict]] = None
+
+class SubmissionOut(BaseModel):
+    id: int
+    assignment_id: int
+    student_id: int
+    attempt_number: int
+    submission_receipt: Optional[str] = None
+    file_url: Optional[str] = None
+    text_content: Optional[str] = None
+    attachments: Optional[List[dict]] = None
+    is_late: bool
+    days_late: float
+    late_penalty_applied: float
+    originality_score: Optional[float] = None
+    originality_report_url: Optional[str] = None
+    marks: Optional[float] = None
+    feedback: Optional[str] = None
+    status: str
+    graded_by_id: Optional[int] = None
+    graded_at: Optional[datetime] = None
+    submitted_at: datetime
+    updated_at: Optional[datetime] = None
+    versions: List[SubmissionVersionOut] = []
+
+    class Config:
+        from_attributes = True
+
+class SubmissionReceiptOut(BaseModel):
+    submission_receipt: str
+    submission_id: int
+    assignment_id: int
+    assignment_title: str
+    course_code: str
+    course_title: str
+    student_id: int
+    student_name: str
+    attempt_number: int
+    is_late: bool
+    days_late: float
+    submitted_at: datetime
+    verification_hash: str
 
 class GradeUpdate(BaseModel):
     assignment_id: int

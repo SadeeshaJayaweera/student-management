@@ -1289,18 +1289,48 @@ class AssignmentSubmission(Base):
     __tablename__ = "assignment_submissions"
 
     id = Column(Integer, primary_key=True, index=True)
-    assignment_id = Column(Integer, ForeignKey("assignments.id"), nullable=False)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    assignment_id = Column(Integer, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_number = Column(Integer, default=1, nullable=False)
+    submission_receipt = Column(String(100), unique=True, index=True, nullable=True)
     file_url = Column(String(500), nullable=True)
     text_content = Column(Text, nullable=True)
-    submitted_at = Column(DateTime, default=func.now())
+    attachments = Column(JSON, nullable=True)  # [{"filename": "...", "url": "...", "size_bytes": 123}]
+    is_late = Column(Boolean, default=False, nullable=False)
+    days_late = Column(Float, default=0.0, nullable=False)
+    late_penalty_applied = Column(Float, default=0.0, nullable=False)
+    originality_score = Column(Float, nullable=True)
+    originality_report_url = Column(String(500), nullable=True)
     marks = Column(Float, nullable=True)
     feedback = Column(Text, nullable=True)
-    status = Column(Enum(AssignmentStatus), default=AssignmentStatus.SUBMITTED)
+    status = Column(Enum(AssignmentStatus), default=AssignmentStatus.SUBMITTED, nullable=False)
+    graded_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    graded_at = Column(DateTime, nullable=True)
+    submitted_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     assignment = relationship("Assignment", back_populates="submissions")
     student = relationship("Student", back_populates="assignments")
+    grader = relationship("User", foreign_keys=[graded_by_id])
     rubric_evaluation = relationship("RubricEvaluation", back_populates="submission", uselist=False, cascade="all, delete-orphan")
+    versions = relationship("AssignmentSubmissionVersion", back_populates="submission", cascade="all, delete-orphan", order_by="AssignmentSubmissionVersion.version_number")
+
+
+class AssignmentSubmissionVersion(Base):
+    __tablename__ = "assignment_submission_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+    file_url = Column(String(500), nullable=True)
+    text_content = Column(Text, nullable=True)
+    attachments = Column(JSON, nullable=True)
+    submission_receipt = Column(String(100), nullable=False)
+    is_late = Column(Boolean, default=False, nullable=False)
+    days_late = Column(Float, default=0.0, nullable=False)
+    submitted_at = Column(DateTime, default=func.now(), nullable=False)
+
+    submission = relationship("AssignmentSubmission", back_populates="versions")
 
 
 # ─── Rubric-Based Assessment Models ──────────────────────────────────────────
