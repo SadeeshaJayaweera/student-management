@@ -1485,6 +1485,7 @@ class Quiz(Base):
     creator = relationship("User", foreign_keys=[creator_id])
     questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan", order_by="QuizQuestion.order_index")
     attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
+    proctoring_sessions = relationship("ExamProctoringSession", back_populates="quiz", cascade="all, delete-orphan")
 
 
 class QuizQuestion(Base):
@@ -1520,6 +1521,50 @@ class QuizAttempt(Base):
 
     quiz = relationship("Quiz", back_populates="attempts")
     student = relationship("Student")
+    proctoring_session = relationship("ExamProctoringSession", back_populates="attempt", uselist=False, cascade="all, delete-orphan")
+
+
+# ─── Timed Examinations and Proctoring Controls Models ────────────────────────
+
+class ExamProctoringSession(Base):
+    __tablename__ = "exam_proctoring_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_id = Column(Integer, ForeignKey("quiz_attempts.id", ondelete="CASCADE"), nullable=True, index=True)
+    session_token = Column(String(100), unique=True, index=True, nullable=False)
+    ip_address = Column(String(50), nullable=True)
+    user_agent = Column(String(255), nullable=True)
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    last_heartbeat_at = Column(DateTime, default=func.now(), nullable=False)
+    status = Column(String(30), default="active", nullable=False)  # active, completed, terminated, flagged
+    tab_switch_count = Column(Integer, default=0, nullable=False)
+    fullscreen_exit_count = Column(Integer, default=0, nullable=False)
+    copy_paste_attempt_count = Column(Integer, default=0, nullable=False)
+    is_flagged = Column(Boolean, default=False, nullable=False)
+    flag_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    quiz = relationship("Quiz", back_populates="proctoring_sessions")
+    student = relationship("Student")
+    attempt = relationship("QuizAttempt", back_populates="proctoring_session")
+    events = relationship("ExamProctoringEvent", back_populates="session", cascade="all, delete-orphan", order_by="desc(ExamProctoringEvent.timestamp)")
+
+
+class ExamProctoringEvent(Base):
+    __tablename__ = "exam_proctoring_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("exam_proctoring_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    event_type = Column(String(50), nullable=False)  # tab_switch, window_blur, fullscreen_exit, copy_paste_blocked, devtools_opened, auto_submitted
+    severity = Column(String(20), default="low", nullable=False)  # low, medium, high, critical
+    details = Column(JSON, nullable=True)
+    timestamp = Column(DateTime, default=func.now(), nullable=False)
+
+    session = relationship("ExamProctoringSession", back_populates="events")
 
 
 class CourseMaterial(Base):
