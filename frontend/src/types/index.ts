@@ -941,6 +941,62 @@ export interface FinancialAuditLog {
   created_at: string;
 }
 
+// ── Modern Digital Library System ────────────────────────────────────
+
+export interface DigitalLibraryResource {
+  id: number;
+  title: string;
+  author: string;
+  resource_type: string;
+  doi_or_issn?: string | null;
+  subject_category: string;
+  file_format: string;
+  file_url: string;
+  cover_url?: string | null;
+  file_size_bytes: number;
+  download_count: number;
+  view_count: number;
+  abstract?: string | null;
+  keywords?: string | null;
+  is_open_access: boolean;
+  published_year?: number | null;
+  publisher?: string | null;
+  collection_id?: number | null;
+  book_id?: number | null;
+  is_bookmarked?: boolean;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface LibrarySubjectCollection {
+  id: number;
+  title: string;
+  slug: string;
+  description?: string | null;
+  icon: string;
+  is_featured: boolean;
+  resource_count?: number;
+  created_at: string;
+}
+
+export interface LibraryBookmark {
+  id: number;
+  user_id: number;
+  resource_id: number;
+  resource: DigitalLibraryResource;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface DigitalLibraryStats {
+  total_resources: number;
+  total_views: number;
+  total_downloads: number;
+  resource_type_breakdown: Record<string, number>;
+  subject_breakdown: Record<string, number>;
+}
+
+
 
 
 
