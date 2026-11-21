@@ -1615,6 +1615,7 @@ class AssignmentCreate(BaseModel):
     peer_review_enabled: bool = False
     group_assignment: bool = False
     file_url: Optional[str] = None
+    rubric_id: Optional[int] = None
 
 class AssignmentUpdate(BaseModel):
     title: Optional[str] = None
@@ -1638,6 +1639,7 @@ class AssignmentUpdate(BaseModel):
     peer_review_enabled: Optional[bool] = None
     group_assignment: Optional[bool] = None
     file_url: Optional[str] = None
+    rubric_id: Optional[int] = None
 
 class AssignmentOut(BaseModel):
     id: int
@@ -1665,10 +1667,110 @@ class AssignmentOut(BaseModel):
     group_assignment: bool
     file_url: Optional[str] = None
     published_at: Optional[datetime] = None
+    rubric_id: Optional[int] = None
     submissions_count: int = 0
     is_available: bool = True
     is_past_due: bool = False
     is_past_cutoff: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+# ─── Rubric Schemas ──────────────────────────────────────────────────────────
+
+class RubricLevelCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = None
+    point_value: float = Field(..., ge=0)
+    order_index: int = 0
+
+class RubricLevelOut(BaseModel):
+    id: int
+    criterion_id: int
+    title: str
+    description: Optional[str] = None
+    point_value: float
+    order_index: int
+
+    class Config:
+        from_attributes = True
+
+class RubricCriterionCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = None
+    max_points: float = Field(..., gt=0)
+    weight: float = Field(1.0, ge=0)
+    order_index: int = 0
+    levels: Optional[List[RubricLevelCreate]] = []
+
+class RubricCriterionOut(BaseModel):
+    id: int
+    rubric_id: int
+    title: str
+    description: Optional[str] = None
+    max_points: float
+    weight: float
+    order_index: int
+    levels: List[RubricLevelOut] = []
+
+    class Config:
+        from_attributes = True
+
+class RubricCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    scoring_strategy: str = "analytic"  # analytic, holistic, percentage
+    is_template: bool = False
+    total_points: float = Field(100.0, gt=0)
+    criteria: Optional[List[RubricCriterionCreate]] = []
+
+class RubricUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    scoring_strategy: Optional[str] = None
+    is_template: Optional[bool] = None
+    total_points: Optional[float] = None
+
+class RubricOut(BaseModel):
+    id: int
+    course_id: Optional[int] = None
+    creator_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    scoring_strategy: str
+    is_template: bool
+    total_points: float
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    criteria: List[RubricCriterionOut] = []
+
+    class Config:
+        from_attributes = True
+
+class CriterionEvaluationScore(BaseModel):
+    criterion_id: int
+    level_id: Optional[int] = None
+    points: float = Field(..., ge=0)
+    comment: Optional[str] = None
+
+class RubricEvaluationCreate(BaseModel):
+    submission_id: Optional[int] = None
+    feedback: Optional[str] = None
+    criteria_scores: List[CriterionEvaluationScore]
+
+class RubricEvaluationOut(BaseModel):
+    id: int
+    rubric_id: int
+    assignment_id: int
+    submission_id: Optional[int] = None
+    grader_id: Optional[int] = None
+    total_score: float
+    max_possible_score: float
+    percentage: float
+    feedback: Optional[str] = None
+    criteria_scores: Optional[List[dict]] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

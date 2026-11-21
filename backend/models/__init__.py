@@ -629,6 +629,7 @@ class Course(Base):
     announcements = relationship("CourseAnnouncement", back_populates="course", cascade="all, delete-orphan", order_by="desc(CourseAnnouncement.is_pinned), desc(CourseAnnouncement.published_at)")
     forum_categories = relationship("CourseForumCategory", back_populates="course", cascade="all, delete-orphan", order_by="CourseForumCategory.display_order")
     live_sessions = relationship("VirtualClassroomSession", back_populates="course", cascade="all, delete-orphan", order_by="VirtualClassroomSession.start_time")
+    rubrics = relationship("Rubric", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -1272,13 +1273,16 @@ class Assignment(Base):
     group_assignment = Column(Boolean, default=False, nullable=False)
     file_url = Column(String(500), nullable=True)
     published_at = Column(DateTime, nullable=True)
+    rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     course = relationship("Course", back_populates="assignments")
     creator = relationship("User", foreign_keys=[creator_id])
     module = relationship("CourseModule")
+    rubric = relationship("Rubric", foreign_keys=[rubric_id])
     submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
+    rubric_evaluations = relationship("RubricEvaluation", back_populates="assignment", cascade="all, delete-orphan")
 
 
 class AssignmentSubmission(Base):
@@ -1296,6 +1300,79 @@ class AssignmentSubmission(Base):
 
     assignment = relationship("Assignment", back_populates="submissions")
     student = relationship("Student", back_populates="assignments")
+    rubric_evaluation = relationship("RubricEvaluation", back_populates="submission", uselist=False, cascade="all, delete-orphan")
+
+
+# ─── Rubric-Based Assessment Models ──────────────────────────────────────────
+
+class Rubric(Base):
+    __tablename__ = "rubrics"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    creator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    scoring_strategy = Column(String(50), default="analytic", nullable=False)  # analytic, holistic, percentage
+    is_template = Column(Boolean, default=False, nullable=False)
+    total_points = Column(Float, default=100.0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="rubrics")
+    creator = relationship("User", foreign_keys=[creator_id])
+    criteria = relationship("RubricCriterion", back_populates="rubric", cascade="all, delete-orphan", order_by="RubricCriterion.order_index")
+    evaluations = relationship("RubricEvaluation", back_populates="rubric", cascade="all, delete-orphan")
+
+
+class RubricCriterion(Base):
+    __tablename__ = "rubric_criteria"
+
+    id = Column(Integer, primary_key=True, index=True)
+    rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    max_points = Column(Float, nullable=False, default=10.0)
+    weight = Column(Float, nullable=False, default=1.0)
+    order_index = Column(Integer, nullable=False, default=0)
+
+    rubric = relationship("Rubric", back_populates="criteria")
+    levels = relationship("RubricLevel", back_populates="criterion", cascade="all, delete-orphan", order_by="RubricLevel.order_index")
+
+
+class RubricLevel(Base):
+    __tablename__ = "rubric_levels"
+
+    id = Column(Integer, primary_key=True, index=True)
+    criterion_id = Column(Integer, ForeignKey("rubric_criteria.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    point_value = Column(Float, nullable=False, default=0.0)
+    order_index = Column(Integer, nullable=False, default=0)
+
+    criterion = relationship("RubricCriterion", back_populates="levels")
+
+
+class RubricEvaluation(Base):
+    __tablename__ = "rubric_evaluations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="CASCADE"), nullable=False, index=True)
+    assignment_id = Column(Integer, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=True, index=True)
+    grader_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    total_score = Column(Float, nullable=False, default=0.0)
+    max_possible_score = Column(Float, nullable=False, default=100.0)
+    percentage = Column(Float, nullable=False, default=0.0)
+    feedback = Column(Text, nullable=True)
+    criteria_scores = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    rubric = relationship("Rubric", back_populates="evaluations")
+    assignment = relationship("Assignment", back_populates="rubric_evaluations")
+    submission = relationship("AssignmentSubmission", back_populates="rubric_evaluation")
+    grader = relationship("User", foreign_keys=[grader_id])
 
 
 class CourseMaterial(Base):
