@@ -1918,6 +1918,129 @@ class QuestionBankItemOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Automated Quiz Schemas ──────────────────────────────────────────────────
+
+class QuizCreate(BaseModel):
+    module_id: Optional[int] = None
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    time_limit_minutes: Optional[int] = Field(None, gt=0)
+    passing_score_percentage: float = Field(50.0, ge=0, le=100)
+    max_attempts: int = Field(1, ge=-1)
+    shuffle_questions: bool = True
+    shuffle_options: bool = True
+    show_correct_answers: bool = True
+    allow_backtracking: bool = True
+    status: str = "published"
+    available_from: Optional[datetime] = None
+    due_date: datetime
+
+class QuizUpdate(BaseModel):
+    module_id: Optional[int] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    time_limit_minutes: Optional[int] = None
+    passing_score_percentage: Optional[float] = None
+    max_attempts: Optional[int] = None
+    shuffle_questions: Optional[bool] = None
+    shuffle_options: Optional[bool] = None
+    show_correct_answers: Optional[bool] = None
+    allow_backtracking: Optional[bool] = None
+    status: Optional[str] = None
+    available_from: Optional[datetime] = None
+    due_date: Optional[datetime] = None
+
+class QuizQuestionAdd(BaseModel):
+    question_item_id: int
+    points: float = Field(1.0, gt=0)
+    order_index: Optional[int] = None
+
+class QuizQuestionOut(BaseModel):
+    id: int
+    quiz_id: int
+    question_item_id: int
+    order_index: int
+    points: float
+    question_item: Optional[QuestionBankItemOut] = None
+
+    class Config:
+        from_attributes = True
+
+class QuizOut(BaseModel):
+    id: int
+    course_id: int
+    module_id: Optional[int] = None
+    creator_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    instructions: Optional[str] = None
+    time_limit_minutes: Optional[int] = None
+    passing_score_percentage: float
+    max_attempts: int
+    shuffle_questions: bool
+    shuffle_options: bool
+    show_correct_answers: bool
+    allow_backtracking: bool
+    total_points: float
+    status: str
+    available_from: Optional[datetime] = None
+    due_date: datetime
+    questions_count: int = 0
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class StudentQuizQuestionOut(BaseModel):
+    id: int
+    order_index: int
+    points: float
+    title: str
+    prompt: str
+    question_type: str
+    options: Optional[List[dict]] = None
+
+class QuizStartOut(BaseModel):
+    attempt_id: int
+    quiz_id: int
+    attempt_number: int
+    time_limit_minutes: Optional[int] = None
+    started_at: datetime
+    questions: List[StudentQuizQuestionOut]
+
+class QuizAnswerItem(BaseModel):
+    question_id: int
+    selected_option_ids: Optional[List[str]] = None
+    text_answer: Optional[str] = None
+    numerical_answer: Optional[float] = None
+
+class QuizAutosavePayload(BaseModel):
+    answers: List[QuizAnswerItem]
+
+class QuizSubmitPayload(BaseModel):
+    answers: List[QuizAnswerItem]
+
+class QuizAttemptOut(BaseModel):
+    id: int
+    quiz_id: int
+    student_id: int
+    attempt_number: int
+    started_at: datetime
+    submitted_at: Optional[datetime] = None
+    total_score: float
+    max_score: float
+    percentage: float
+    is_passed: bool
+    status: str
+    results: Optional[List[dict]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class GradeUpdate(BaseModel):
     assignment_id: int
     submission_id: int
