@@ -103,6 +103,8 @@ class Institution(Base):
     campuses = relationship("Campus", back_populates="institution", cascade="all, delete-orphan")
     faculties = relationship("Faculty", back_populates="institution", cascade="all, delete-orphan")
     departments = relationship("Department", back_populates="institution", cascade="all, delete-orphan")
+    academic_years = relationship("AcademicYear", back_populates="institution", cascade="all, delete-orphan")
+    semesters = relationship("Semester", back_populates="institution", cascade="all, delete-orphan")
 
 
 class Campus(Base):
@@ -163,6 +165,50 @@ class Department(Base):
 
     institution = relationship("Institution", back_populates="departments")
     faculty = relationship("Faculty", back_populates="departments")
+
+
+class AcademicYear(Base):
+    __tablename__ = "academic_years"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    is_current = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="academic_years")
+    semesters = relationship("Semester", back_populates="academic_year", cascade="all, delete-orphan")
+
+
+class Semester(Base):
+    __tablename__ = "semesters"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_year_id = Column(Integer, ForeignKey("academic_years.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    term_number = Column(Integer, default=1, nullable=False)
+    start_date = Column(Date, nullable=False)
+    end_date = Column(Date, nullable=False)
+    census_date = Column(Date, nullable=True)
+    registration_start_date = Column(Date, nullable=True)
+    registration_end_date = Column(Date, nullable=True)
+    add_drop_deadline = Column(Date, nullable=True)
+    exam_start_date = Column(Date, nullable=True)
+    exam_end_date = Column(Date, nullable=True)
+    is_current = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="semesters")
+    academic_year = relationship("AcademicYear", back_populates="semesters")
 
 
 # ─── Core User Model ──────────────────────────────────────────────────────────

@@ -38,6 +38,7 @@ from backend.routers.tenants import router as tenants_router
 from backend.routers.accounts import router as accounts_router
 from backend.routers.audit import router as audit_router
 from backend.routers.institutions import router as institutions_router
+from backend.routers.academic_terms import router as academic_terms_router
 from backend.routers.v1 import v1_router
 
 
@@ -137,6 +138,7 @@ app.include_router(tenants_router)
 app.include_router(accounts_router)
 app.include_router(audit_router)
 app.include_router(institutions_router)
+app.include_router(academic_terms_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

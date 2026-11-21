@@ -230,6 +230,95 @@ class DepartmentOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+# ─── Academic Year & Semester Schemas ─────────────────────────────────────────
+
+class AcademicYearCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=100)
+    start_date: date
+    end_date: date
+    is_current: bool = False
+    is_active: bool = True
+
+class AcademicYearUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    is_current: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+class AcademicYearOut(BaseModel):
+    id: int
+    institution_id: int
+    code: str
+    name: str
+    start_date: date
+    end_date: date
+    is_current: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SemesterCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=100)
+    term_number: int = Field(default=1, ge=1, le=10)
+    start_date: date
+    end_date: date
+    census_date: Optional[date] = None
+    registration_start_date: Optional[date] = None
+    registration_end_date: Optional[date] = None
+    add_drop_deadline: Optional[date] = None
+    exam_start_date: Optional[date] = None
+    exam_end_date: Optional[date] = None
+    is_current: bool = False
+    is_active: bool = True
+
+class SemesterUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    term_number: Optional[int] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    census_date: Optional[date] = None
+    registration_start_date: Optional[date] = None
+    registration_end_date: Optional[date] = None
+    add_drop_deadline: Optional[date] = None
+    exam_start_date: Optional[date] = None
+    exam_end_date: Optional[date] = None
+    is_current: Optional[bool] = None
+    is_active: Optional[bool] = None
+
+class SemesterOut(BaseModel):
+    id: int
+    institution_id: int
+    academic_year_id: int
+    code: str
+    name: str
+    term_number: int
+    start_date: date
+    end_date: date
+    census_date: Optional[date] = None
+    registration_start_date: Optional[date] = None
+    registration_end_date: Optional[date] = None
+    add_drop_deadline: Optional[date] = None
+    exam_start_date: Optional[date] = None
+    exam_end_date: Optional[date] = None
+    is_current: bool
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserSessionOut(BaseModel):
     id: int
     ip_address: Optional[str] = None
