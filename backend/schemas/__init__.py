@@ -1009,6 +1009,70 @@ class StudentSupportCaseOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Academic Records and Transcript Schemas ──────────────────────────────────
+
+class GradePostingRequest(BaseModel):
+    student_id: int
+    course_id: int
+    semester_id: Optional[int] = None
+    midterm: Optional[float] = None
+    final: Optional[float] = None
+    assignments_avg: Optional[float] = None
+    total: Optional[float] = None
+    letter_grade: Optional[str] = None
+    grade_points: Optional[float] = None
+    is_final: bool = True
+    remarks: Optional[str] = None
+
+class TermGPACalculationResult(BaseModel):
+    student_id: int
+    semester_id: int
+    term_gpa: float
+    cgpa: float
+    credits_attempted: int
+    credits_earned: int
+    cumulative_credits_attempted: int
+    cumulative_credits_earned: int
+    academic_standing: str
+    course_grades: List[Dict[str, Any]]
+
+class OfficialTranscriptIssueRequest(BaseModel):
+    student_id: int
+    recipient_name: Optional[str] = None
+    recipient_email: Optional[str] = None
+    issue_type: str = "official"  # official, certified, unofficial
+
+class OfficialTranscriptOut(BaseModel):
+    id: int
+    institution_id: int
+    student_id: int
+    verification_code: str
+    digital_signature_hash: str
+    issue_type: str
+    status: str
+    issued_by_id: Optional[int] = None
+    issued_at: datetime
+    recipient_name: Optional[str] = None
+    recipient_email: Optional[str] = None
+    data_snapshot: Dict[str, Any]
+    class Config:
+        from_attributes = True
+
+class TranscriptVerificationResult(BaseModel):
+    is_valid: bool
+    verification_code: str
+    issue_type: str
+    status: str
+    issued_at: datetime
+    student_name: str
+    student_id: str
+    institution_name: str
+    program_name: str
+    cgpa: float
+    total_credits_earned: int
+    academic_standing: str
+    digital_signature_hash: str
+
 class GradeOut(BaseModel):
     id: int
     course_id: int

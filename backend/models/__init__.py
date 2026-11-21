@@ -843,19 +843,68 @@ class Grade(Base):
     __tablename__ = "grades"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
+    semester_id = Column(Integer, ForeignKey("semesters.id", ondelete="SET NULL"), nullable=True, index=True)
     midterm = Column(Float, nullable=True)
     final = Column(Float, nullable=True)
     assignments_avg = Column(Float, nullable=True)
     total = Column(Float, nullable=True)
     letter_grade = Column(String(5), nullable=True)
     grade_points = Column(Float, nullable=True)
+    credits_earned = Column(Integer, default=0, nullable=False)
+    is_final = Column(Boolean, default=False, nullable=False)
     remarks = Column(Text, nullable=True)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     student = relationship("Student", back_populates="grades")
     course = relationship("Course", back_populates="grades")
+    semester = relationship("Semester")
+
+
+class AcademicTermRecord(Base):
+    __tablename__ = "academic_term_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    semester_id = Column(Integer, ForeignKey("semesters.id", ondelete="CASCADE"), nullable=False, index=True)
+    term_gpa = Column(Float, default=0.0, nullable=False)
+    cgpa = Column(Float, default=0.0, nullable=False)
+    credits_attempted = Column(Integer, default=0, nullable=False)
+    credits_earned = Column(Integer, default=0, nullable=False)
+    cumulative_credits_attempted = Column(Integer, default=0, nullable=False)
+    cumulative_credits_earned = Column(Integer, default=0, nullable=False)
+    academic_standing = Column(String(50), default="good_standing", nullable=False)
+    is_finalized = Column(Boolean, default=False, nullable=False)
+    finalized_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution")
+    student = relationship("Student")
+    semester = relationship("Semester")
+
+
+class OfficialTranscript(Base):
+    __tablename__ = "official_transcripts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    verification_code = Column(String(64), unique=True, index=True, nullable=False)
+    digital_signature_hash = Column(String(128), nullable=False)
+    issue_type = Column(String(30), default="official", nullable=False)
+    status = Column(String(20), default="valid", nullable=False)
+    issued_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    issued_at = Column(DateTime, default=func.now(), nullable=False)
+    recipient_name = Column(String(200), nullable=True)
+    recipient_email = Column(String(255), nullable=True)
+    data_snapshot = Column(JSON, nullable=False)
+
+    institution = relationship("Institution")
+    student = relationship("Student")
+    issued_by = relationship("User")
 
 
 class Attendance(Base):
