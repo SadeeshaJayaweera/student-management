@@ -5,6 +5,9 @@ import {
   StudentInvoice,
   BillingSummary,
   FeeStructure,
+  PaymentReceipt,
+  FinancialAuditLog,
+  PaymentCheckoutResponse,
 } from '@/types'
 import toast from 'react-hot-toast'
 
@@ -22,6 +25,25 @@ export default function Billing() {
   const [selectedInvoice, setSelectedInvoice] = useState<StudentInvoice | null>(null)
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false)
   const [creating, setCreating] = useState<boolean>(false)
+
+  // Payment states
+  const [paying, setPaying] = useState<boolean>(false)
+  const [paymentTarget, setPaymentTarget] = useState<{ invoiceId: number; installmentId?: number | null; amount: number; title: string } | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<string>('credit_card')
+  const [receiptModal, setReceiptModal] = useState<PaymentReceipt | null>(null)
+
+  // Financial Audit Log state
+  const [showAuditModal, setShowAuditModal] = useState<boolean>(false)
+  const [auditLogs, setAuditLogs] = useState<FinancialAuditLog[]>([])
+  const [loadingAudit, setLoadingAudit] = useState<boolean>(false)
+
+  // Manual payment recording
+  const [showManualModal, setShowManualModal] = useState<boolean>(false)
+  const [manualInvoiceId, setManualInvoiceId] = useState<number | null>(null)
+  const [manualAmount, setManualAmount] = useState<number>(0)
+  const [manualRefNote, setManualRefNote] = useState<string>('')
+  const [manualMethod, setManualMethod] = useState<string>('bank_transfer')
+  const [recordingManual, setRecordingManual] = useState<boolean>(false)
 
   // Invoice creation form
   const [newStudentId, setNewStudentId] = useState<number | ''>('')
@@ -88,6 +110,62 @@ export default function Billing() {
     }
   }
 
+  const handleCheckout = async () => {
+    if (!paymentTarget || paying) return
+    try {
+      setPaying(true)
+      const res = await api.post<PaymentCheckoutResponse>('/payments/checkout', {
+        invoice_id: paymentTarget.invoiceId,
+        installment_id: paymentTarget.installmentId || undefined,
+        payment_method: paymentMethod,
+        gateway: 'payhere',
+      })
+      toast.success(`Payment checkout session started (${res.data.transaction_ref})`)
+      setPaymentTarget(null)
+      setSelectedInvoice(null)
+      loadData()
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to initiate checkout.')
+    } finally {
+      setPaying(false)
+    }
+  }
+
+  const handleOpenAudit = async () => {
+    setShowAuditModal(true)
+    try {
+      setLoadingAudit(true)
+      const res = await api.get<FinancialAuditLog[]>('/payments/admin/audit-ledger')
+      setAuditLogs(res.data)
+    } catch (err: any) {
+      toast.error('Could not load audit ledger.')
+    } finally {
+      setLoadingAudit(false)
+    }
+  }
+
+  const handleRecordManual = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!manualInvoiceId || !manualAmount || !manualRefNote.trim() || recordingManual) return
+    try {
+      setRecordingManual(true)
+      const res = await api.post<PaymentReceipt>('/payments/admin/manual-record', {
+        invoice_id: manualInvoiceId,
+        amount: manualAmount,
+        payment_method: manualMethod,
+        reference_note: manualRefNote.trim(),
+      })
+      toast.success('Manual payment verified and recorded!')
+      setShowManualModal(false)
+      setReceiptModal(res.data)
+      loadData()
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Failed to record manual payment.')
+    } finally {
+      setRecordingManual(false)
+    }
+  }
+
   const formatCurrency = (amount: number, currency: string = 'LKR') => {
     return `${currency} ${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
@@ -123,13 +201,22 @@ export default function Billing() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {isFinanceStaff && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="btn btn-primary"
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              <span>🧾</span> Generate Student Invoice
-            </button>
+            <>
+              <button
+                onClick={handleOpenAudit}
+                className="btn btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>📜</span> Audit Ledger
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                <span>🧾</span> Generate Invoice
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -324,13 +411,37 @@ export default function Billing() {
                         </span>
                       </td>
                       <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                        <button
-                          onClick={() => setSelectedInvoice(inv)}
-                          className="btn btn-secondary"
-                          style={{ fontSize: '0.8rem', padding: '4px 10px' }}
-                        >
-                          View Details 👁
-                        </button>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                          {inv.balance_due > 0 && !isFinanceStaff && (
+                            <button
+                              onClick={() => setPaymentTarget({ invoiceId: inv.id, amount: inv.balance_due, title: inv.invoice_number })}
+                              className="btn btn-primary"
+                              style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+                            >
+                              Pay 💳
+                            </button>
+                          )}
+                          {inv.balance_due > 0 && isFinanceStaff && (
+                            <button
+                              onClick={() => {
+                                setManualInvoiceId(inv.id)
+                                setManualAmount(inv.balance_due)
+                                setShowManualModal(true)
+                              }}
+                              className="btn btn-secondary"
+                              style={{ fontSize: '0.8rem', padding: '4px 10px', color: '#34d399' }}
+                            >
+                              Record 💵
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setSelectedInvoice(inv)}
+                            className="btn btn-secondary"
+                            style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+                          >
+                            Details 👁
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -521,6 +632,21 @@ export default function Billing() {
               >
                 Close
               </button>
+              {selectedInvoice.balance_due > 0 && !isFinanceStaff && (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setPaymentTarget({
+                      invoiceId: selectedInvoice.id,
+                      amount: selectedInvoice.balance_due,
+                      title: `Invoice ${selectedInvoice.invoice_number}`,
+                    })
+                  }}
+                >
+                  Pay Full Balance ({formatCurrency(selectedInvoice.balance_due, selectedInvoice.currency)}) 💳
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -688,6 +814,340 @@ export default function Billing() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Online Payment Checkout Modal */}
+      {paymentTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div className="card" style={{ width: '100%', maxWidth: 480, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Online Fee Payment</h3>
+              <button
+                type="button"
+                onClick={() => setPaymentTarget(null)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginBottom: 16, padding: 14, backgroundColor: 'rgba(59, 130, 246, 0.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Paying for:</div>
+              <div style={{ fontWeight: 700, fontSize: '1rem', marginTop: 2 }}>{paymentTarget.title}</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#60a5fa', marginTop: 6 }}>
+                {formatCurrency(paymentTarget.amount)}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 6 }}>
+                Select Payment Method
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('credit_card')}
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    border: paymentMethod === 'credit_card' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    backgroundColor: paymentMethod === 'credit_card' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: '1.2rem' }}>💳</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>Credit / Debit Card</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod('bank_transfer')}
+                  style={{
+                    padding: 12,
+                    borderRadius: 8,
+                    border: paymentMethod === 'bank_transfer' ? '2px solid #3b82f6' : '1px solid var(--border-color)',
+                    backgroundColor: paymentMethod === 'bank_transfer' ? 'rgba(59, 130, 246, 0.15)' : 'transparent',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    textAlign: 'center',
+                  }}
+                >
+                  <div style={{ fontSize: '1.2rem' }}>🏦</div>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 600, marginTop: 4 }}>PayHere Gateway</div>
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setPaymentTarget(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleCheckout}
+                disabled={paying}
+              >
+                {paying ? 'Connecting to Gateway...' : `Proceed to Pay (${formatCurrency(paymentTarget.amount)})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Staff Record Manual Payment Modal */}
+      {showManualModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div className="card" style={{ width: '100%', maxWidth: 480, padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>Record Manual Payment</h3>
+              <button
+                type="button"
+                onClick={() => setShowManualModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleRecordManual}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>
+                  Amount Received (LKR) *
+                </label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={manualAmount}
+                  onChange={(e) => setManualAmount(Number(e.target.value) || 0)}
+                  required
+                />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>
+                  Payment Method
+                </label>
+                <select
+                  className="form-control"
+                  value={manualMethod}
+                  onChange={(e) => setManualMethod(e.target.value)}
+                >
+                  <option value="bank_transfer">Direct Bank Deposit / Transfer</option>
+                  <option value="cash">Campus Cashier Deposit</option>
+                  <option value="cheque">Bank Draft / Cheque</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: 4 }}>
+                  Bank Reference / Slip Number *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. BOC-DEP-994821"
+                  className="form-control"
+                  value={manualRefNote}
+                  onChange={(e) => setManualRefNote(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowManualModal(false)}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={recordingManual}>
+                  {recordingManual ? 'Recording...' : 'Verify & Record Payment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Official Payment Receipt Modal */}
+      {receiptModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div className="card" style={{ width: '100%', maxWidth: 520, padding: 28 }}>
+            <div style={{ textAlign: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: '2.4rem' }}>🏛️</div>
+              <h3 style={{ margin: '6px 0 0 0', fontWeight: 800 }}>NSBM GREEN UNIVERSITY</h3>
+              <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>OFFICIAL BURSAR PAYMENT RECEIPT</div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: '0.9rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Receipt Number:</span>
+                <span style={{ fontWeight: 700, color: '#34d399' }}>{receiptModal.receipt_number}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Amount Paid:</span>
+                <span style={{ fontWeight: 800, fontSize: '1.1rem', color: '#60a5fa' }}>
+                  {formatCurrency(receiptModal.amount_paid, receiptModal.currency)}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Payment Method:</span>
+                <span style={{ fontWeight: 600 }}>{receiptModal.payment_method.toUpperCase()}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Issued Date:</span>
+                <span>{new Date(receiptModal.issued_at).toLocaleString()}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Issued By:</span>
+                <span>{receiptModal.generated_by}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 24 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setReceiptModal(null)}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  window.print()
+                  setReceiptModal(null)
+                }}
+              >
+                Print Receipt 🖨️
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Financial Audit Ledger Modal */}
+      {showAuditModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000,
+          }}
+        >
+          <div className="card" style={{ width: '100%', maxWidth: 860, maxHeight: '85vh', overflowY: 'auto', padding: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Immutable Financial Audit Ledger</h3>
+                <div className="text-muted" style={{ fontSize: '0.82rem' }}>
+                  Cryptographically trackable payment events, webhook validations, and manual transaction adjustments.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAuditModal(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '1.2rem' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingAudit ? (
+              <div style={{ padding: 36, textAlign: 'center' }} className="text-muted">Loading audit entries...</div>
+            ) : auditLogs.length === 0 ? (
+              <div style={{ padding: 36, textAlign: 'center' }} className="text-muted">No audit logs recorded yet.</div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-color)', color: '#94a3b8', textTransform: 'uppercase' }}>
+                      <th style={{ padding: '10px 12px' }}>Timestamp</th>
+                      <th style={{ padding: '10px 12px' }}>Action</th>
+                      <th style={{ padding: '10px 12px' }}>Actor</th>
+                      <th style={{ padding: '10px 12px' }}>Amount</th>
+                      <th style={{ padding: '10px 12px' }}>Status Transition</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map((log) => (
+                      <tr key={log.id} style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)' }}>
+                        <td style={{ padding: '10px 12px', color: '#94a3b8' }}>
+                          {new Date(log.created_at).toLocaleString()}
+                        </td>
+                        <td style={{ padding: '10px 12px', fontWeight: 700, color: '#60a5fa' }}>
+                          {log.action}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>{log.actor_name || 'System'}</td>
+                        <td style={{ padding: '10px 12px', fontWeight: 600 }}>
+                          {log.amount != null ? formatCurrency(log.amount) : '—'}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ color: '#fbbf24' }}>{log.old_status || 'initial'}</span> →{' '}
+                          <span style={{ color: '#34d399', fontWeight: 700 }}>{log.new_status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowAuditModal(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

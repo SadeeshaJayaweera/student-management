@@ -884,6 +884,64 @@ export interface BillingSummary {
   currency: string;
 }
 
+// ── Payment Gateway & Financial Auditing ─────────────────────────────
+
+export interface PaymentReceipt {
+  id: number;
+  transaction_id: number;
+  invoice_id: number;
+  receipt_number: string;
+  receipt_url?: string | null;
+  amount_paid: number;
+  currency: string;
+  payment_method: string;
+  issued_at: string;
+  generated_by: string;
+}
+
+export interface PaymentTransaction {
+  id: number;
+  invoice_id: number;
+  installment_id?: number | null;
+  student_id: number;
+  transaction_ref: string;
+  gateway: string;
+  gateway_reference?: string | null;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed' | 'refunded';
+  payment_method: string;
+  created_at: string;
+  receipt?: PaymentReceipt | null;
+}
+
+export interface PaymentCheckoutResponse {
+  transaction_id: number;
+  transaction_ref: string;
+  amount: number;
+  currency: string;
+  status: string;
+  gateway: string;
+  checkout_url: string;
+  checkout_params: Record<string, any>;
+}
+
+export interface FinancialAuditLog {
+  id: number;
+  transaction_id?: number | null;
+  invoice_id?: number | null;
+  actor_user_id?: number | null;
+  actor_name?: string | null;
+  action: string;
+  old_status?: string | null;
+  new_status?: string | null;
+  amount?: number | null;
+  ip_address?: string | null;
+  details?: Record<string, any> | null;
+  created_at: string;
+}
+
+
 
 
 
