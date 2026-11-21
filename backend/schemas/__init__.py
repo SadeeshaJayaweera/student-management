@@ -958,6 +958,51 @@ class StudentProgressRosterItem(BaseModel):
     total_lessons_count: int
     is_completed: bool
 
+class CourseAnnouncementCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    content: str = Field(..., min_length=1)
+    priority: str = "normal"
+    is_pinned: bool = False
+    cohort_id: Optional[int] = None
+    published_at: Optional[datetime] = None
+    requires_acknowledgement: bool = False
+
+class CourseAnnouncementUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    priority: Optional[str] = None
+    is_pinned: Optional[bool] = None
+    requires_acknowledgement: Optional[bool] = None
+
+class CourseAnnouncementOut(BaseModel):
+    id: int
+    course_id: int
+    author_id: Optional[int] = None
+    author_name: Optional[str] = None
+    cohort_id: Optional[int] = None
+    title: str
+    content: str
+    priority: str
+    is_pinned: bool
+    requires_acknowledgement: bool
+    is_acknowledged: Optional[bool] = False
+    acknowledgements_count: int = 0
+    published_at: datetime
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class AnnouncementAcknowledgeOut(BaseModel):
+    id: int
+    announcement_id: int
+    student_id: int
+    acknowledged_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)
