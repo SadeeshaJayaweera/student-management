@@ -3039,6 +3039,91 @@ class MessagingContactOut(BaseModel):
     context: Optional[str] = None
 
 
+# ─── Advanced Notification Schemas ──────────────────────────────────────────
+
+class NotificationCreate(BaseModel):
+    user_id: int
+    title: str = Field(..., min_length=2, max_length=300)
+    message: str = Field(..., min_length=1)
+    notification_type: str = "info"  # info, warning, success, error
+    category: str = "general"  # academic, deadline, announcement, system, finance, social
+    priority: str = "normal"  # urgent, high, normal, low
+    link: Optional[str] = None
+    extra_data: Optional[Dict[str, Any]] = None
+    expires_at: Optional[datetime] = None
+
+class NotificationBroadcastPayload(BaseModel):
+    title: str = Field(..., min_length=3, max_length=300)
+    message: str = Field(..., min_length=3)
+    notification_type: str = "info"
+    category: str = "announcement"
+    priority: str = "normal"
+    target_role: Optional[str] = None  # None = all users, or "student", "lecturer", etc.
+    link: Optional[str] = None
+
+class NotificationBatchAction(BaseModel):
+    notification_ids: Optional[List[int]] = None  # None or empty = mark all as read
+    action: str = "mark_read"  # mark_read, delete
+
+class NotificationOut(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    message: str
+    notification_type: str
+    category: str
+    priority: str
+    link: Optional[str] = None
+    is_read: bool
+    read_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    extra_data: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NotificationPreferenceUpdate(BaseModel):
+    email_enabled: Optional[bool] = None
+    in_app_enabled: Optional[bool] = None
+    push_enabled: Optional[bool] = None
+    sms_enabled: Optional[bool] = None
+    notify_academic: Optional[bool] = None
+    notify_deadlines: Optional[bool] = None
+    notify_announcements: Optional[bool] = None
+    notify_messages: Optional[bool] = None
+    notify_grades: Optional[bool] = None
+    quiet_hours_enabled: Optional[bool] = None
+    quiet_hours_start: Optional[str] = None
+    quiet_hours_end: Optional[str] = None
+
+class NotificationPreferenceOut(BaseModel):
+    user_id: int
+    email_enabled: bool
+    in_app_enabled: bool
+    push_enabled: bool
+    sms_enabled: bool
+    notify_academic: bool
+    notify_deadlines: bool
+    notify_announcements: bool
+    notify_messages: bool
+    notify_grades: bool
+    quiet_hours_enabled: bool
+    quiet_hours_start: Optional[str] = None
+    quiet_hours_end: Optional[str] = None
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NotificationStatsOut(BaseModel):
+    total_unread: int
+    total_count: int
+    unread_by_category: Dict[str, int]
+    unread_by_priority: Dict[str, int]
+
+
+
 
 
 

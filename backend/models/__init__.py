@@ -296,6 +296,7 @@ class User(Base):
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
     assigned_roles = relationship("UserRoleAssignment", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    notification_preferences = relationship("NotificationPreference", uselist=False, back_populates="user", cascade="all, delete-orphan")
     messages = relationship("Message", foreign_keys="Message.sender_id", back_populates="sender")
 
 
@@ -1852,15 +1853,42 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String(300), nullable=False)
     message = Column(Text, nullable=False)
     notification_type = Column(String(50), default="info")  # info, warning, success, error
+    category = Column(String(50), default="general", nullable=False, index=True)  # academic, deadline, announcement, system, finance, social
+    priority = Column(String(20), default="normal", nullable=False)  # urgent, high, normal, low
     link = Column(String(500), nullable=True)
-    is_read = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=func.now())
+    is_read = Column(Boolean, default=False, nullable=False, index=True)
+    read_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
+    extra_data = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="notifications")
+
+
+class NotificationPreference(Base):
+    __tablename__ = "notification_preferences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    email_enabled = Column(Boolean, default=True, nullable=False)
+    in_app_enabled = Column(Boolean, default=True, nullable=False)
+    push_enabled = Column(Boolean, default=True, nullable=False)
+    sms_enabled = Column(Boolean, default=False, nullable=False)
+    notify_academic = Column(Boolean, default=True, nullable=False)
+    notify_deadlines = Column(Boolean, default=True, nullable=False)
+    notify_announcements = Column(Boolean, default=True, nullable=False)
+    notify_messages = Column(Boolean, default=True, nullable=False)
+    notify_grades = Column(Boolean, default=True, nullable=False)
+    quiet_hours_enabled = Column(Boolean, default=False, nullable=False)
+    quiet_hours_start = Column(String(10), nullable=True)  # "22:00"
+    quiet_hours_end = Column(String(10), nullable=True)  # "07:00"
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    user = relationship("User", back_populates="notification_preferences")
 
 
 class Conversation(Base):

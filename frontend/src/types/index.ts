@@ -658,6 +658,49 @@ export interface MessagingContact {
   context?: string | null;
 }
 
+// ── Notification Center ───────────────────────────────────────
+
+export interface NotificationItem {
+  id: number;
+  user_id: number;
+  title: string;
+  message: string;
+  notification_type: 'info' | 'warning' | 'success' | 'error';
+  category: 'general' | 'academic' | 'deadline' | 'announcement' | 'system' | 'finance' | 'social';
+  priority: 'urgent' | 'high' | 'normal' | 'low';
+  link?: string | null;
+  is_read: boolean;
+  read_at?: string | null;
+  expires_at?: string | null;
+  extra_data?: Record<string, any> | null;
+  created_at: string;
+}
+
+export interface NotificationPreferences {
+  user_id: number;
+  email_enabled: boolean;
+  in_app_enabled: boolean;
+  push_enabled: boolean;
+  sms_enabled: boolean;
+  notify_academic: boolean;
+  notify_deadlines: boolean;
+  notify_announcements: boolean;
+  notify_messages: boolean;
+  notify_grades: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start?: string | null;
+  quiet_hours_end?: string | null;
+  updated_at: string;
+}
+
+export interface NotificationStats {
+  total_unread: number;
+  total_count: number;
+  unread_by_category: Record<string, number>;
+  unread_by_priority: Record<string, number>;
+}
+
+
 
 
 

@@ -66,6 +66,7 @@ from backend.routers.attendance_management import router as attendance_managemen
 from backend.routers.calendar_tasks import router as calendar_tasks_router
 from backend.routers.collaboration import router as collaboration_router
 from backend.routers.messaging import router as messaging_router
+from backend.routers.notifications import router as notifications_router
 from backend.routers.v1 import v1_router
 
 
@@ -193,6 +194,7 @@ app.include_router(attendance_management_router)
 app.include_router(calendar_tasks_router)
 app.include_router(collaboration_router)
 app.include_router(messaging_router)
+app.include_router(notifications_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

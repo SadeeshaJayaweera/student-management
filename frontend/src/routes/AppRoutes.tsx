@@ -19,6 +19,7 @@ import Timetable from '@/pages/Timetable'
 import CalendarTasks from '@/pages/CalendarTasks'
 import CollaborationSpaces from '@/pages/CollaborationSpaces'
 import Messaging from '@/pages/Messaging'
+import Notifications from '@/pages/Notifications'
 import { AlumniNetwork, Experiences } from '@/pages/Alumni'
 
 function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: string }) {
@@ -37,7 +38,6 @@ function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: s
 
 const Grading = () => <StubPage title="Grading Center" icon="✅" desc="Review and grade student submissions." />
 const Analytics = () => <StubPage title="Analytics Dashboard" icon="📈" desc="Teaching performance and student insights." />
-const Notifications = () => <StubPage title="Notifications" icon="🔔" desc="Stay up to date with campus announcements." />
 const Mentorship = () => <StubPage title="Mentorship Program" icon="🤝" desc="Connect with alumni mentors." />
 const JobBoard = () => <StubPage title="Job Board" icon="💼" desc="Career opportunities from alumni and partners." />
 const ManageUsers = () => <StubPage title="User Management" icon="👥" desc="Manage all system users." />

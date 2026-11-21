@@ -240,11 +240,18 @@ async def get_current_admin(current_user: User = Depends(get_current_user)) -> U
 
 def require_roles(*roles: str):
     """Dependency factory for role-based access"""
+    # Normalize if passed as a single list or tuple
+    if len(roles) == 1 and isinstance(roles[0], (list, tuple, set)):
+        allowed_roles = tuple(str(r) for r in roles[0])
+    else:
+        allowed_roles = tuple(str(r) for r in roles)
+
     async def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in roles:
+        user_role_str = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+        if current_user.role not in allowed_roles and user_role_str not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Requires one of: {', '.join(roles)}"
+                detail=f"Requires one of: {', '.join(allowed_roles)}"
             )
         return current_user
     return role_checker
