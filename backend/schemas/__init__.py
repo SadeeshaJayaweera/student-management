@@ -790,6 +790,38 @@ class CourseOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Enrollment Schemas ───────────────────────────────────────────────────────
+
+class EnrollmentRegisterRequest(BaseModel):
+    course_id: int
+    semester_id: Optional[int] = None
+    registration_type: str = "regular"  # regular, audit, repeat
+    remarks: Optional[str] = None
+
+class EnrollmentStatusUpdate(BaseModel):
+    status: str  # active, approved, waitlisted, dropped, withdrawn, rejected, completed
+    rejection_reason: Optional[str] = None
+    remarks: Optional[str] = None
+
+class EnrollmentOut(BaseModel):
+    id: int
+    student_id: int
+    course_id: int
+    institution_id: Optional[int] = None
+    semester_id: Optional[int] = None
+    enrolled_at: datetime
+    status: str
+    waitlist_position: Optional[int] = None
+    registration_type: str
+    approved_by_id: Optional[int] = None
+    approved_at: Optional[datetime] = None
+    dropped_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    remarks: Optional[str] = None
+    course: Optional[CourseOut] = None
+    class Config:
+        from_attributes = True
+
 class GradeOut(BaseModel):
     id: int
     course_id: int
