@@ -107,6 +107,7 @@ class Institution(Base):
     semesters = relationship("Semester", back_populates="institution", cascade="all, delete-orphan")
     programs = relationship("Program", back_populates="institution", cascade="all, delete-orphan")
     lecturers = relationship("Lecturer", back_populates="institution", cascade="all, delete-orphan")
+    cohorts = relationship("Cohort", back_populates="institution", cascade="all, delete-orphan")
 
 
 class Campus(Base):
@@ -675,6 +676,83 @@ class Enrollment(Base):
     semester = relationship("Semester")
     approved_by = relationship("User", foreign_keys=[approved_by_id])
     institution = relationship("Institution")
+
+
+# ─── Cohort & Group Management Models ──────────────────────────────────────────
+
+class Cohort(Base):
+    __tablename__ = "cohorts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True, index=True)
+    academic_year_id = Column(Integer, ForeignKey("academic_years.id", ondelete="SET NULL"), nullable=True, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(150), nullable=False)
+    year_of_study = Column(Integer, default=1, nullable=False)
+    semester_number = Column(Integer, default=1, nullable=False)
+    max_capacity = Column(Integer, default=60, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    institution = relationship("Institution", back_populates="cohorts")
+    program = relationship("Program")
+    academic_year = relationship("AcademicYear")
+    members = relationship("CohortMember", back_populates="cohort", cascade="all, delete-orphan")
+    groups = relationship("StudentGroup", back_populates="cohort", cascade="all, delete-orphan")
+
+
+class CohortMember(Base):
+    __tablename__ = "cohort_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cohort_id = Column(Integer, ForeignKey("cohorts.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(30), default="student", nullable=False)  # student, class_representative, vice_representative
+    joined_at = Column(DateTime, default=func.now(), nullable=False)
+    status = Column(String(20), default="active", nullable=False)  # active, transferred, inactive
+
+    # Relationships
+    cohort = relationship("Cohort", back_populates="members")
+    student = relationship("Student")
+
+
+class StudentGroup(Base):
+    __tablename__ = "student_groups"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    cohort_id = Column(Integer, ForeignKey("cohorts.id", ondelete="CASCADE"), nullable=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    group_type = Column(String(50), default="tutorial", nullable=False)  # tutorial, lab, project_team, discussion
+    name = Column(String(100), nullable=False)
+    max_capacity = Column(Integer, default=30, nullable=False)
+    mentor_lecturer_id = Column(Integer, ForeignKey("lecturers.id", ondelete="SET NULL"), nullable=True)
+    schedule_info = Column(JSON, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    cohort = relationship("Cohort", back_populates="groups")
+    course = relationship("Course")
+    mentor_lecturer = relationship("Lecturer")
+    members = relationship("StudentGroupMember", back_populates="group", cascade="all, delete-orphan")
+
+
+class StudentGroupMember(Base):
+    __tablename__ = "student_group_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("student_groups.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    group_role = Column(String(30), default="member", nullable=False)  # leader, member
+    joined_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    group = relationship("StudentGroup", back_populates="members")
+    student = relationship("Student")
 
 
 class Grade(Base):
