@@ -544,4 +544,63 @@ export interface CalendarEvent {
   created_at: string;
 }
 
+// ── Student Collaboration Spaces ──────────────────────────────
+
+export interface CollaborationMember {
+  id: number;
+  student_id: number;
+  student_name: string;
+  student_reg_id?: string | null;
+  role: string;
+  joined_at: string;
+}
+
+export interface CollaborationAsset {
+  id: number;
+  workspace_id: number;
+  created_by_student_id?: number | null;
+  author_name: string;
+  title: string;
+  asset_type: string;
+  content: string;
+  version: number;
+  created_at: string;
+}
+
+export interface CollaborationMessage {
+  id: number;
+  workspace_id: number;
+  sender_student_id: number;
+  sender_name: string;
+  content: string;
+  pinned: boolean;
+  created_at: string;
+}
+
+export interface CollaborationWorkspace {
+  id: number;
+  course_id?: number | null;
+  course_code?: string | null;
+  name: string;
+  description?: string | null;
+  topic?: string | null;
+  visibility: string;
+  owner_student_id: number;
+  owner_name: string;
+  join_code: string;
+  shared_whiteboard_data?: Record<string, any> | null;
+  meeting_link?: string | null;
+  status: string;
+  members_count: number;
+  assets_count: number;
+  created_at: string;
+}
+
+export interface CollaborationWorkspaceDetail extends CollaborationWorkspace {
+  members: CollaborationMember[];
+  assets: CollaborationAsset[];
+  recent_messages: CollaborationMessage[];
+}
+
+
 

@@ -16,6 +16,7 @@ function studentNav(): NavItem[] {
     { to: '/attendance',   icon: '📅', label: 'Attendance' },
     { to: '/timetable',    icon: '⏰', label: 'Timetable' },
     { to: '/calendar',     icon: '📆', label: 'Calendar & Tasks' },
+    { to: '/collaboration', icon: '👥', label: 'Study Groups' },
   ]
 }
 

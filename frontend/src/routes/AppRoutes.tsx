@@ -17,6 +17,7 @@ import Courses from '@/pages/Courses'
 import Profile from '@/pages/Profile'
 import Timetable from '@/pages/Timetable'
 import CalendarTasks from '@/pages/CalendarTasks'
+import CollaborationSpaces from '@/pages/CollaborationSpaces'
 import { AlumniNetwork, Experiences } from '@/pages/Alumni'
 
 function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: string }) {
@@ -59,6 +60,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/calendar" element={<CalendarTasks />} />
         <Route path="/tasks" element={<CalendarTasks />} />
+        <Route path="/collaboration" element={<CollaborationSpaces />} />
 
         {/* Lecturer Portals */}
         <Route path="/grading" element={<Grading />} />
