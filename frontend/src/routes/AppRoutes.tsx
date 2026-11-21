@@ -15,6 +15,7 @@ import Assignments from '@/pages/Assignments'
 import Attendance from '@/pages/Attendance'
 import Courses from '@/pages/Courses'
 import Profile from '@/pages/Profile'
+import Timetable from '@/pages/Timetable'
 import { AlumniNetwork, Experiences } from '@/pages/Alumni'
 
 function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: string }) {
@@ -31,7 +32,6 @@ function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: s
   )
 }
 
-const Timetable = () => <StubPage title="Weekly Timetable" icon="⏰" desc="View your class schedule for this semester." />
 const Grading = () => <StubPage title="Grading Center" icon="✅" desc="Review and grade student submissions." />
 const Analytics = () => <StubPage title="Analytics Dashboard" icon="📈" desc="Teaching performance and student insights." />
 const Notifications = () => <StubPage title="Notifications" icon="🔔" desc="Stay up to date with campus announcements." />

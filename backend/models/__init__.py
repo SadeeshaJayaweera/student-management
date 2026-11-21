@@ -635,6 +635,7 @@ class Course(Base):
     quizzes = relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
     gradebook_categories = relationship("GradebookCategory", back_populates="course", cascade="all, delete-orphan", order_by="GradebookCategory.id")
     grade_scales = relationship("GradeScale", back_populates="course", cascade="all, delete-orphan")
+    timetable_slots = relationship("TimetableSlot", back_populates="course", cascade="all, delete-orphan", order_by="TimetableSlot.day_of_week, TimetableSlot.start_time")
 
 
 class CoursePrerequisite(Base):
@@ -1915,4 +1916,28 @@ class GradebookOverride(Base):
     course = relationship("Course")
     student = relationship("Student")
     overridden_by = relationship("User", foreign_keys=[overridden_by_id])
+
+
+class TimetableSlot(Base):
+    __tablename__ = "timetable_slots"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    lecturer_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    day_of_week = Column(Integer, nullable=False, index=True)  # 0=Monday, 1=Tuesday, ..., 6=Sunday
+    start_time = Column(String(10), nullable=False)  # HH:MM
+    end_time = Column(String(10), nullable=False)    # HH:MM
+    title = Column(String(200), nullable=False)
+    slot_type = Column(String(50), default="lecture", nullable=False)  # lecture, lab, tutorial, exam, workshop
+    room = Column(String(100), nullable=False)
+    building = Column(String(100), nullable=True)
+    recurrence_pattern = Column(String(50), default="weekly", nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    color = Column(String(20), default="#4F46E5", nullable=False)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="timetable_slots")
+    lecturer = relationship("User", foreign_keys=[lecturer_id])
 
