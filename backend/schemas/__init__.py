@@ -1839,6 +1839,85 @@ class SubmissionReceiptOut(BaseModel):
     submitted_at: datetime
     verification_hash: str
 
+# ─── Question Bank Schemas ───────────────────────────────────────────────────
+
+class QuestionCategoryCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
+    display_order: int = 0
+
+class QuestionCategoryOut(BaseModel):
+    id: int
+    course_id: Optional[int] = None
+    parent_id: Optional[int] = None
+    name: str
+    description: Optional[str] = None
+    display_order: int
+    questions_count: int = 0
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class QuestionOption(BaseModel):
+    id: str
+    text: str
+    is_correct: bool = False
+    feedback: Optional[str] = None
+
+class QuestionBankItemCreate(BaseModel):
+    category_id: Optional[int] = None
+    rubric_id: Optional[int] = None
+    title: str = Field(..., min_length=2, max_length=255)
+    prompt: str = Field(..., min_length=2)
+    question_type: str = "single_choice"  # single_choice, multiple_choice, true_false, short_answer, essay, code_snippet, numerical
+    difficulty_level: str = "intermediate"  # beginner, intermediate, advanced, expert
+    default_points: float = Field(1.0, gt=0)
+    explanation: Optional[str] = None
+    tags: Optional[List[str]] = []
+    options: Optional[List[QuestionOption]] = None
+    answer_key: Optional[dict] = None
+    is_active: bool = True
+
+class QuestionBankItemUpdate(BaseModel):
+    category_id: Optional[int] = None
+    rubric_id: Optional[int] = None
+    title: Optional[str] = None
+    prompt: Optional[str] = None
+    question_type: Optional[str] = None
+    difficulty_level: Optional[str] = None
+    default_points: Optional[float] = None
+    explanation: Optional[str] = None
+    tags: Optional[List[str]] = None
+    options: Optional[List[QuestionOption]] = None
+    answer_key: Optional[dict] = None
+    is_active: Optional[bool] = None
+
+class QuestionBankItemOut(BaseModel):
+    id: int
+    course_id: Optional[int] = None
+    category_id: Optional[int] = None
+    creator_id: Optional[int] = None
+    rubric_id: Optional[int] = None
+    title: str
+    prompt: str
+    question_type: str
+    difficulty_level: str
+    default_points: float
+    explanation: Optional[str] = None
+    tags: Optional[List[str]] = None
+    options: Optional[List[dict]] = None
+    answer_key: Optional[dict] = None
+    is_active: bool
+    usage_count: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 class GradeUpdate(BaseModel):
     assignment_id: int
     submission_id: int

@@ -630,6 +630,8 @@ class Course(Base):
     forum_categories = relationship("CourseForumCategory", back_populates="course", cascade="all, delete-orphan", order_by="CourseForumCategory.display_order")
     live_sessions = relationship("VirtualClassroomSession", back_populates="course", cascade="all, delete-orphan", order_by="VirtualClassroomSession.start_time")
     rubrics = relationship("Rubric", back_populates="course", cascade="all, delete-orphan")
+    question_categories = relationship("QuestionCategory", back_populates="course", cascade="all, delete-orphan", order_by="QuestionCategory.display_order")
+    question_bank_items = relationship("QuestionBankItem", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -1403,6 +1405,52 @@ class RubricEvaluation(Base):
     assignment = relationship("Assignment", back_populates="rubric_evaluations")
     submission = relationship("AssignmentSubmission", back_populates="rubric_evaluation")
     grader = relationship("User", foreign_keys=[grader_id])
+
+
+# ─── Question Bank & Assessment Questions Models ──────────────────────────────
+
+class QuestionCategory(Base):
+    __tablename__ = "question_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    parent_id = Column(Integer, ForeignKey("question_categories.id", ondelete="CASCADE"), nullable=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    display_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="question_categories")
+    questions = relationship("QuestionBankItem", back_populates="category", cascade="all, delete-orphan")
+
+
+class QuestionBankItem(Base):
+    __tablename__ = "question_bank_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    category_id = Column(Integer, ForeignKey("question_categories.id", ondelete="SET NULL"), nullable=True, index=True)
+    creator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    prompt = Column(Text, nullable=False)
+    question_type = Column(String(50), nullable=False)  # single_choice, multiple_choice, true_false, short_answer, essay, code_snippet, numerical
+    difficulty_level = Column(String(20), default="intermediate", nullable=False)  # beginner, intermediate, advanced, expert
+    default_points = Column(Float, default=1.0, nullable=False)
+    explanation = Column(Text, nullable=True)
+    tags = Column(JSON, nullable=True)  # ["trees", "recursion"]
+    options = Column(JSON, nullable=True)  # [{"id": "opt_1", "text": "...", "is_correct": True, "feedback": "..."}]
+    answer_key = Column(JSON, nullable=True)  # {"expected_text": "...", "tolerance": 0.05, "regex": "..."}
+    is_active = Column(Boolean, default=True, nullable=False)
+    usage_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="question_bank_items")
+    category = relationship("QuestionCategory", back_populates="questions")
+    creator = relationship("User", foreign_keys=[creator_id])
+    rubric = relationship("Rubric", foreign_keys=[rubric_id])
 
 
 class CourseMaterial(Base):
