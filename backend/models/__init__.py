@@ -632,6 +632,7 @@ class Course(Base):
     rubrics = relationship("Rubric", back_populates="course", cascade="all, delete-orphan")
     question_categories = relationship("QuestionCategory", back_populates="course", cascade="all, delete-orphan", order_by="QuestionCategory.display_order")
     question_bank_items = relationship("QuestionBankItem", back_populates="course", cascade="all, delete-orphan")
+    quizzes = relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -1451,6 +1452,74 @@ class QuestionBankItem(Base):
     category = relationship("QuestionCategory", back_populates="questions")
     creator = relationship("User", foreign_keys=[creator_id])
     rubric = relationship("Rubric", foreign_keys=[rubric_id])
+
+
+# ─── Automated Quiz & Assessment Engine Models ────────────────────────────────
+
+class Quiz(Base):
+    __tablename__ = "quizzes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True)
+    creator_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    instructions = Column(Text, nullable=True)
+    time_limit_minutes = Column(Integer, nullable=True)
+    passing_score_percentage = Column(Float, default=50.0, nullable=False)
+    max_attempts = Column(Integer, default=1, nullable=False)
+    shuffle_questions = Column(Boolean, default=True, nullable=False)
+    shuffle_options = Column(Boolean, default=True, nullable=False)
+    show_correct_answers = Column(Boolean, default=True, nullable=False)
+    allow_backtracking = Column(Boolean, default=True, nullable=False)
+    total_points = Column(Float, default=0.0, nullable=False)
+    status = Column(String(30), default="published", nullable=False)  # draft, published, closed
+    available_from = Column(DateTime, nullable=True)
+    due_date = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="quizzes")
+    module = relationship("CourseModule")
+    creator = relationship("User", foreign_keys=[creator_id])
+    questions = relationship("QuizQuestion", back_populates="quiz", cascade="all, delete-orphan", order_by="QuizQuestion.order_index")
+    attempts = relationship("QuizAttempt", back_populates="quiz", cascade="all, delete-orphan")
+
+
+class QuizQuestion(Base):
+    __tablename__ = "quiz_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_item_id = Column(Integer, ForeignKey("question_bank_items.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_index = Column(Integer, default=0, nullable=False)
+    points = Column(Float, default=1.0, nullable=False)
+
+    quiz = relationship("Quiz", back_populates="questions")
+    question_item = relationship("QuestionBankItem")
+
+
+class QuizAttempt(Base):
+    __tablename__ = "quiz_attempts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    quiz_id = Column(Integer, ForeignKey("quizzes.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    attempt_number = Column(Integer, default=1, nullable=False)
+    started_at = Column(DateTime, default=func.now(), nullable=False)
+    submitted_at = Column(DateTime, nullable=True)
+    total_score = Column(Float, default=0.0, nullable=False)
+    max_score = Column(Float, default=0.0, nullable=False)
+    percentage = Column(Float, default=0.0, nullable=False)
+    is_passed = Column(Boolean, default=False, nullable=False)
+    status = Column(String(30), default="in_progress", nullable=False)  # in_progress, submitted, graded, abandoned
+    answers = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    quiz = relationship("Quiz", back_populates="attempts")
+    student = relationship("Student")
 
 
 class CourseMaterial(Base):

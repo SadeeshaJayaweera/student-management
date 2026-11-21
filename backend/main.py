@@ -55,6 +55,7 @@ from backend.routers.assignments import router as assignments_router
 from backend.routers.rubrics import router as rubrics_router
 from backend.routers.submissions import router as submissions_router
 from backend.routers.questions import router as questions_router
+from backend.routers.quizzes import router as quizzes_router
 from backend.routers.v1 import v1_router
 
 
@@ -171,6 +172,7 @@ app.include_router(assignments_router)
 app.include_router(rubrics_router)
 app.include_router(submissions_router)
 app.include_router(questions_router)
+app.include_router(quizzes_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
