@@ -2541,6 +2541,83 @@ class LibraryResourceBookmark(Base):
     resource = relationship("DigitalLibraryResource", back_populates="bookmarks")
 
 
+# ─── Sports and Athletic Management Models ───────────────────────────────────
+
+class AthleticTeam(Base):
+    __tablename__ = "athletic_teams"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False, index=True)
+    sport_type = Column(String(60), nullable=False, index=True)  # cricket, rugby, football, swimming, badminton, basketball, esports
+    coach_name = Column(String(200), nullable=True)
+    captain_name = Column(String(200), nullable=True)
+    division = Column(String(60), default="Division 1", nullable=False)
+    home_venue = Column(String(200), nullable=True)
+    logo_url = Column(String(500), nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    roster = relationship("AthleteProfile", back_populates="team", cascade="all, delete-orphan")
+    fixtures = relationship("SportsFixture", back_populates="team", cascade="all, delete-orphan")
+
+
+class AthleteProfile(Base):
+    __tablename__ = "athlete_profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("athletic_teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    jersey_number = Column(Integer, nullable=True)
+    position_or_role = Column(String(100), nullable=False)
+    fitness_status = Column(String(30), default="fit", nullable=False)  # fit, injured, resting, convalescing
+    matches_played = Column(Integer, default=0, nullable=False)
+    points_or_goals = Column(Integer, default=0, nullable=False)
+    mvp_awards = Column(Integer, default=0, nullable=False)
+    joined_date = Column(Date, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    student = relationship("Student")
+    team = relationship("AthleticTeam", back_populates="roster")
+
+
+class SportsFixture(Base):
+    __tablename__ = "sports_fixtures"
+
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("athletic_teams.id", ondelete="CASCADE"), nullable=False, index=True)
+    tournament_name = Column(String(255), nullable=False, index=True)
+    opponent_name = Column(String(255), nullable=False)
+    scheduled_time = Column(DateTime, nullable=False, index=True)
+    venue = Column(String(200), nullable=False)
+    fixture_type = Column(String(50), default="tournament", nullable=False)  # tournament, friendly, league, qualifier
+    status = Column(String(30), default="upcoming", nullable=False)  # upcoming, ongoing, completed, postponed, cancelled
+    our_score = Column(String(50), nullable=True)
+    opponent_score = Column(String(50), nullable=True)
+    match_result = Column(String(30), nullable=True)  # won, lost, drawn, abandoned
+    highlights = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    team = relationship("AthleticTeam", back_populates="fixtures")
+
+
+class SportsFacilityBooking(Base):
+    __tablename__ = "sports_facility_bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    facility_name = Column(String(150), nullable=False, index=True)
+    booked_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    team_id = Column(Integer, ForeignKey("athletic_teams.id", ondelete="SET NULL"), nullable=True, index=True)
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False)
+    purpose = Column(String(255), nullable=False)
+    status = Column(String(30), default="confirmed", nullable=False)  # pending, confirmed, cancelled
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    booked_by = relationship("User")
+    team = relationship("AthleticTeam")
+
+
+
 
 
 

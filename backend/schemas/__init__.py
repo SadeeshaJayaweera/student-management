@@ -3685,6 +3685,127 @@ class CirculationStatsOut(BaseModel):
     collected_fines_total: float
 
 
+# ─── Sports and Athletic Management Schemas ──────────────────────────────────
+
+class AthleticTeamCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=200)
+    sport_type: str = Field(..., min_length=2, max_length=60)
+    coach_name: Optional[str] = None
+    captain_name: Optional[str] = None
+    division: str = "Division 1"
+    home_venue: Optional[str] = None
+    logo_url: Optional[str] = None
+
+class AthleteProfileCreate(BaseModel):
+    student_id: int
+    jersey_number: Optional[int] = None
+    position_or_role: str = Field(..., min_length=2, max_length=100)
+    fitness_status: str = "fit"
+    joined_date: Optional[date] = None
+
+class AthleteProfileOut(BaseModel):
+    id: int
+    student_id: int
+    student_name: Optional[str] = None
+    student_reg_number: Optional[str] = None
+    team_id: int
+    jersey_number: Optional[int] = None
+    position_or_role: str
+    fitness_status: str
+    matches_played: int
+    points_or_goals: int
+    mvp_awards: int
+    joined_date: Optional[date] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SportsFixtureCreate(BaseModel):
+    team_id: int
+    tournament_name: str = Field(..., min_length=2, max_length=255)
+    opponent_name: str = Field(..., min_length=2, max_length=255)
+    scheduled_time: datetime
+    venue: str = Field(..., min_length=2, max_length=200)
+    fixture_type: str = "tournament"
+
+class SportsFixtureResultUpdate(BaseModel):
+    status: str = "completed"
+    our_score: str = Field(..., min_length=1, max_length=50)
+    opponent_score: str = Field(..., min_length=1, max_length=50)
+    match_result: str = Field(..., pattern="^(won|lost|drawn|abandoned)$")
+    highlights: Optional[str] = None
+
+class SportsFixtureOut(BaseModel):
+    id: int
+    team_id: int
+    team_name: Optional[str] = None
+    sport_type: Optional[str] = None
+    tournament_name: str
+    opponent_name: str
+    scheduled_time: datetime
+    venue: str
+    fixture_type: str
+    status: str
+    our_score: Optional[str] = None
+    opponent_score: Optional[str] = None
+    match_result: Optional[str] = None
+    highlights: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AthleticTeamOut(BaseModel):
+    id: int
+    name: str
+    sport_type: str
+    coach_name: Optional[str] = None
+    captain_name: Optional[str] = None
+    division: str
+    home_venue: Optional[str] = None
+    logo_url: Optional[str] = None
+    is_active: bool
+    roster: List[AthleteProfileOut] = []
+    fixtures: List[SportsFixtureOut] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class SportsFacilityBookingCreate(BaseModel):
+    facility_name: str = Field(..., min_length=2, max_length=150)
+    team_id: Optional[int] = None
+    start_time: datetime
+    end_time: datetime
+    purpose: str = Field(..., min_length=2, max_length=255)
+
+class SportsFacilityBookingOut(BaseModel):
+    id: int
+    facility_name: str
+    booked_by_user_id: int
+    booked_by_name: Optional[str] = None
+    team_id: Optional[int] = None
+    team_name: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    purpose: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AthleticStatsOut(BaseModel):
+    total_teams: int
+    total_athletes: int
+    upcoming_fixtures_count: int
+    matches_won: int
+    matches_lost: int
+    facilities_booked_count: int
+
+
+
 
 
 

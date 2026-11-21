@@ -1052,6 +1052,81 @@ export interface CirculationStats {
   collected_fines_total: number;
 }
 
+// ── Sports and Athletic Management ───────────────────────────────────
+
+export interface AthleteProfile {
+  id: number;
+  student_id: number;
+  student_name?: string | null;
+  student_reg_number?: string | null;
+  team_id: number;
+  jersey_number?: number | null;
+  position_or_role: string;
+  fitness_status: string;
+  matches_played: number;
+  points_or_goals: number;
+  mvp_awards: number;
+  joined_date?: string | null;
+  created_at: string;
+}
+
+export interface SportsFixture {
+  id: number;
+  team_id: number;
+  team_name?: string | null;
+  sport_type?: string | null;
+  tournament_name: string;
+  opponent_name: string;
+  scheduled_time: string;
+  venue: string;
+  fixture_type: string;
+  status: string;
+  our_score?: string | null;
+  opponent_score?: string | null;
+  match_result?: string | null;
+  highlights?: string | null;
+  created_at: string;
+}
+
+export interface AthleticTeam {
+  id: number;
+  name: string;
+  sport_type: string;
+  coach_name?: string | null;
+  captain_name?: string | null;
+  division: string;
+  home_venue?: string | null;
+  logo_url?: string | null;
+  is_active: boolean;
+  roster: AthleteProfile[];
+  fixtures: SportsFixture[];
+  created_at: string;
+}
+
+export interface SportsFacilityBooking {
+  id: number;
+  facility_name: string;
+  booked_by_user_id: number;
+  booked_by_name?: string | null;
+  team_id?: number | null;
+  team_name?: string | null;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  status: string;
+  created_at: string;
+}
+
+export interface AthleticStats {
+  total_teams: number;
+  total_athletes: number;
+  upcoming_fixtures_count: number;
+  matches_won: number;
+  matches_lost: number;
+  facilities_booked_count: number;
+}
+
+
 
 
 
