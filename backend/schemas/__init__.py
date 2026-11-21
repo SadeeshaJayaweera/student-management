@@ -3515,6 +3515,111 @@ class ManualPaymentRecordRequest(BaseModel):
     paid_date: Optional[date] = None
 
 
+# ─── Modern Digital Library System Schemas ───────────────────────────────────
+
+class DigitalResourceCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=350)
+    author: str = Field(..., min_length=2, max_length=300)
+    resource_type: str = "ebook"  # ebook, research_paper, journal_article, thesis, video_lecture, audio_resource
+    doi_or_issn: Optional[str] = None
+    subject_category: str = "General"
+    file_format: str = "pdf"
+    file_url: str = Field(..., min_length=3, max_length=500)
+    cover_url: Optional[str] = None
+    file_size_bytes: int = 0
+    abstract: Optional[str] = None
+    keywords: Optional[str] = None
+    is_open_access: bool = True
+    published_year: Optional[int] = None
+    publisher: Optional[str] = None
+    collection_id: Optional[int] = None
+    book_id: Optional[int] = None
+
+class DigitalResourceUpdate(BaseModel):
+    title: Optional[str] = None
+    author: Optional[str] = None
+    resource_type: Optional[str] = None
+    doi_or_issn: Optional[str] = None
+    subject_category: Optional[str] = None
+    file_format: Optional[str] = None
+    file_url: Optional[str] = None
+    cover_url: Optional[str] = None
+    file_size_bytes: Optional[int] = None
+    abstract: Optional[str] = None
+    keywords: Optional[str] = None
+    is_open_access: Optional[bool] = None
+    published_year: Optional[int] = None
+    publisher: Optional[str] = None
+    collection_id: Optional[int] = None
+    book_id: Optional[int] = None
+
+class DigitalResourceOut(BaseModel):
+    id: int
+    title: str
+    author: str
+    resource_type: str
+    doi_or_issn: Optional[str] = None
+    subject_category: str
+    file_format: str
+    file_url: str
+    cover_url: Optional[str] = None
+    file_size_bytes: int
+    download_count: int
+    view_count: int
+    abstract: Optional[str] = None
+    keywords: Optional[str] = None
+    is_open_access: bool
+    published_year: Optional[int] = None
+    publisher: Optional[str] = None
+    collection_id: Optional[int] = None
+    book_id: Optional[int] = None
+    is_bookmarked: Optional[bool] = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class LibrarySubjectCollectionCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=200)
+    slug: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    icon: str = "📚"
+    is_featured: bool = False
+
+class LibrarySubjectCollectionOut(BaseModel):
+    id: int
+    title: str
+    slug: str
+    description: Optional[str] = None
+    icon: str
+    is_featured: bool
+    resource_count: Optional[int] = 0
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class LibraryBookmarkOut(BaseModel):
+    id: int
+    user_id: int
+    resource_id: int
+    resource: DigitalResourceOut
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class DigitalLibraryStatsOut(BaseModel):
+    total_resources: int
+    total_views: int
+    total_downloads: int
+    resource_type_breakdown: Dict[str, int]
+    subject_breakdown: Dict[str, int]
+
+
+
 
 
 

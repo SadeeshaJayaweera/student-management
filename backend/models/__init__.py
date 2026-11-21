@@ -2457,6 +2457,66 @@ class FinancialAuditLog(Base):
     actor = relationship("User")
 
 
+# ─── Modern Digital Library System Models ────────────────────────────────────
+
+class LibrarySubjectCollection(Base):
+    __tablename__ = "library_subject_collections"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    slug = Column(String(200), unique=True, index=True, nullable=False)
+    description = Column(Text, nullable=True)
+    icon = Column(String(50), default="📚", nullable=False)
+    is_featured = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    resources = relationship("DigitalLibraryResource", back_populates="collection")
+
+
+class DigitalLibraryResource(Base):
+    __tablename__ = "digital_library_resources"
+
+    id = Column(Integer, primary_key=True, index=True)
+    book_id = Column(Integer, ForeignKey("books.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(350), nullable=False, index=True)
+    author = Column(String(300), nullable=False, index=True)
+    resource_type = Column(String(50), default="ebook", nullable=False)  # ebook, research_paper, journal_article, thesis, video_lecture, audio_resource
+    doi_or_issn = Column(String(100), nullable=True, index=True)
+    subject_category = Column(String(100), default="General", nullable=False, index=True)
+    file_format = Column(String(20), default="pdf", nullable=False)  # pdf, epub, mp4, mp3, html
+    file_url = Column(String(500), nullable=False)
+    cover_url = Column(String(500), nullable=True)
+    file_size_bytes = Column(Integer, default=0, nullable=False)
+    download_count = Column(Integer, default=0, nullable=False)
+    view_count = Column(Integer, default=0, nullable=False)
+    abstract = Column(Text, nullable=True)
+    keywords = Column(String(300), nullable=True)
+    is_open_access = Column(Boolean, default=True, nullable=False)
+    published_year = Column(Integer, nullable=True)
+    publisher = Column(String(200), nullable=True)
+    collection_id = Column(Integer, ForeignKey("library_subject_collections.id", ondelete="SET NULL"), nullable=True, index=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    book = relationship("Book")
+    collection = relationship("LibrarySubjectCollection", back_populates="resources")
+    bookmarks = relationship("LibraryResourceBookmark", back_populates="resource", cascade="all, delete-orphan")
+
+
+class LibraryResourceBookmark(Base):
+    __tablename__ = "library_resource_bookmarks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    resource_id = Column(Integer, ForeignKey("digital_library_resources.id", ondelete="CASCADE"), nullable=False, index=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    user = relationship("User")
+    resource = relationship("DigitalLibraryResource", back_populates="bookmarks")
+
+
+
 
 
 
