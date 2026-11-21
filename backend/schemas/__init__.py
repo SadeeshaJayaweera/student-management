@@ -3426,6 +3426,96 @@ class BillingSummaryOut(BaseModel):
     currency: str
 
 
+# ─── Payment Gateway & Financial Auditing Schemas ────────────────────────────
+
+class PaymentCheckoutRequest(BaseModel):
+    invoice_id: int
+    installment_id: Optional[int] = None
+    payment_method: str = "credit_card"  # credit_card, debit_card, bank_transfer
+    gateway: str = "payhere"
+    idempotency_key: Optional[str] = None
+    return_url: Optional[str] = None
+
+class PaymentCheckoutResponse(BaseModel):
+    transaction_id: int
+    transaction_ref: str
+    amount: float
+    currency: str
+    status: str
+    gateway: str
+    checkout_url: str
+    checkout_params: Dict[str, Any]
+
+class PaymentWebhookPayload(BaseModel):
+    transaction_ref: str
+    gateway_reference: str
+    status: str  # completed, failed
+    amount: float
+    currency: str = "LKR"
+    signature: str
+    payer_email: Optional[str] = None
+    error_message: Optional[str] = None
+
+class PaymentReceiptOut(BaseModel):
+    id: int
+    transaction_id: int
+    invoice_id: int
+    receipt_number: str
+    receipt_url: Optional[str] = None
+    amount_paid: float
+    currency: str
+    payment_method: str
+    issued_at: datetime
+    generated_by: str
+
+    class Config:
+        from_attributes = True
+
+class PaymentTransactionOut(BaseModel):
+    id: int
+    invoice_id: int
+    installment_id: Optional[int] = None
+    student_id: int
+    transaction_ref: str
+    gateway: str
+    gateway_reference: Optional[str] = None
+    amount: float
+    currency: str
+    status: str
+    payment_method: str
+    created_at: datetime
+    receipt: Optional[PaymentReceiptOut] = None
+
+    class Config:
+        from_attributes = True
+
+class FinancialAuditLogOut(BaseModel):
+    id: int
+    transaction_id: Optional[int] = None
+    invoice_id: Optional[int] = None
+    actor_user_id: Optional[int] = None
+    actor_name: Optional[str] = None
+    action: str
+    old_status: Optional[str] = None
+    new_status: Optional[str] = None
+    amount: Optional[float] = None
+    ip_address: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ManualPaymentRecordRequest(BaseModel):
+    invoice_id: int
+    installment_id: Optional[int] = None
+    amount: float = Field(..., gt=0)
+    payment_method: str = "bank_transfer"
+    reference_note: str = Field(..., min_length=3, max_length=255)
+    paid_date: Optional[date] = None
+
+
+
 
 
 

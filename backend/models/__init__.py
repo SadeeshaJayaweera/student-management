@@ -2390,6 +2390,74 @@ class InvoicePaymentInstallment(Base):
     invoice = relationship("StudentInvoice", back_populates="installments")
 
 
+# ─── Payment Gateway & Financial Auditing Models ─────────────────────────────
+
+class PaymentTransaction(Base):
+    __tablename__ = "payment_transactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("student_invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+    installment_id = Column(Integer, ForeignKey("invoice_payment_installments.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    transaction_ref = Column(String(100), unique=True, index=True, nullable=False)
+    gateway = Column(String(50), default="payhere", nullable=False)  # payhere, stripe, bank_transfer, cash
+    gateway_reference = Column(String(150), nullable=True, index=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String(10), default="LKR", nullable=False)
+    status = Column(String(30), default="pending", nullable=False)  # pending, completed, failed, refunded
+    payment_method = Column(String(50), default="credit_card", nullable=False)  # credit_card, debit_card, bank_transfer, cash
+    idempotency_key = Column(String(120), unique=True, nullable=True, index=True)
+    payer_email = Column(String(255), nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    invoice = relationship("StudentInvoice")
+    installment = relationship("InvoicePaymentInstallment")
+    student = relationship("Student")
+    receipt = relationship("PaymentReceipt", back_populates="transaction", uselist=False, cascade="all, delete-orphan")
+    audit_logs = relationship("FinancialAuditLog", back_populates="transaction", cascade="all, delete-orphan")
+
+
+class PaymentReceipt(Base):
+    __tablename__ = "payment_receipts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transaction_id = Column(Integer, ForeignKey("payment_transactions.id", ondelete="CASCADE"), unique=True, nullable=False, index=True)
+    invoice_id = Column(Integer, ForeignKey("student_invoices.id", ondelete="CASCADE"), nullable=False, index=True)
+    receipt_number = Column(String(60), unique=True, index=True, nullable=False)
+    receipt_url = Column(String(500), nullable=True)
+    amount_paid = Column(Float, nullable=False)
+    currency = Column(String(10), default="LKR", nullable=False)
+    payment_method = Column(String(50), nullable=False)
+    issued_at = Column(DateTime, default=func.now(), nullable=False)
+    generated_by = Column(String(100), default="system", nullable=False)
+
+    transaction = relationship("PaymentTransaction", back_populates="receipt")
+    invoice = relationship("StudentInvoice")
+
+
+class FinancialAuditLog(Base):
+    __tablename__ = "financial_audit_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    transaction_id = Column(Integer, ForeignKey("payment_transactions.id", ondelete="SET NULL"), nullable=True, index=True)
+    invoice_id = Column(Integer, ForeignKey("student_invoices.id", ondelete="CASCADE"), nullable=True, index=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    action = Column(String(60), nullable=False)  # checkout_initiated, webhook_verified, receipt_issued, manual_payment_recorded, payment_failed, refund_processed
+    old_status = Column(String(30), nullable=True)
+    new_status = Column(String(30), nullable=True)
+    amount = Column(Float, nullable=True)
+    ip_address = Column(String(60), nullable=True)
+    details = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    transaction = relationship("PaymentTransaction", back_populates="audit_logs")
+    invoice = relationship("StudentInvoice")
+    actor = relationship("User")
+
+
+
 
 
 
