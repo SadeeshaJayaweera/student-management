@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from backend.config import settings
 from backend.database import init_db
 from backend.core.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
+from backend.core.tenant import TenantMiddleware
 from backend.core.logging import setup_logging, logger
 from backend.core.responses import APIResponse, APIErrorResponse
 from backend.core.exceptions import EduSphereException
@@ -31,6 +32,7 @@ from backend.routers.portals import (
     news_router, admin_router, ws_router
 )
 from backend.routers.rbac import router as rbac_router
+from backend.routers.tenants import router as tenants_router
 from backend.routers.v1 import v1_router
 
 
@@ -96,6 +98,7 @@ setup_logging(level="DEBUG" if settings.debug else "INFO", json_logs=settings.is
 
 # ── Middleware ─────────────────────────────────────────────────────────────────
 
+app.add_middleware(TenantMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -123,6 +126,7 @@ app.include_router(sports_router)
 app.include_router(news_router)
 app.include_router(admin_router)
 app.include_router(rbac_router)
+app.include_router(tenants_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
