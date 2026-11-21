@@ -2041,6 +2041,59 @@ class QuizAttemptOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Timed Examinations and Proctoring Controls Schemas ───────────────────────
+
+class ProctoringSessionStart(BaseModel):
+    attempt_id: Optional[int] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+
+class ProctoringEventCreate(BaseModel):
+    event_type: str  # tab_switch, window_blur, fullscreen_exit, copy_paste_blocked, devtools_opened
+    severity: str = "medium"
+    details: Optional[dict] = None
+
+class ProctoringEventOut(BaseModel):
+    id: int
+    session_id: int
+    event_type: str
+    severity: str
+    details: Optional[dict] = None
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+class ProctoringSessionOut(BaseModel):
+    id: int
+    quiz_id: int
+    student_id: int
+    attempt_id: Optional[int] = None
+    session_token: str
+    started_at: datetime
+    expires_at: datetime
+    last_heartbeat_at: datetime
+    status: str
+    tab_switch_count: int
+    fullscreen_exit_count: int
+    copy_paste_attempt_count: int
+    is_flagged: bool
+    flag_reason: Optional[str] = None
+    remaining_seconds: float = 0.0
+    created_at: datetime
+    events: List[ProctoringEventOut] = []
+
+    class Config:
+        from_attributes = True
+
+class ProctoringHeartbeatOut(BaseModel):
+    status: str
+    remaining_seconds: float
+    is_flagged: bool
+    tab_switch_count: int
+    fullscreen_exit_count: int
+    server_time: datetime
+
 class GradeUpdate(BaseModel):
     assignment_id: int
     submission_id: int
