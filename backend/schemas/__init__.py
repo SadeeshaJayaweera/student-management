@@ -203,6 +203,27 @@ class ResetPasswordRequest(BaseModel):
 class SuspendAccountRequest(BaseModel):
     reason: str = Field(..., min_length=3, max_length=255)
 
+
+# ─── Audit Trail Schemas ──────────────────────────────────────────────────────
+
+class AuditLogOut(BaseModel):
+    id: int
+    timestamp: datetime
+    event_type: str
+    severity: str
+    user_id: Optional[int] = None
+    username: Optional[str] = None
+    institution_id: Optional[int] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    correlation_id: Optional[str] = None
+    details: Optional[Dict[str, Any]] = None
+
+    class Config:
+        from_attributes = True
+
 class UserLogin(BaseModel):
     username: str
     password: str

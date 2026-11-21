@@ -11,8 +11,16 @@ from sqlalchemy import select, update
 from sqlalchemy.orm.attributes import flag_modified
 
 from backend.config import settings
-from backend.models import User, UserRole, UserSession, RefreshToken, UserAccountStatus
+from backend.models import (
+    User,
+    UserRole,
+    UserSession,
+    RefreshToken,
+    UserAccountStatus,
+    AuditSeverity,
+)
 from backend.repositories.user_repository import UserRepository
+from backend.core.audit import log_audit_event, AuditEventType
 from backend.schemas import (
     UserCreate,
     Token,
@@ -76,7 +84,28 @@ class AuthService:
             user.failed_login_attempts += 1
             if user.failed_login_attempts >= 5:
                 user.locked_until = now + timedelta(minutes=15)
-            await self.db.commit()
+                await self.db.commit()
+                await log_audit_event(
+                    self.db,
+                    event_type=AuditEventType.AUTH_LOCKOUT,
+                    severity=AuditSeverity.CRITICAL,
+                    user_id=user.id,
+                    username=username,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    details={"failed_attempts": user.failed_login_attempts},
+                )
+            else:
+                await self.db.commit()
+                await log_audit_event(
+                    self.db,
+                    event_type=AuditEventType.AUTH_LOGIN_FAILED,
+                    severity=AuditSeverity.WARNING,
+                    user_id=user.id,
+                    username=username,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
             raise UnauthorizedException("Invalid username or password.")
 
         if user.account_status == UserAccountStatus.SUSPENDED:
@@ -109,6 +138,17 @@ class AuthService:
         self.db.add(session)
         await self.db.commit()
         await self.db.refresh(session)
+
+        await log_audit_event(
+            self.db,
+            event_type=AuditEventType.AUTH_LOGIN_SUCCESS,
+            severity=AuditSeverity.INFO,
+            user_id=user.id,
+            username=user.username,
+            institution_id=user.institution_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
         return user, session, False
 
     async def setup_mfa(self, user: User) -> MFASetupResponse:
