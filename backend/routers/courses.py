@@ -6,12 +6,12 @@ from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func, update
 from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
-    Course, CoursePrerequisite, CourseModule, CourseLesson, Institution, Program, Lecturer,
+    Course, CoursePrerequisite, CourseModule, CourseLesson, LessonContentVersion, Institution, Program, Lecturer,
     User, UserRole, Enrollment, Assignment, Student
 )
 from backend.schemas import (
@@ -19,10 +19,12 @@ from backend.schemas import (
     CoursePrerequisiteCreate, CoursePrerequisiteOut,
     CourseModuleCreate, CourseModuleUpdate, CourseModuleOut,
     CourseLessonBase, CourseLessonCreate, CourseLessonUpdate, CourseLessonOut,
+    LessonContentCreate, LessonContentOut, LessonContentVersionSummary,
     ModuleReorderRequest, LessonReorderRequest,
     CourseWorkspaceSettingsUpdate, CourseWorkspaceOut
 )
 from backend.core.dependencies import get_current_user
+from backend.core.sanitization import sanitize_rich_content
 
 router = APIRouter(tags=["Course & Module Management"])
 
@@ -698,6 +700,216 @@ async def delete_lesson(
     await db.delete(lesson)
     await db.commit()
     return None
+
+
+# ─── Rich Learning Content Authoring & Versioning ─────────────────────────────
+
+@router.post("/api/lessons/{lesson_id}/content", response_model=LessonContentOut, status_code=201)
+async def author_lesson_content(
+    lesson_id: int,
+    payload: LessonContentCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Author or update rich learning content for a lesson with automatic versioning
+    and anti-XSS sanitization.
+    """
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    # Sanitize content against XSS while preserving rich format
+    rendered = sanitize_rich_content(payload.raw_content, content_format=payload.content_format)
+
+    # Determine next version number
+    q_ver = select(func.max(LessonContentVersion.version_number)).where(
+        LessonContentVersion.lesson_id == lesson_id
+    )
+    max_ver = (await db.execute(q_ver)).scalar() or 0
+    next_ver = max_ver + 1
+
+    # Mark existing versions as not current
+    await db.execute(
+        update(LessonContentVersion)
+        .where(LessonContentVersion.lesson_id == lesson_id)
+        .values(is_current=False)
+    )
+
+    new_content = LessonContentVersion(
+        lesson_id=lesson_id,
+        version_number=next_ver,
+        content_format=payload.content_format,
+        raw_content=payload.raw_content,
+        rendered_content=rendered,
+        widget_configs=payload.widget_configs,
+        author_id=current_user.id,
+        change_summary=payload.change_summary or f"Version {next_ver} updated",
+        is_current=True,
+    )
+    db.add(new_content)
+
+    # Sync lesson content field with rendered content
+    lesson.content = rendered
+    await db.commit()
+    await db.refresh(new_content)
+    return new_content
+
+
+@router.get("/api/lessons/{lesson_id}/content", response_model=LessonContentOut)
+async def get_lesson_content(
+    lesson_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve current active rich learning content for a lesson"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}
+    is_instructor = bool(course and course.lecturer and course.lecturer.user_id == current_user.id)
+
+    if not (is_admin or is_instructor) and not lesson.is_published:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found or unavailable")
+
+    c_res = await db.execute(
+        select(LessonContentVersion)
+        .where(LessonContentVersion.lesson_id == lesson_id, LessonContentVersion.is_current == True)
+    )
+    content = c_res.scalar_one_or_none()
+    if not content:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No content authored for this lesson")
+
+    return content
+
+
+@router.get("/api/lessons/{lesson_id}/content/versions", response_model=List[LessonContentVersionSummary])
+async def list_content_versions(
+    lesson_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List historical revision audit trail for lesson content (faculty and admin only)"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    v_res = await db.execute(
+        select(LessonContentVersion)
+        .where(LessonContentVersion.lesson_id == lesson_id)
+        .order_by(LessonContentVersion.version_number.desc())
+    )
+    return list(v_res.scalars().all())
+
+
+@router.get("/api/lessons/{lesson_id}/content/versions/{version_number}", response_model=LessonContentOut)
+async def get_content_version(
+    lesson_id: int,
+    version_number: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve specific historical version of lesson content (faculty and admin only)"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    v_res = await db.execute(
+        select(LessonContentVersion)
+        .where(
+            LessonContentVersion.lesson_id == lesson_id,
+            LessonContentVersion.version_number == version_number
+        )
+    )
+    target = v_res.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Version not found")
+
+    return target
+
+
+@router.post("/api/lessons/{lesson_id}/content/rollback/{version_number}", response_model=LessonContentOut)
+async def rollback_content_version(
+    lesson_id: int,
+    version_number: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Rollback lesson content to a prior version, appending a new version with
+    the restored content and maintaining full version lineage.
+    """
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    v_res = await db.execute(
+        select(LessonContentVersion)
+        .where(
+            LessonContentVersion.lesson_id == lesson_id,
+            LessonContentVersion.version_number == version_number
+        )
+    )
+    target = v_res.scalar_one_or_none()
+    if not target:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Target revision not found")
+
+    # Determine next version
+    q_ver = select(func.max(LessonContentVersion.version_number)).where(
+        LessonContentVersion.lesson_id == lesson_id
+    )
+    max_ver = (await db.execute(q_ver)).scalar() or 0
+    next_ver = max_ver + 1
+
+    # Mark existing as not current
+    await db.execute(
+        update(LessonContentVersion)
+        .where(LessonContentVersion.lesson_id == lesson_id)
+        .values(is_current=False)
+    )
+
+    restored = LessonContentVersion(
+        lesson_id=lesson_id,
+        version_number=next_ver,
+        content_format=target.content_format,
+        raw_content=target.raw_content,
+        rendered_content=target.rendered_content,
+        widget_configs=target.widget_configs,
+        author_id=current_user.id,
+        change_summary=f"Rollback to version {version_number}",
+        is_current=True,
+    )
+    db.add(restored)
+    lesson.content = target.rendered_content
+    await db.commit()
+    await db.refresh(restored)
+    return restored
 
 
 # ─── Course Workspace Architecture ───────────────────────────────────────────

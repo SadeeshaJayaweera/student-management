@@ -58,6 +58,27 @@ def sanitize_html(text: str, strip_tags: bool = True) -> str:
     return cleaned.strip()
 
 
+def sanitize_rich_content(text: str, content_format: str = "markdown") -> str:
+    """
+    Sanitizes rich learning content (Markdown, rich HTML, embed widgets).
+    Eliminates XSS vectors like <script>, <iframe>, <object>, <embed>, inline on* handlers,
+    javascript:/vbscript: protocols, while preserving safe formatting tags (h1-h6, p, ul, ol, li,
+    code, pre, table, a[href], img[src], blockquote, details, etc.).
+    """
+    if not isinstance(text, str):
+        return ""
+
+    # Neutralize dangerous tags and their content
+    cleaned = _DANGEROUS_TAGS_PATTERN.sub("", text)
+    cleaned = _DANGEROUS_EMPTY_TAGS_PATTERN.sub("", cleaned)
+    # Neutralize inline JS event handlers
+    cleaned = _INLINE_EVENT_HANDLERS_PATTERN.sub("", cleaned)
+    # Neutralize javascript/vbscript/data URLs
+    cleaned = _JAVASCRIPT_URI_PATTERN.sub("", cleaned)
+
+    return cleaned.strip()
+
+
 def sanitize_payload(payload: Union[Dict[str, Any], List[Any], str, Any]) -> Any:
     """
     Recursively inspects and sanitizes nested dictionary or list payloads,

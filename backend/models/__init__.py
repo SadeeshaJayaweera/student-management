@@ -678,6 +678,26 @@ class CourseLesson(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     module = relationship("CourseModule", back_populates="lessons")
+    content_versions = relationship("LessonContentVersion", back_populates="lesson", cascade="all, delete-orphan", order_by="desc(LessonContentVersion.version_number)")
+
+
+class LessonContentVersion(Base):
+    __tablename__ = "lesson_content_versions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("course_lessons.id", ondelete="CASCADE"), nullable=False, index=True)
+    version_number = Column(Integer, default=1, nullable=False, index=True)
+    content_format = Column(String(50), default="markdown", nullable=False) # markdown, html, interactive_block
+    raw_content = Column(Text, nullable=False)
+    rendered_content = Column(Text, nullable=False)
+    widget_configs = Column(JSON, nullable=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    change_summary = Column(String(255), nullable=True)
+    is_current = Column(Boolean, default=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    lesson = relationship("CourseLesson", back_populates="content_versions")
+    author = relationship("User")
 
 
 class Enrollment(Base):
