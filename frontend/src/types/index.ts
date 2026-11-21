@@ -42,6 +42,93 @@ export interface StudentDashboard {
   upcoming_events: EventSummary[];
 }
 
+export interface CourseProgressSummary {
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  faculty: string;
+  department: string;
+  lecturer_name: string;
+  delivery_method: string;
+  completed_lessons: number;
+  total_lessons: number;
+  progress_percentage: number;
+  current_grade_percentage?: number | null;
+  letter_grade?: string | null;
+  attendance_rate: number;
+}
+
+export interface UpcomingDeadlineItem {
+  id: number;
+  item_type: 'assignment' | 'quiz';
+  title: string;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  due_date: string;
+  days_remaining: number;
+  is_overdue: boolean;
+  max_marks: number;
+  submission_status: string;
+}
+
+export interface UpcomingClassSession {
+  session_id: number;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  title: string;
+  start_time: string;
+  duration_minutes: number;
+  session_type: string;
+  join_url?: string | null;
+  is_live: boolean;
+}
+
+export interface DashboardAnnouncementItem {
+  id: number;
+  course_id: number;
+  course_code: string;
+  course_title: string;
+  title: string;
+  content: string;
+  is_pinned: boolean;
+  author_name: string;
+  published_at: string;
+}
+
+export interface PersonalizedRecommendation {
+  id: string;
+  category: 'urgent_deadline' | 'learning_progress' | 'academic_alert' | 'study_resource';
+  priority: 'high' | 'medium' | 'low';
+  title: string;
+  description: string;
+  action_label: string;
+  action_link: string;
+}
+
+export interface PersonalizedStudentDashboard {
+  student_id: string;
+  full_name: string;
+  email: string;
+  faculty: string;
+  department: string;
+  program: string;
+  year_of_study: number;
+  semester: number;
+  gpa: number;
+  credits_earned: number;
+  overall_attendance_rate: number;
+  enrolled_courses_count: number;
+  pending_tasks_count: number;
+  unread_notifications_count: number;
+  courses_progress: CourseProgressSummary[];
+  upcoming_deadlines: UpcomingDeadlineItem[];
+  upcoming_classes: UpcomingClassSession[];
+  recent_announcements: DashboardAnnouncementItem[];
+  recommendations: PersonalizedRecommendation[];
+}
+
 export interface GradeSummary {
   course: string;
   course_code: string;

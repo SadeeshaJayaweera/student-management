@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/api/client'
-import type { StudentDashboard, LecturerDashboard, AdminDashboard } from '@/types'
+import type { StudentDashboard, LecturerDashboard, AdminDashboard, PersonalizedStudentDashboard } from '@/types'
 import { Bar } from 'react-chartjs-2'
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js'
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend)
@@ -61,9 +61,15 @@ function GpaRing({ gpa }: { gpa: number }) {
 
 function StudentDash() {
   const [data, setData] = useState<StudentDashboard | null>(null)
+  const [personalized, setPersonalized] = useState<PersonalizedStudentDashboard | null>(null)
   const navigate = useNavigate()
 
-  useEffect(() => { api.get<StudentDashboard>('/students/dashboard').then(r => setData(r.data)) }, [])
+  useEffect(() => {
+    api.get<StudentDashboard>('/students/dashboard').then(r => setData(r.data))
+    api.get<PersonalizedStudentDashboard>('/students/dashboard/personalized')
+      .then(r => setPersonalized(r.data))
+      .catch(() => console.info('Personalized dashboard endpoint loading or fallback.'))
+  }, [])
 
   if (!data) return <div className="flex justify-center items-center" style={{ height: 300 }}><div className="spinner" /></div>
 
@@ -84,6 +90,41 @@ function StudentDash() {
           <div className="text-sm text-muted">Department: <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>{data.department}</span></div>
         </div>
       </div>
+
+      {/* Personalized Recommendations */}
+      {personalized && personalized.recommendations && personalized.recommendations.length > 0 && (
+        <div className="mb-24">
+          <div className="card-title mb-12">💡 Personalized Recommendations</div>
+          <div className="grid-2 gap-16">
+            {personalized.recommendations.map(rec => (
+              <div
+                key={rec.id}
+                className="card"
+                style={{
+                  borderLeft: rec.priority === 'high' ? '4px solid #FF6B6B' : rec.priority === 'medium' ? '4px solid #FFB347' : '4px solid #00D4AA',
+                  padding: '16px 20px',
+                  marginBottom: 0
+                }}
+              >
+                <div className="flex justify-between items-center mb-8">
+                  <span style={{ fontWeight: 600, fontSize: '.9rem' }}>{rec.title}</span>
+                  <span className={`badge ${rec.priority === 'high' ? 'badge-danger' : rec.priority === 'medium' ? 'badge-warning' : 'badge-success'}`}>
+                    {rec.priority.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-xs text-muted mb-12" style={{ lineHeight: 1.5 }}>{rec.description}</p>
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{ fontSize: '.75rem', padding: '4px 12px' }}
+                  onClick={() => navigate(rec.action_link)}
+                >
+                  {rec.action_label} →
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="stat-grid">
@@ -114,6 +155,104 @@ function StudentDash() {
           ))}
         </div>
       </div>
+
+      {/* Course Progress Breakdown */}
+      {personalized && personalized.courses_progress && personalized.courses_progress.length > 0 && (
+        <div className="card mb-24">
+          <div className="flex justify-between items-center mb-16">
+            <div>
+              <div className="card-title">📖 Course Progress & Academic Standing</div>
+              <div className="card-subtitle">Active enrollments and lesson completion rates</div>
+            </div>
+            <button className="btn btn-ghost btn-sm" onClick={() => navigate('/courses')}>All Courses →</button>
+          </div>
+          <div className="grid-2 gap-16">
+            {personalized.courses_progress.map(cp => (
+              <div key={cp.course_id} style={{ padding: 14, background: 'rgba(255,255,255,.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,.06)' }}>
+                <div className="flex justify-between items-center mb-6">
+                  <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{cp.course_code}: {cp.course_title}</div>
+                  {cp.letter_grade && <span className={`badge ${letterClass(cp.letter_grade)}`}>{cp.letter_grade}</span>}
+                </div>
+                <div className="text-xs text-muted mb-8">Lecturer: {cp.lecturer_name} · Attendance: {cp.attendance_rate}%</div>
+                <div className="flex justify-between text-xs text-muted mb-4">
+                  <span>Lesson Progress</span>
+                  <span>{cp.completed_lessons}/{cp.total_lessons} ({cp.progress_percentage}%)</span>
+                </div>
+                <div className="progress progress-primary" style={{ height: 6 }}>
+                  <div className="progress-bar" style={{ width: `${cp.progress_percentage}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Upcoming Deadlines & Classes */}
+      {personalized && (
+        <div className="grid-2 mb-24">
+          {/* Upcoming Deadlines */}
+          <div className="card">
+            <div className="flex justify-between items-center mb-16">
+              <div>
+                <div className="card-title">⏳ Upcoming Deadlines</div>
+                <div className="card-subtitle">Assignments and timed quizzes</div>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => navigate('/assignments')}>View All →</button>
+            </div>
+            {personalized.upcoming_deadlines.length > 0 ? (
+              <div className="flex flex-col gap-10">
+                {personalized.upcoming_deadlines.slice(0, 4).map(d => (
+                  <div key={`${d.item_type}-${d.id}`} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '.85rem' }}>{d.title}</div>
+                      <div className="text-xs text-muted">{d.course_code} · Due {new Date(d.due_date).toLocaleDateString()}</div>
+                    </div>
+                    <span className={`badge ${d.submission_status === 'submitted' || d.submission_status === 'graded' ? 'badge-success' : d.is_overdue ? 'badge-danger' : 'badge-warning'}`}>
+                      {d.submission_status.toUpperCase()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-muted" style={{ textAlign: 'center', padding: 20 }}>No pending deadlines</div>
+            )}
+          </div>
+
+          {/* Upcoming Virtual Classes */}
+          <div className="card">
+            <div className="flex justify-between items-center mb-16">
+              <div>
+                <div className="card-title">💻 Virtual Classrooms</div>
+                <div className="card-subtitle">Scheduled live lectures & sessions</div>
+              </div>
+            </div>
+            {personalized.upcoming_classes.length > 0 ? (
+              <div className="flex flex-col gap-10">
+                {personalized.upcoming_classes.slice(0, 4).map(s => (
+                  <div key={s.session_id} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, fontSize: '.85rem' }}>
+                        {s.is_live && <span style={{ color: '#FF453A', marginRight: 6 }}>● LIVE</span>}
+                        {s.title}
+                      </div>
+                      <div className="text-xs text-muted">{s.course_code} · {new Date(s.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({s.duration_minutes}m)</div>
+                    </div>
+                    {s.join_url ? (
+                      <a href={s.join_url} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm" style={{ fontSize: '.75rem', padding: '3px 10px' }}>
+                        Join
+                      </a>
+                    ) : (
+                      <span className="badge badge-info">{s.session_type}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-muted" style={{ textAlign: 'center', padding: 20 }}>No live classes scheduled today</div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="grid-2">
         {/* Grades */}

@@ -2507,3 +2507,88 @@ class GradebookExportOut(BaseModel):
     records_count: int
     data: List[dict]
 
+
+# ─── Personalized Student Dashboard Schemas ───────────────────────────────────
+
+class CourseProgressSummary(BaseModel):
+    course_id: int
+    course_code: str
+    course_title: str
+    faculty: str
+    department: str
+    lecturer_name: str
+    delivery_method: str
+    completed_lessons: int
+    total_lessons: int
+    progress_percentage: float
+    current_grade_percentage: Optional[float] = None
+    letter_grade: Optional[str] = None
+    attendance_rate: float
+
+class UpcomingDeadlineItem(BaseModel):
+    id: int
+    item_type: str  # "assignment" or "quiz"
+    title: str
+    course_id: int
+    course_code: str
+    course_title: str
+    due_date: datetime
+    days_remaining: float
+    is_overdue: bool
+    max_marks: float
+    submission_status: str  # "pending", "submitted", "graded", "missed"
+
+class UpcomingClassSession(BaseModel):
+    session_id: int
+    course_id: int
+    course_code: str
+    course_title: str
+    title: str
+    start_time: datetime
+    duration_minutes: int
+    session_type: str
+    join_url: Optional[str] = None
+    is_live: bool
+
+class DashboardAnnouncementItem(BaseModel):
+    id: int
+    course_id: int
+    course_code: str
+    course_title: str
+    title: str
+    content: str
+    is_pinned: bool
+    author_name: str
+    published_at: datetime
+
+class PersonalizedRecommendation(BaseModel):
+    id: str
+    category: str  # "urgent_deadline", "learning_progress", "academic_alert", "study_resource"
+    priority: str  # "high", "medium", "low"
+    title: str
+    description: str
+    action_label: str
+    action_link: str
+
+class PersonalizedStudentDashboardOut(BaseModel):
+    student_id: str
+    full_name: str
+    email: str
+    faculty: str
+    department: str
+    program: str
+    year_of_study: int
+    semester: int
+    gpa: float
+    credits_earned: int
+    overall_attendance_rate: float
+    enrolled_courses_count: int
+    pending_tasks_count: int
+    unread_notifications_count: int
+    courses_progress: List[CourseProgressSummary]
+    upcoming_deadlines: List[UpcomingDeadlineItem]
+    upcoming_classes: List[UpcomingClassSession]
+    recent_announcements: List[DashboardAnnouncementItem]
+    recommendations: List[PersonalizedRecommendation]
+
+
