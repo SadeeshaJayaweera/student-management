@@ -105,6 +105,7 @@ class Institution(Base):
     departments = relationship("Department", back_populates="institution", cascade="all, delete-orphan")
     academic_years = relationship("AcademicYear", back_populates="institution", cascade="all, delete-orphan")
     semesters = relationship("Semester", back_populates="institution", cascade="all, delete-orphan")
+    programs = relationship("Program", back_populates="institution", cascade="all, delete-orphan")
 
 
 class Campus(Base):
@@ -146,6 +147,7 @@ class Faculty(Base):
     institution = relationship("Institution", back_populates="faculties")
     campus = relationship("Campus", back_populates="faculties")
     departments = relationship("Department", back_populates="faculty", cascade="all, delete-orphan")
+    programs = relationship("Program", back_populates="faculty")
 
 
 class Department(Base):
@@ -165,6 +167,7 @@ class Department(Base):
 
     institution = relationship("Institution", back_populates="departments")
     faculty = relationship("Faculty", back_populates="departments")
+    programs = relationship("Program", back_populates="department")
 
 
 class AcademicYear(Base):
@@ -209,6 +212,47 @@ class Semester(Base):
 
     institution = relationship("Institution", back_populates="semesters")
     academic_year = relationship("AcademicYear", back_populates="semesters")
+
+
+class Program(Base):
+    __tablename__ = "programs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    faculty_id = Column(Integer, ForeignKey("faculties.id", ondelete="SET NULL"), nullable=True, index=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    qualification = Column(String(50), default="BSc", nullable=False)
+    duration_years = Column(Float, default=4.0, nullable=False)
+    total_credits = Column(Integer, default=120, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution", back_populates="programs")
+    faculty = relationship("Faculty", back_populates="programs")
+    department = relationship("Department", back_populates="programs")
+    specializations = relationship("Specialization", back_populates="program", cascade="all, delete-orphan")
+
+
+class Specialization(Base):
+    __tablename__ = "specializations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False, index=True)
+    code = Column(String(50), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    required_credits = Column(Integer, default=30, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    institution = relationship("Institution")
+    program = relationship("Program", back_populates="specializations")
 
 
 # ─── Core User Model ──────────────────────────────────────────────────────────

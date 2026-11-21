@@ -319,6 +319,79 @@ class SemesterOut(BaseModel):
         from_attributes = True
 
 
+# ─── Program & Specialization Schemas ─────────────────────────────────────────
+
+class ProgramCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    qualification: str = Field(default="BSc", min_length=2, max_length=50)
+    duration_years: float = Field(default=4.0, ge=0.5, le=10.0)
+    total_credits: int = Field(default=120, ge=1, le=500)
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    description: Optional[str] = None
+    is_active: bool = True
+
+class ProgramUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    qualification: Optional[str] = None
+    duration_years: Optional[float] = None
+    total_credits: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    description: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class ProgramOut(BaseModel):
+    id: int
+    institution_id: int
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    code: str
+    name: str
+    qualification: str
+    duration_years: float
+    total_credits: int
+    description: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SpecializationCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    required_credits: int = Field(default=30, ge=1, le=200)
+    is_active: bool = True
+
+class SpecializationUpdate(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+    required_credits: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class SpecializationOut(BaseModel):
+    id: int
+    institution_id: int
+    program_id: int
+    code: str
+    name: str
+    description: Optional[str] = None
+    required_credits: int
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UserSessionOut(BaseModel):
     id: int
     ip_address: Optional[str] = None
