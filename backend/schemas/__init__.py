@@ -786,9 +786,36 @@ class CourseOut(BaseModel):
     program_id: Optional[int] = None
     delivery_method: Optional[str] = "in_person"
     learning_outcomes: Optional[List[str]] = None
+    syllabus_data: Optional[Dict[str, Any]] = None
+    workspace_settings: Optional[Dict[str, Any]] = None
+    banner_url: Optional[str] = None
     lecturer: Optional[LecturerOut] = None
     class Config:
         from_attributes = True
+
+class CourseWorkspaceSettingsUpdate(BaseModel):
+    syllabus_data: Optional[Dict[str, Any]] = None
+    workspace_settings: Optional[Dict[str, Any]] = None
+    banner_url: Optional[str] = None
+
+class CourseWorkspaceOut(BaseModel):
+    course_id: int
+    course_code: str
+    title: str
+    description: Optional[str] = None
+    credits: int
+    delivery_method: str
+    learning_outcomes: Optional[List[str]] = None
+    schedule: Optional[Dict[str, Any]] = None
+    banner_url: Optional[str] = None
+    syllabus_data: Optional[Dict[str, Any]] = None
+    workspace_settings: Optional[Dict[str, Any]] = None
+    lecturer: Optional[Dict[str, Any]] = None
+    stats: Dict[str, Any]
+    user_context: Dict[str, Any]
+    modules: List[Dict[str, Any]]
+    recent_announcements: List[Dict[str, Any]]
+    active_assignments: List[Dict[str, Any]]
 
 # ─── Enrollment Schemas ───────────────────────────────────────────────────────
 
