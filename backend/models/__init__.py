@@ -1277,6 +1277,8 @@ class Assignment(Base):
     file_url = Column(String(500), nullable=True)
     published_at = Column(DateTime, nullable=True)
     rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True, index=True)
+    grades_released = Column(Boolean, default=True, nullable=False)
+    grades_released_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -1286,6 +1288,7 @@ class Assignment(Base):
     rubric = relationship("Rubric", foreign_keys=[rubric_id])
     submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete-orphan")
     rubric_evaluations = relationship("RubricEvaluation", back_populates="assignment", cascade="all, delete-orphan")
+    appeals = relationship("GradeAppeal", back_populates="assignment", cascade="all, delete-orphan")
 
 
 class AssignmentSubmission(Base):
@@ -1318,6 +1321,8 @@ class AssignmentSubmission(Base):
     rubric_evaluation = relationship("RubricEvaluation", back_populates="submission", uselist=False, cascade="all, delete-orphan")
     versions = relationship("AssignmentSubmissionVersion", back_populates="submission", cascade="all, delete-orphan", order_by="AssignmentSubmissionVersion.version_number")
     plagiarism_report = relationship("PlagiarismScanReport", back_populates="submission", uselist=False, cascade="all, delete-orphan")
+    annotations = relationship("SubmissionAnnotation", back_populates="submission", cascade="all, delete-orphan", order_by="SubmissionAnnotation.created_at")
+    appeals = relationship("GradeAppeal", back_populates="submission", cascade="all, delete-orphan", order_by="desc(GradeAppeal.created_at)")
 
 
 class AssignmentSubmissionVersion(Base):
@@ -1335,6 +1340,46 @@ class AssignmentSubmissionVersion(Base):
     submitted_at = Column(DateTime, default=func.now(), nullable=False)
 
     submission = relationship("AssignmentSubmission", back_populates="versions")
+
+
+# ─── Grading Workflows & Feedback Delivery Models ─────────────────────────────
+
+class SubmissionAnnotation(Base):
+    __tablename__ = "submission_annotations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    page_number = Column(Integer, nullable=True)
+    coordinates = Column(JSON, nullable=True)  # {"x": 100, "y": 200, "width": 50, "height": 20}
+    comment_text = Column(Text, nullable=False)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    submission = relationship("AssignmentSubmission", back_populates="annotations")
+    author = relationship("User", foreign_keys=[author_id])
+
+
+class GradeAppeal(Base):
+    __tablename__ = "grade_appeals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    assignment_id = Column(Integer, ForeignKey("assignments.id", ondelete="CASCADE"), nullable=False, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    reason = Column(Text, nullable=False)
+    requested_marks = Column(Float, nullable=True)
+    status = Column(String(30), default="pending", nullable=False)  # pending, in_review, approved, rejected
+    resolution_notes = Column(Text, nullable=True)
+    resolved_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    assignment = relationship("Assignment", back_populates="appeals")
+    submission = relationship("AssignmentSubmission", back_populates="appeals")
+    student = relationship("Student")
+    resolver = relationship("User", foreign_keys=[resolved_by_id])
 
 
 # ─── Academic Integrity and Plagiarism Check Models ───────────────────────────
