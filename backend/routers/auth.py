@@ -28,12 +28,17 @@ from backend.core.exceptions import (
     NotFoundException,
 )
 from backend.core.dependencies import get_current_user
+from backend.core.rate_limit import rate_limit
 from backend.utils.security import create_mfa_token
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
-@router.post("/login", response_model=LoginResponse)
+@router.post(
+    "/login",
+    response_model=LoginResponse,
+    dependencies=[Depends(rate_limit(max_requests=20, window_seconds=60, action="auth_login"))],
+)
 async def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),

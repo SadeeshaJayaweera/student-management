@@ -17,6 +17,8 @@ from backend.config import settings
 from backend.database import init_db
 from backend.core.middleware import CorrelationIdMiddleware, RequestLoggingMiddleware
 from backend.core.tenant import TenantMiddleware
+from backend.core.security_headers import SecurityHeadersMiddleware
+from backend.core.payload_limit import PayloadSizeLimitMiddleware
 from backend.core.logging import setup_logging, logger
 from backend.core.responses import APIResponse, APIErrorResponse
 from backend.core.exceptions import EduSphereException
@@ -100,6 +102,8 @@ setup_logging(level="DEBUG" if settings.debug else "INFO", json_logs=settings.is
 
 # ── Middleware ─────────────────────────────────────────────────────────────────
 
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(PayloadSizeLimitMiddleware)
 app.add_middleware(TenantMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(CorrelationIdMiddleware)
@@ -214,6 +218,8 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         code = "NOT_FOUND"
     elif exc.status_code == 400:
         code = "BAD_REQUEST"
+    elif exc.status_code == 429:
+        code = "RATE_LIMIT_EXCEEDED"
 
     detail_str = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     return JSONResponse(
@@ -221,6 +227,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         content=APIErrorResponse.build(
             code=code, message=detail_str, correlation_id=cid
         ).model_dump(),
+        headers=exc.headers,
     )
 
 
