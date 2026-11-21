@@ -822,6 +822,92 @@ class EnrollmentOut(BaseModel):
     class Config:
         from_attributes = True
 
+# ─── Cohort and Group Schemas ─────────────────────────────────────────────────
+
+class CohortCreate(BaseModel):
+    code: str = Field(..., min_length=2, max_length=50)
+    name: str = Field(..., min_length=3, max_length=150)
+    program_id: Optional[int] = None
+    academic_year_id: Optional[int] = None
+    year_of_study: int = 1
+    semester_number: int = 1
+    max_capacity: int = 60
+
+class CohortUpdate(BaseModel):
+    name: Optional[str] = None
+    max_capacity: Optional[int] = None
+    year_of_study: Optional[int] = None
+    semester_number: Optional[int] = None
+    is_active: Optional[bool] = None
+
+class CohortMemberAdd(BaseModel):
+    student_id: int
+    role: str = "student"  # student, class_representative, vice_representative
+
+class CohortMemberOut(BaseModel):
+    id: int
+    cohort_id: int
+    student_id: int
+    role: str
+    joined_at: datetime
+    status: str
+    class Config:
+        from_attributes = True
+
+class CohortOut(BaseModel):
+    id: int
+    institution_id: int
+    program_id: Optional[int] = None
+    academic_year_id: Optional[int] = None
+    code: str
+    name: str
+    year_of_study: int
+    semester_number: int
+    max_capacity: int
+    is_active: bool
+    created_at: datetime
+    member_count: Optional[int] = 0
+    class Config:
+        from_attributes = True
+
+class StudentGroupCreate(BaseModel):
+    cohort_id: Optional[int] = None
+    course_id: Optional[int] = None
+    group_type: str = "tutorial"  # tutorial, lab, project_team, discussion
+    name: str = Field(..., min_length=2, max_length=100)
+    max_capacity: int = 30
+    mentor_lecturer_id: Optional[int] = None
+    schedule_info: Optional[Dict[str, Any]] = None
+
+class StudentGroupMemberAdd(BaseModel):
+    student_id: int
+    group_role: str = "member"  # leader, member
+
+class StudentGroupMemberOut(BaseModel):
+    id: int
+    group_id: int
+    student_id: int
+    group_role: str
+    joined_at: datetime
+    class Config:
+        from_attributes = True
+
+class StudentGroupOut(BaseModel):
+    id: int
+    institution_id: int
+    cohort_id: Optional[int] = None
+    course_id: Optional[int] = None
+    group_type: str
+    name: str
+    max_capacity: int
+    mentor_lecturer_id: Optional[int] = None
+    schedule_info: Optional[Dict[str, Any]] = None
+    is_active: bool
+    created_at: datetime
+    member_count: Optional[int] = 0
+    class Config:
+        from_attributes = True
+
 class GradeOut(BaseModel):
     id: int
     course_id: int
