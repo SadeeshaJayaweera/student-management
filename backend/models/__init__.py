@@ -755,6 +755,90 @@ class StudentGroupMember(Base):
     student = relationship("Student")
 
 
+# ─── Academic Advising and Student Support Models ──────────────────────────────
+
+class AcademicAdvisorAssignment(Base):
+    __tablename__ = "academic_advisor_assignments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    lecturer_id = Column(Integer, ForeignKey("lecturers.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_date = Column(Date, default=func.current_date(), nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    advising_type = Column(String(50), default="academic", nullable=False)  # academic, career, pastoral, research_supervisor
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    institution = relationship("Institution")
+    student = relationship("Student")
+    lecturer = relationship("Lecturer")
+
+
+class AdvisingSession(Base):
+    __tablename__ = "advising_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    lecturer_id = Column(Integer, ForeignKey("lecturers.id", ondelete="CASCADE"), nullable=False, index=True)
+    scheduled_at = Column(DateTime, nullable=False)
+    duration_minutes = Column(Integer, default=30, nullable=False)
+    session_type = Column(String(50), default="one_on_one", nullable=False)  # one_on_one, group, online, urgent_intervention
+    status = Column(String(30), default="scheduled", nullable=False)  # scheduled, completed, cancelled, no_show
+    topic = Column(String(200), nullable=False)
+    student_notes = Column(Text, nullable=True)  # notes/goals visible to student
+    confidential_notes = Column(Text, nullable=True)  # strictly private to advisor/dean/admin
+    action_items = Column(JSON, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    student = relationship("Student")
+    lecturer = relationship("Lecturer")
+
+
+class StudentSupportCase(Base):
+    __tablename__ = "student_support_cases"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    assigned_staff_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    case_number = Column(String(50), unique=True, index=True, nullable=False)
+    category = Column(String(50), default="academic_probation", nullable=False)  # academic_probation, attendance_warning, financial_hardship, well_being, disciplinary
+    priority = Column(String(20), default="medium", nullable=False)  # low, medium, high, critical
+    status = Column(String(30), default="open", nullable=False)  # open, in_progress, escalated, resolved, closed
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=False)
+    resolution_summary = Column(Text, nullable=True)
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    student = relationship("Student")
+    assigned_staff = relationship("User", foreign_keys=[assigned_staff_id])
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    notes = relationship("SupportCaseNote", back_populates="support_case", cascade="all, delete-orphan")
+
+
+class SupportCaseNote(Base):
+    __tablename__ = "support_case_notes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    case_id = Column(Integer, ForeignKey("student_support_cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    is_confidential = Column(Boolean, default=False, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    # Relationships
+    support_case = relationship("StudentSupportCase", back_populates="notes")
+    author = relationship("User")
+
+
 class Grade(Base):
     __tablename__ = "grades"
 
