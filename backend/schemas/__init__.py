@@ -814,6 +814,32 @@ class ModuleReorderRequest(BaseModel):
 class LessonReorderRequest(BaseModel):
     lesson_ids: List[int]
 
+class CourseDocumentOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    course_id: int
+    module_id: Optional[int] = None
+    lesson_id: Optional[int] = None
+    title: str
+    original_filename: str
+    mime_type: str
+    file_size_bytes: int
+    sha256_hash: str
+    uploader_id: Optional[int] = None
+    is_published: bool
+    download_count: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class CourseDocumentUpdate(BaseModel):
+    title: Optional[str] = None
+    module_id: Optional[int] = None
+    lesson_id: Optional[int] = None
+    is_published: Optional[bool] = None
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)
