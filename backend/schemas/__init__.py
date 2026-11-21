@@ -590,17 +590,89 @@ class AlumniExperienceOut(AlumniExperienceCreate):
 # ─── Course Schemas ───────────────────────────────────────────────────────────
 
 class CourseCreate(BaseModel):
-    course_code: str
+    course_code: str = Field(..., min_length=2, max_length=50)
+    title: str = Field(..., min_length=2, max_length=200)
+    description: Optional[str] = None
+    credits: int = Field(default=3, ge=1, le=30)
+    faculty: Optional[str] = "Computing"
+    department: Optional[str] = "Software Engineering"
+    semester: int = Field(default=1, ge=1, le=10)
+    year: int = Field(default=1, ge=1, le=10)
+    max_students: int = Field(default=60, ge=1, le=1000)
+    lecturer_id: Optional[int] = None
+    program_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    delivery_method: str = "in_person"
+    learning_outcomes: Optional[List[str]] = None
+    schedule: Optional[Dict[str, Any]] = None
+
+class CourseUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    credits: Optional[int] = None
+    faculty: Optional[str] = None
+    department: Optional[str] = None
+    semester: Optional[int] = None
+    year: Optional[int] = None
+    max_students: Optional[int] = None
+    lecturer_id: Optional[int] = None
+    program_id: Optional[int] = None
+    faculty_id: Optional[int] = None
+    department_id: Optional[int] = None
+    delivery_method: Optional[str] = None
+    learning_outcomes: Optional[List[str]] = None
+    schedule: Optional[Dict[str, Any]] = None
+    is_active: Optional[bool] = None
+
+class CoursePrerequisiteCreate(BaseModel):
+    prerequisite_course_id: int
+    is_mandatory: bool = True
+    minimum_grade: str = "C"
+
+class CoursePrerequisiteOut(BaseModel):
+    id: int
+    course_id: int
+    prerequisite_course_id: int
+    is_mandatory: bool
+    minimum_grade: str
+    created_at: datetime
+    prerequisite_course_code: Optional[str] = None
+    prerequisite_title: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class CourseModuleCreate(BaseModel):
+    order_index: int = 1
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    learning_objectives: Optional[List[str]] = None
+    estimated_hours: float = 10.0
+    is_active: bool = True
+
+class CourseModuleUpdate(BaseModel):
+    order_index: Optional[int] = None
+    title: Optional[str] = None
+    description: Optional[str] = None
+    learning_objectives: Optional[List[str]] = None
+    estimated_hours: Optional[float] = None
+    is_active: Optional[bool] = None
+
+class CourseModuleOut(BaseModel):
+    id: int
+    course_id: int
+    order_index: int
     title: str
     description: Optional[str] = None
-    credits: int = 3
-    faculty: str
-    department: str
-    semester: int
-    year: int
-    max_students: int = 60
-    lecturer_id: Optional[int] = None
-    schedule: Optional[Dict[str, Any]] = None
+    learning_objectives: Optional[List[str]] = None
+    estimated_hours: float
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class CourseOut(BaseModel):
     id: int
@@ -608,12 +680,16 @@ class CourseOut(BaseModel):
     title: str
     description: Optional[str] = None
     credits: int
-    faculty: str
-    department: str
+    faculty: Optional[str] = None
+    department: Optional[str] = None
     semester: int
     year: int
     max_students: int
     is_active: bool
+    institution_id: Optional[int] = None
+    program_id: Optional[int] = None
+    delivery_method: Optional[str] = "in_person"
+    learning_outcomes: Optional[List[str]] = None
     lecturer: Optional[LecturerOut] = None
     class Config:
         from_attributes = True

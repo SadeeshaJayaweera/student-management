@@ -569,6 +569,11 @@ class Course(Base):
     year = Column(Integer, nullable=False)
     max_students = Column(Integer, default=60)
     lecturer_id = Column(Integer, ForeignKey("lecturers.id"), nullable=True)
+    program_id = Column(Integer, ForeignKey("programs.id", ondelete="SET NULL"), nullable=True, index=True)
+    faculty_id = Column(Integer, ForeignKey("faculties.id", ondelete="SET NULL"), nullable=True, index=True)
+    department_id = Column(Integer, ForeignKey("departments.id", ondelete="SET NULL"), nullable=True, index=True)
+    delivery_method = Column(String(50), default="in_person", nullable=False)
+    learning_outcomes = Column(JSON, nullable=True)
     schedule = Column(JSON, nullable=True)  # {"day": "Monday", "time": "9:00", "room": "A101"}
     syllabus_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
@@ -577,11 +582,47 @@ class Course(Base):
     # Relationships
     institution = relationship("Institution", back_populates="courses")
     lecturer = relationship("Lecturer", back_populates="courses")
+    program = relationship("Program")
+    faculty_ref = relationship("Faculty")
+    department_ref = relationship("Department")
+    prerequisites = relationship("CoursePrerequisite", foreign_keys="CoursePrerequisite.course_id", back_populates="course", cascade="all, delete-orphan")
+    modules = relationship("CourseModule", back_populates="course", cascade="all, delete-orphan")
     enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
     grades = relationship("Grade", back_populates="course", cascade="all, delete-orphan")
     assignments = relationship("Assignment", back_populates="course", cascade="all, delete-orphan")
     attendances = relationship("Attendance", back_populates="course", cascade="all, delete-orphan")
     materials = relationship("CourseMaterial", back_populates="course", cascade="all, delete-orphan")
+
+
+class CoursePrerequisite(Base):
+    __tablename__ = "course_prerequisites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    prerequisite_course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    is_mandatory = Column(Boolean, default=True, nullable=False)
+    minimum_grade = Column(String(5), default="C", nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    course = relationship("Course", foreign_keys=[course_id], back_populates="prerequisites")
+    prerequisite_course = relationship("Course", foreign_keys=[prerequisite_course_id])
+
+
+class CourseModule(Base):
+    __tablename__ = "course_modules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    order_index = Column(Integer, default=1, nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    learning_objectives = Column(JSON, nullable=True)
+    estimated_hours = Column(Float, default=10.0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="modules")
 
 
 class Enrollment(Base):

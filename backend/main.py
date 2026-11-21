@@ -40,6 +40,7 @@ from backend.routers.audit import router as audit_router
 from backend.routers.institutions import router as institutions_router
 from backend.routers.academic_terms import router as academic_terms_router
 from backend.routers.programs import router as programs_router
+from backend.routers.courses import router as courses_router
 from backend.routers.v1 import v1_router
 
 
@@ -141,6 +142,7 @@ app.include_router(audit_router)
 app.include_router(institutions_router)
 app.include_router(academic_terms_router)
 app.include_router(programs_router)
+app.include_router(courses_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
