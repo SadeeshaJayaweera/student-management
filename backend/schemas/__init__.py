@@ -1118,6 +1118,92 @@ class ForumThreadDetailOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+# ─── Virtual Classroom & Live Session Schemas ─────────────────────────────────
+
+class VirtualClassroomSessionCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    description: Optional[str] = None
+    provider: str = "zoom"  # zoom, google_meet, microsoft_teams, bigbluebutton, custom_hls
+    meeting_id: Optional[str] = None
+    join_url: str = Field(..., min_length=5, max_length=1024)
+    host_url: Optional[str] = None
+    passcode: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    is_recorded: bool = True
+    max_participants: Optional[int] = 100
+    session_settings: Optional[Dict[str, Any]] = None
+
+class VirtualClassroomSessionUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    provider: Optional[str] = None
+    meeting_id: Optional[str] = None
+    join_url: Optional[str] = None
+    host_url: Optional[str] = None
+    passcode: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    status: Optional[str] = None  # scheduled, live, concluded, cancelled
+    recording_url: Optional[str] = None
+    recording_duration_minutes: Optional[int] = None
+    is_recorded: Optional[bool] = None
+    max_participants: Optional[int] = None
+    session_settings: Optional[Dict[str, Any]] = None
+
+class VirtualClassroomSessionOut(BaseModel):
+    id: int
+    course_id: int
+    host_id: Optional[int] = None
+    host_name: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    provider: str
+    meeting_id: Optional[str] = None
+    join_url: str
+    host_url: Optional[str] = None  # Only exposed to hosts/admins
+    passcode: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    status: str
+    recording_url: Optional[str] = None
+    recording_duration_minutes: Optional[int] = None
+    is_recorded: bool
+    max_participants: Optional[int] = 100
+    session_settings: Optional[Dict[str, Any]] = None
+    participants_count: int = 0
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class VirtualClassroomAttendanceRecord(BaseModel):
+    id: int
+    session_id: int
+    user_id: int
+    student_id: Optional[int] = None
+    participant_name: Optional[str] = None
+    joined_at: datetime
+    left_at: Optional[datetime] = None
+    duration_minutes: int = 0
+    device_type: Optional[str] = "browser"
+    attendance_status: str = "present"
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class VirtualClassroomJoinResponse(BaseModel):
+    session_id: int
+    join_url: str
+    passcode: Optional[str] = None
+    provider: str
+    status: str
+    attendance_id: int
+    joined_at: datetime
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)
@@ -1207,6 +1293,7 @@ class CourseWorkspaceOut(BaseModel):
     modules: List[Dict[str, Any]]
     recent_announcements: List[Dict[str, Any]]
     active_assignments: List[Dict[str, Any]]
+    upcoming_live_sessions: Optional[List[Dict[str, Any]]] = None
 
 # ─── Enrollment Schemas ───────────────────────────────────────────────────────
 

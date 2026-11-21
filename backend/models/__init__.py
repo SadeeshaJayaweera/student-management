@@ -628,6 +628,7 @@ class Course(Base):
     videos = relationship("CourseVideo", back_populates="course", cascade="all, delete-orphan")
     announcements = relationship("CourseAnnouncement", back_populates="course", cascade="all, delete-orphan", order_by="desc(CourseAnnouncement.is_pinned), desc(CourseAnnouncement.published_at)")
     forum_categories = relationship("CourseForumCategory", back_populates="course", cascade="all, delete-orphan", order_by="CourseForumCategory.display_order")
+    live_sessions = relationship("VirtualClassroomSession", back_populates="course", cascade="all, delete-orphan", order_by="VirtualClassroomSession.start_time")
 
 
 class CoursePrerequisite(Base):
@@ -921,6 +922,57 @@ class ForumPostReaction(Base):
 
     post = relationship("ForumPost", back_populates="reactions")
     user = relationship("User")
+
+
+class VirtualClassroomSession(Base):
+    __tablename__ = "virtual_classroom_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    host_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    provider = Column(String(50), default="zoom", nullable=False)  # zoom, google_meet, microsoft_teams, bigbluebutton, custom_hls
+    meeting_id = Column(String(255), nullable=True)
+    join_url = Column(String(1024), nullable=False)
+    host_url = Column(String(1024), nullable=True)
+    passcode = Column(String(100), nullable=True)
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False)
+    status = Column(String(30), default="scheduled", nullable=False)  # scheduled, live, concluded, cancelled
+    recording_url = Column(String(1024), nullable=True)
+    recording_duration_minutes = Column(Integer, nullable=True)
+    is_recorded = Column(Boolean, default=True, nullable=False)
+    max_participants = Column(Integer, default=100, nullable=True)
+    session_settings = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="live_sessions")
+    host = relationship("User")
+    attendances = relationship("VirtualClassroomAttendance", back_populates="session", cascade="all, delete-orphan")
+
+
+class VirtualClassroomAttendance(Base):
+    __tablename__ = "virtual_classroom_attendance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("virtual_classroom_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=True, index=True)
+    joined_at = Column(DateTime, default=func.now(), nullable=False)
+    left_at = Column(DateTime, nullable=True)
+    duration_minutes = Column(Integer, default=0, nullable=False)
+    device_type = Column(String(100), default="browser", nullable=True)
+    attendance_status = Column(String(30), default="present", nullable=False)  # present, late, partial, left_early
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    __table_args__ = (UniqueConstraint("session_id", "user_id", name="uq_session_user_attendance"),)
+
+    session = relationship("VirtualClassroomSession", back_populates="attendances")
+    user = relationship("User")
+    student = relationship("Student")
 
 
 class Enrollment(Base):

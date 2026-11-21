@@ -929,6 +929,7 @@ async def get_course_workspace(
         selectinload(Course.modules).selectinload(CourseModule.lessons),
         selectinload(Course.assignments),
         selectinload(Course.announcements).selectinload(CourseAnnouncement.author),
+        selectinload(Course.live_sessions),
         selectinload(Course.enrollments).selectinload(Enrollment.student)
     )
     res = await db.execute(q)
@@ -1027,6 +1028,20 @@ async def get_course_workspace(
         if is_admin or is_instructor or (ann.published_at and ann.published_at <= now)
     ]
 
+    upcoming_sessions = [
+        {
+            "id": s.id,
+            "title": s.title,
+            "provider": s.provider,
+            "start_time": s.start_time.isoformat() if s.start_time else None,
+            "end_time": s.end_time.isoformat() if s.end_time else None,
+            "status": s.status,
+            "join_url": s.join_url,
+        }
+        for s in course.live_sessions
+        if s.status in {"scheduled", "live"}
+    ]
+
     return CourseWorkspaceOut(
         course_id=course.id,
         course_code=course.course_code,
@@ -1053,7 +1068,8 @@ async def get_course_workspace(
         },
         modules=modules_data,
         recent_announcements=recent_announcements,
-        active_assignments=assignments_data
+        active_assignments=assignments_data,
+        upcoming_live_sessions=upcoming_sessions
     )
 
 
