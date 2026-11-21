@@ -12,7 +12,8 @@ from backend.models import (
     ClubEvent, Course
 )
 from backend.schemas import (
-    StudentOut, StudentUpdate, GradeOut, CourseOut, AssignmentOut, NotificationOut,
+    StudentOut, StudentUpdate, StudentCreate, StudentStatusUpdate,
+    GradeOut, CourseOut, AssignmentOut, NotificationOut,
     SubmissionCreate, StudentDashboard
 )
 from backend.utils.security import get_current_user, require_roles
@@ -287,6 +288,141 @@ async def get_assignments(
     ]
 
 
+def _mask_student_pii(student: Student, current_user: User) -> StudentOut:
+    out = StudentOut.model_validate(student)
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_privileged = role_val in {UserRole.ADMIN.value, UserRole.REGISTRAR.value} or current_user.id == student.user_id
+    if not is_privileged:
+        out.national_id = "REDACTED"
+        out.date_of_birth = None
+    return out
+
+
+@router.get("", response_model=List[StudentOut])
+async def list_students(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+    campus_id: Optional[int] = None,
+    program_id: Optional[int] = None,
+    faculty_id: Optional[int] = None,
+    department_id: Optional[int] = None,
+    academic_standing: Optional[str] = None,
+    enrollment_status: Optional[str] = None,
+    search: Optional[str] = None,
+    current_user: User = Depends(require_roles("admin", "registrar", "dean", "lecturer")),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    List students with filtering, search, and pagination.
+    Restricted to academic staff and administrators.
+    """
+    query = select(Student).options(selectinload(Student.user))
+
+    # Multi-tenant isolation
+    if current_user.institution_id is not None:
+        query = query.where(Student.institution_id == current_user.institution_id)
+
+    if campus_id is not None:
+        query = query.where(Student.campus_id == campus_id)
+    if program_id is not None:
+        query = query.where(Student.program_id == program_id)
+    if faculty_id is not None:
+        query = query.where(Student.faculty_id == faculty_id)
+    if department_id is not None:
+        query = query.where(Student.department_id == department_id)
+    if academic_standing is not None:
+        query = query.where(Student.academic_standing == academic_standing)
+    if enrollment_status is not None:
+        query = query.where(Student.enrollment_status == enrollment_status)
+
+    if search:
+        search_filter = f"%{search}%"
+        query = query.join(Student.user).where(
+            or_(
+                Student.student_id.ilike(search_filter),
+                User.full_name.ilike(search_filter),
+                User.email.ilike(search_filter)
+            )
+        )
+
+    query = query.offset(skip).limit(limit)
+    res = await db.execute(query)
+    students = res.scalars().all()
+
+    return [_mask_student_pii(s, current_user) for s in students]
+
+
+@router.post("", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
+async def create_student_profile(
+    payload: StudentCreate,
+    current_user: User = Depends(require_roles("admin", "registrar")),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Provision a new student profile for an existing student user.
+    Restricted to Admins and Registrars.
+    """
+    # Verify user exists and has student role
+    user_res = await db.execute(select(User).where(User.id == payload.user_id))
+    user = user_res.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="Target user account not found")
+
+    user_role = user.role.value if hasattr(user.role, "value") else str(user.role)
+    if user_role != UserRole.STUDENT.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Student profile can only be provisioned for users with 'student' role"
+        )
+
+    # Check for existing profile
+    existing = await db.execute(
+        select(Student).where(or_(Student.user_id == payload.user_id, Student.student_id == payload.student_id))
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A student profile already exists for this user or student ID"
+        )
+
+    # Institution isolation
+    institution_id = current_user.institution_id or user.institution_id
+
+    student = Student(
+        user_id=payload.user_id,
+        institution_id=institution_id,
+        student_id=payload.student_id,
+        faculty=payload.faculty,
+        department=payload.department,
+        program=payload.program,
+        year_of_study=payload.year_of_study,
+        semester=payload.semester,
+        campus_id=payload.campus_id,
+        program_id=payload.program_id,
+        faculty_id=payload.faculty_id,
+        department_id=payload.department_id,
+        enrollment_date=payload.enrollment_date,
+        expected_graduation=payload.expected_graduation,
+        address=payload.address,
+        emergency_contact=payload.emergency_contact,
+        national_id=payload.national_id,
+        date_of_birth=payload.date_of_birth,
+        gender=payload.gender,
+        academic_standing=payload.academic_standing or "good_standing",
+        enrollment_status=payload.enrollment_status or "enrolled",
+        scholarship=payload.scholarship,
+        gpa=0.0,
+        credits_earned=0
+    )
+    db.add(student)
+    await db.commit()
+
+    refreshed = await db.execute(
+        select(Student).where(Student.id == student.id).options(selectinload(Student.user))
+    )
+    return refreshed.scalar_one()
+
+
 @router.get("/{student_ref}", response_model=StudentOut)
 async def get_student_by_id(
     student_ref: str,
@@ -297,7 +433,7 @@ async def get_student_by_id(
     Get student profile by ID or Student ID.
     Enforces resource-level authorization (BOLA defense):
     - Students can only view their own profile.
-    - Staff / faculty can view student profiles.
+    - Staff / faculty can view student profiles (with PII masking for non-admin/registrar).
     """
     query = select(Student).options(selectinload(Student.user))
     if student_ref.isdigit():
@@ -315,7 +451,7 @@ async def get_student_by_id(
     except ForbiddenException as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=e.message)
 
-    return student
+    return _mask_student_pii(student, current_user)
 
 
 @router.put("/{student_ref}", response_model=StudentOut)
@@ -329,7 +465,7 @@ async def update_student_profile(
     Update student profile details.
     Enforces resource-level authorization:
     - Students can only update their own emergency contact and address.
-    - Academic fields (year, semester) can only be altered by Admins or Registrars.
+    - Academic fields (year, semester, campus, program, etc.) can only be altered by Admins or Registrars.
     """
     query = select(Student).options(selectinload(Student.user))
     if student_ref.isdigit():
@@ -355,21 +491,92 @@ async def update_student_profile(
     if payload.emergency_contact is not None:
         student.emergency_contact = payload.emergency_contact
 
-    # Privilege escalation defense: students cannot alter academic status
-    if (payload.year_of_study is not None or payload.semester is not None) and not is_staff:
+    # Privilege escalation defense: students cannot alter academic status or assignments
+    academic_fields_provided = any([
+        payload.year_of_study is not None,
+        payload.semester is not None,
+        payload.campus_id is not None,
+        payload.program_id is not None,
+        payload.academic_standing is not None,
+        payload.enrollment_status is not None,
+        payload.expected_graduation is not None,
+        payload.scholarship is not None
+    ])
+
+    if academic_fields_provided and not is_staff:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only academic staff (Admin/Registrar) can update year of study or semester."
+            detail="Only academic staff (Admin/Registrar) can update academic standing, program, or semester details."
         )
 
-    if payload.year_of_study is not None and is_staff:
-        student.year_of_study = payload.year_of_study
-    if payload.semester is not None and is_staff:
-        student.semester = payload.semester
+    if is_staff:
+        if payload.year_of_study is not None:
+            student.year_of_study = payload.year_of_study
+        if payload.semester is not None:
+            student.semester = payload.semester
+        if payload.campus_id is not None:
+            student.campus_id = payload.campus_id
+        if payload.program_id is not None:
+            student.program_id = payload.program_id
+        if payload.academic_standing is not None:
+            student.academic_standing = payload.academic_standing
+        if payload.enrollment_status is not None:
+            student.enrollment_status = payload.enrollment_status
+        if payload.expected_graduation is not None:
+            student.expected_graduation = payload.expected_graduation
+        if payload.scholarship is not None:
+            student.scholarship = payload.scholarship
 
     await db.commit()
     await db.refresh(student)
-    return student
+    return _mask_student_pii(student, current_user)
+
+
+@router.patch("/{student_ref}/status", response_model=StudentOut)
+async def update_student_status(
+    student_ref: str,
+    payload: StudentStatusUpdate,
+    current_user: User = Depends(require_roles("admin", "registrar")),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Administrative transition of student enrollment status or academic standing.
+    Restricted to Admins and Registrars.
+    """
+    ALLOWED_STATUSES = {"enrolled", "on_leave", "suspended", "graduated", "withdrawn", "deferred"}
+    ALLOWED_STANDINGS = {"good_standing", "academic_probation", "deans_list", "suspended", "dismissed"}
+
+    if payload.enrollment_status and payload.enrollment_status not in ALLOWED_STATUSES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid enrollment status. Allowed values: {sorted(list(ALLOWED_STATUSES))}"
+        )
+
+    if payload.academic_standing and payload.academic_standing not in ALLOWED_STANDINGS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid academic standing. Allowed values: {sorted(list(ALLOWED_STANDINGS))}"
+        )
+
+    query = select(Student).options(selectinload(Student.user))
+    if student_ref.isdigit():
+        query = query.where(or_(Student.id == int(student_ref), Student.student_id == student_ref))
+    else:
+        query = query.where(Student.student_id == student_ref)
+
+    res = await db.execute(query)
+    student = res.scalar_one_or_none()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student profile not found")
+
+    if payload.enrollment_status:
+        student.enrollment_status = payload.enrollment_status
+    if payload.academic_standing:
+        student.academic_standing = payload.academic_standing
+
+    await db.commit()
+    await db.refresh(student)
+    return _mask_student_pii(student, current_user)
 
 
 @router.post("/assignments/{assignment_id}/submit")
