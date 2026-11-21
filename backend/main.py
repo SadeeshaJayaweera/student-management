@@ -72,6 +72,7 @@ from backend.routers.wellbeing import router as wellbeing_router
 from backend.routers.billing import router as billing_router
 from backend.routers.payments import router as payments_router
 from backend.routers.digital_library import router as digital_library_router
+from backend.routers.circulation import router as circulation_router
 from backend.routers.v1 import v1_router
 
 
@@ -205,6 +206,7 @@ app.include_router(wellbeing_router)
 app.include_router(billing_router)
 app.include_router(payments_router)
 app.include_router(digital_library_router)
+app.include_router(circulation_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
