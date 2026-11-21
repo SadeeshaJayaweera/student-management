@@ -655,13 +655,26 @@ class Enrollment(Base):
     __tablename__ = "enrollments"
 
     id = Column(Integer, primary_key=True, index=True)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
-    course_id = Column(Integer, ForeignKey("courses.id"), nullable=False)
-    enrolled_at = Column(DateTime, default=func.now())
-    status = Column(String(20), default="active")  # active, dropped, completed
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True, index=True)
+    semester_id = Column(Integer, ForeignKey("semesters.id", ondelete="SET NULL"), nullable=True, index=True)
+    enrolled_at = Column(DateTime, default=func.now(), nullable=False)
+    status = Column(String(30), default="active", nullable=False)  # active, requested, waitlisted, dropped, withdrawn, rejected, completed
+    waitlist_position = Column(Integer, nullable=True)
+    registration_type = Column(String(30), default="regular", nullable=False)  # regular, audit, repeat
+    approved_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    approved_at = Column(DateTime, nullable=True)
+    dropped_at = Column(DateTime, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    remarks = Column(Text, nullable=True)
 
+    # Relationships
     student = relationship("Student", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
+    semester = relationship("Semester")
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
+    institution = relationship("Institution")
 
 
 class Grade(Base):
