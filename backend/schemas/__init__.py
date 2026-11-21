@@ -2878,6 +2878,96 @@ class CalendarEventOut(BaseModel):
         from_attributes = True
 
 
+# ─── Student Collaboration Spaces Schemas ─────────────────────────────────────
+
+class CollaborationWorkspaceCreate(BaseModel):
+    course_id: Optional[int] = None
+    name: str
+    description: Optional[str] = None
+    topic: Optional[str] = None
+    visibility: str = "course_public"  # private, course_public, invite_only
+    meeting_link: Optional[str] = None
+
+class CollaborationWorkspaceJoinPayload(BaseModel):
+    join_code: str
+
+class CollaborationWorkspaceMemberOut(BaseModel):
+    id: int
+    student_id: int
+    student_name: str
+    student_reg_id: Optional[str] = None
+    role: str
+    joined_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CollaborationWorkspaceAssetCreate(BaseModel):
+    title: str
+    asset_type: str = "note"  # document, link, code_snippet, note
+    content: str
+
+class CollaborationWorkspaceAssetOut(BaseModel):
+    id: int
+    workspace_id: int
+    created_by_student_id: Optional[int] = None
+    author_name: str
+    title: str
+    asset_type: str
+    content: str
+    version: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CollaborationWorkspaceMessageCreate(BaseModel):
+    content: str
+    pinned: bool = False
+
+class CollaborationWorkspaceMessageOut(BaseModel):
+    id: int
+    workspace_id: int
+    sender_student_id: int
+    sender_name: str
+    content: str
+    pinned: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CollaborationWorkspaceWhiteboardUpdate(BaseModel):
+    whiteboard_data: Dict[str, Any]
+
+class CollaborationWorkspaceOut(BaseModel):
+    id: int
+    course_id: Optional[int] = None
+    course_code: Optional[str] = None
+    name: str
+    description: Optional[str] = None
+    topic: Optional[str] = None
+    visibility: str
+    owner_student_id: int
+    owner_name: str
+    join_code: str
+    shared_whiteboard_data: Optional[Dict[str, Any]] = None
+    meeting_link: Optional[str] = None
+    status: str
+    members_count: int
+    assets_count: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CollaborationWorkspaceDetailOut(CollaborationWorkspaceOut):
+    members: List[CollaborationWorkspaceMemberOut]
+    assets: List[CollaborationWorkspaceAssetOut]
+    recent_messages: List[CollaborationWorkspaceMessageOut]
+
+
+
 
 
 

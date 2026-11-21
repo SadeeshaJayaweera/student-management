@@ -2041,4 +2041,73 @@ class CalendarEvent(Base):
     course = relationship("Course")
 
 
+class CollaborationWorkspace(Base):
+    __tablename__ = "collaboration_workspaces"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    topic = Column(String(150), nullable=True)
+    visibility = Column(String(30), default="course_public", nullable=False)  # private, course_public, invite_only
+    owner_student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    join_code = Column(String(12), unique=True, index=True, nullable=False)
+    shared_whiteboard_data = Column(JSON, nullable=True)
+    meeting_link = Column(String(500), nullable=True)
+    status = Column(String(30), default="active", nullable=False)  # active, archived
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course")
+    owner = relationship("Student", foreign_keys=[owner_student_id])
+    members = relationship("CollaborationWorkspaceMember", back_populates="workspace", cascade="all, delete-orphan")
+    assets = relationship("CollaborationWorkspaceAsset", back_populates="workspace", cascade="all, delete-orphan", order_by="desc(CollaborationWorkspaceAsset.created_at)")
+    messages = relationship("CollaborationWorkspaceMessage", back_populates="workspace", cascade="all, delete-orphan", order_by="CollaborationWorkspaceMessage.created_at")
+
+
+class CollaborationWorkspaceMember(Base):
+    __tablename__ = "collaboration_workspace_members"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("collaboration_workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(30), default="collaborator", nullable=False)  # owner, admin, collaborator, viewer
+    joined_at = Column(DateTime, default=func.now(), nullable=False)
+
+    workspace = relationship("CollaborationWorkspace", back_populates="members")
+    student = relationship("Student")
+
+
+class CollaborationWorkspaceAsset(Base):
+    __tablename__ = "collaboration_workspace_assets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("collaboration_workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_by_student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    asset_type = Column(String(50), default="note", nullable=False)  # document, link, code_snippet, note
+    content = Column(Text, nullable=False)
+    version = Column(Integer, default=1, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    workspace = relationship("CollaborationWorkspace", back_populates="assets")
+    created_by = relationship("Student", foreign_keys=[created_by_student_id])
+
+
+class CollaborationWorkspaceMessage(Base):
+    __tablename__ = "collaboration_workspace_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    workspace_id = Column(Integer, ForeignKey("collaboration_workspaces.id", ondelete="CASCADE"), nullable=False, index=True)
+    sender_student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    content = Column(Text, nullable=False)
+    pinned = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    workspace = relationship("CollaborationWorkspace", back_populates="messages")
+    sender = relationship("Student", foreign_keys=[sender_student_id])
+
+
+
 
