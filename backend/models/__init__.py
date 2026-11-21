@@ -603,6 +603,9 @@ class Course(Base):
     learning_outcomes = Column(JSON, nullable=True)
     schedule = Column(JSON, nullable=True)  # {"day": "Monday", "time": "9:00", "room": "A101"}
     syllabus_url = Column(String(500), nullable=True)
+    syllabus_data = Column(JSON, nullable=True)
+    workspace_settings = Column(JSON, nullable=True)
+    banner_url = Column(String(500), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
 

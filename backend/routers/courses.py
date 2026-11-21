@@ -8,11 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from backend.database import get_db
-from backend.models import Course, CoursePrerequisite, CourseModule, Institution, Program, Lecturer, User, UserRole
+from backend.models import (
+    Course, CoursePrerequisite, CourseModule, Institution, Program, Lecturer,
+    User, UserRole, Enrollment, Assignment, Student
+)
 from backend.schemas import (
     CourseCreate, CourseUpdate, CourseOut,
     CoursePrerequisiteCreate, CoursePrerequisiteOut,
     CourseModuleCreate, CourseModuleUpdate, CourseModuleOut,
+    CourseWorkspaceSettingsUpdate, CourseWorkspaceOut
 )
 from backend.core.dependencies import get_current_user
 
@@ -410,3 +414,161 @@ async def delete_module(
     await db.delete(mod)
     await db.commit()
     return None
+
+
+# ─── Course Workspace Architecture ───────────────────────────────────────────
+
+from sqlalchemy.orm import selectinload
+
+@router.get("/api/courses/{course_id}/workspace", response_model=CourseWorkspaceOut)
+async def get_course_workspace(
+    course_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Unified course learning workspace hub.
+    Enforces authorization: Accessible only to enrolled students or course instructors/administrators.
+    """
+    q = select(Course).where(Course.id == course_id).options(
+        selectinload(Course.lecturer).selectinload(Lecturer.user),
+        selectinload(Course.modules),
+        selectinload(Course.assignments),
+        selectinload(Course.enrollments).selectinload(Enrollment.student)
+    )
+    res = await db.execute(q)
+    course = res.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}
+    is_instructor = bool(course.lecturer and course.lecturer.user_id == current_user.id)
+
+    # Check student enrollment
+    is_enrolled_student = False
+    enrollment_status = None
+    if role_val == UserRole.STUDENT.value:
+        for enr in course.enrollments:
+            if enr.student and enr.student.user_id == current_user.id:
+                enrollment_status = enr.status
+                if enr.status in {"active", "completed"}:
+                    is_enrolled_student = True
+                break
+
+    if not (is_admin or is_instructor or is_enrolled_student):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You must be actively enrolled in or instructor of this course to access the workspace."
+        )
+
+    # Calculate active stats
+    active_students = len([e for e in course.enrollments if e.status == "active"])
+    sorted_modules = sorted(course.modules, key=lambda m: m.order_index)
+    sorted_assignments = sorted(course.assignments, key=lambda a: a.due_date if a.due_date else datetime.max)
+
+    modules_data = [
+        {
+            "id": m.id,
+            "order_index": m.order_index,
+            "title": m.title,
+            "description": m.description,
+            "learning_objectives": m.learning_objectives,
+            "estimated_hours": m.estimated_hours,
+            "is_active": m.is_active
+        }
+        for m in sorted_modules if m.is_active or is_admin or is_instructor
+    ]
+
+    assignments_data = [
+        {
+            "id": a.id,
+            "title": a.title,
+            "description": a.description,
+            "due_date": a.due_date.isoformat() if a.due_date else None,
+            "max_marks": a.max_marks,
+            "type": a.assignment_type
+        }
+        for a in sorted_assignments
+    ]
+
+    lecturer_info = None
+    if course.lecturer:
+        lecturer_info = {
+            "id": course.lecturer.id,
+            "full_name": course.lecturer.user.full_name if course.lecturer.user else "Faculty Instructor",
+            "email": course.lecturer.user.email if course.lecturer.user else None,
+            "office_location": course.lecturer.office_location,
+            "office_hours": course.lecturer.office_hours
+        }
+
+    return CourseWorkspaceOut(
+        course_id=course.id,
+        course_code=course.course_code,
+        title=course.title,
+        description=course.description,
+        credits=course.credits,
+        delivery_method=course.delivery_method,
+        learning_outcomes=course.learning_outcomes,
+        schedule=course.schedule,
+        banner_url=course.banner_url,
+        syllabus_data=course.syllabus_data,
+        workspace_settings=course.workspace_settings,
+        lecturer=lecturer_info,
+        stats={
+            "enrolled_count": active_students,
+            "modules_count": len(modules_data),
+            "assignments_count": len(assignments_data)
+        },
+        user_context={
+            "role": role_val,
+            "is_instructor": is_instructor,
+            "is_admin": is_admin,
+            "enrollment_status": enrollment_status
+        },
+        modules=modules_data,
+        recent_announcements=[],
+        active_assignments=assignments_data
+    )
+
+
+@router.put("/api/courses/{course_id}/workspace/settings")
+async def update_course_workspace_settings(
+    course_id: int,
+    payload: CourseWorkspaceSettingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update course syllabus, banner, and workspace configurations (Instructor/Admin only)"""
+    res = await db.execute(
+        select(Course).where(Course.id == course_id).options(selectinload(Course.lecturer))
+    )
+    course = res.scalar_one_or_none()
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val in {UserRole.ADMIN.value, UserRole.DEAN.value}
+    is_instructor = bool(course.lecturer and course.lecturer.user_id == current_user.id)
+
+    if not (is_admin or is_instructor):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Instructor or administrative privileges required to update workspace settings."
+        )
+
+    if payload.syllabus_data is not None:
+        course.syllabus_data = payload.syllabus_data
+    if payload.workspace_settings is not None:
+        course.workspace_settings = payload.workspace_settings
+    if payload.banner_url is not None:
+        course.banner_url = payload.banner_url
+
+    await db.commit()
+    await db.refresh(course)
+    return {
+        "course_id": course.id,
+        "syllabus_data": course.syllabus_data,
+        "workspace_settings": course.workspace_settings,
+        "banner_url": course.banner_url
+    }
