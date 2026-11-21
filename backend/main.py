@@ -163,6 +163,9 @@ if (dist_path / "assets").exists():
 @app.get("/{full_path:path}", include_in_schema=False)
 async def serve_react_app(full_path: str):
     """Fallback handler to serve built React SPA for any non-API routes"""
+    if full_path.startswith("api/") or full_path == "api":
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+
     # Check if the requested file exists in dist
     target_file = dist_path / full_path
     if full_path and target_file.is_file():
@@ -251,8 +254,8 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
         "backend.main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=settings.host,
+        port=settings.port,
         reload=settings.debug,
         log_level="info"
     )

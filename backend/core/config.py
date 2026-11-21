@@ -25,6 +25,8 @@ class Settings(BaseSettings):
         description="Deployment environment (development, testing, staging, production)",
     )
     debug: bool = Field(default=False, description="Enable verbose debug mode")
+    host: str = Field(default="127.0.0.1", description="Server bind host")
+    port: int = Field(default=8000, description="Server listen port")
 
     # Security & Cryptography
     secret_key: str = Field(
