@@ -622,6 +622,7 @@ class Course(Base):
     assignments = relationship("Assignment", back_populates="course", cascade="all, delete-orphan")
     attendances = relationship("Attendance", back_populates="course", cascade="all, delete-orphan")
     materials = relationship("CourseMaterial", back_populates="course", cascade="all, delete-orphan")
+    documents = relationship("CourseDocument", back_populates="course", cascade="all, delete-orphan")
 
 
 class CoursePrerequisite(Base):
@@ -658,6 +659,7 @@ class CourseModule(Base):
     course = relationship("Course", back_populates="modules")
     prerequisite = relationship("CourseModule", remote_side=[id])
     lessons = relationship("CourseLesson", back_populates="module", cascade="all, delete-orphan", order_by="CourseLesson.order_index")
+    documents = relationship("CourseDocument", back_populates="module")
 
 
 class CourseLesson(Base):
@@ -679,6 +681,7 @@ class CourseLesson(Base):
 
     module = relationship("CourseModule", back_populates="lessons")
     content_versions = relationship("LessonContentVersion", back_populates="lesson", cascade="all, delete-orphan", order_by="desc(LessonContentVersion.version_number)")
+    documents = relationship("CourseDocument", back_populates="lesson")
 
 
 class LessonContentVersion(Base):
@@ -698,6 +701,32 @@ class LessonContentVersion(Base):
 
     lesson = relationship("CourseLesson", back_populates="content_versions")
     author = relationship("User")
+
+
+class CourseDocument(Base):
+    __tablename__ = "course_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True)
+    lesson_id = Column(Integer, ForeignKey("course_lessons.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    original_filename = Column(String(255), nullable=False)
+    storage_path = Column(String(512), nullable=False)
+    mime_type = Column(String(100), nullable=False)
+    file_size_bytes = Column(Integer, nullable=False)
+    sha256_hash = Column(String(64), nullable=False)
+    uploader_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    is_published = Column(Boolean, default=True, nullable=False)
+    download_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="documents")
+    module = relationship("CourseModule", back_populates="documents")
+    lesson = relationship("CourseLesson", back_populates="documents")
+    uploader = relationship("User")
 
 
 class Enrollment(Base):
