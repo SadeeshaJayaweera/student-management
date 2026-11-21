@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
     Column, Integer, String, Float, Boolean, DateTime, Text,
-    ForeignKey, Enum, Date, JSON, BigInteger
+    ForeignKey, Enum, Date, JSON, BigInteger, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -627,6 +627,7 @@ class Course(Base):
     documents = relationship("CourseDocument", back_populates="course", cascade="all, delete-orphan")
     videos = relationship("CourseVideo", back_populates="course", cascade="all, delete-orphan")
     announcements = relationship("CourseAnnouncement", back_populates="course", cascade="all, delete-orphan", order_by="desc(CourseAnnouncement.is_pinned), desc(CourseAnnouncement.published_at)")
+    forum_categories = relationship("CourseForumCategory", back_populates="course", cascade="all, delete-orphan", order_by="CourseForumCategory.display_order")
 
 
 class CoursePrerequisite(Base):
@@ -848,6 +849,78 @@ class AnnouncementAcknowledgement(Base):
 
     announcement = relationship("CourseAnnouncement", back_populates="acknowledgements")
     student = relationship("Student")
+
+
+class CourseForumCategory(Base):
+    __tablename__ = "course_forum_categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(150), nullable=False)
+    description = Column(Text, nullable=True)
+    is_locked = Column(Boolean, default=False, nullable=False)
+    display_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course", back_populates="forum_categories")
+    threads = relationship("ForumThread", back_populates="category", cascade="all, delete-orphan", order_by="desc(ForumThread.is_pinned), desc(ForumThread.created_at)")
+
+
+class ForumThread(Base):
+    __tablename__ = "forum_threads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id = Column(Integer, ForeignKey("course_forum_categories.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    content = Column(Text, nullable=False)
+    is_pinned = Column(Boolean, default=False, nullable=False)
+    is_locked = Column(Boolean, default=False, nullable=False)
+    view_count = Column(Integer, default=0, nullable=False)
+    reply_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course")
+    category = relationship("CourseForumCategory", back_populates="threads")
+    author = relationship("User")
+    posts = relationship("ForumPost", back_populates="thread", cascade="all, delete-orphan", order_by="ForumPost.created_at")
+
+
+class ForumPost(Base):
+    __tablename__ = "forum_posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    thread_id = Column(Integer, ForeignKey("forum_threads.id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    parent_post_id = Column(Integer, ForeignKey("forum_posts.id", ondelete="SET NULL"), nullable=True, index=True)
+    content = Column(Text, nullable=False)
+    is_endorsed_by_instructor = Column(Boolean, default=False, nullable=False)
+    is_solution = Column(Boolean, default=False, nullable=False)
+    upvotes = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    thread = relationship("ForumThread", back_populates="posts")
+    author = relationship("User")
+    reactions = relationship("ForumPostReaction", back_populates="post", cascade="all, delete-orphan")
+
+
+class ForumPostReaction(Base):
+    __tablename__ = "forum_post_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("forum_posts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    reaction_type = Column(String(50), default="like", nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    __table_args__ = (UniqueConstraint("post_id", "user_id", "reaction_type", name="uq_post_user_reaction"),)
+
+    post = relationship("ForumPost", back_populates="reactions")
+    user = relationship("User")
 
 
 class Enrollment(Base):

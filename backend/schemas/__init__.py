@@ -1003,6 +1003,121 @@ class AnnouncementAcknowledgeOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+# ─── Course Forum Schemas ─────────────────────────────────────────────────────
+
+class CourseForumCategoryCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=150)
+    description: Optional[str] = None
+    is_locked: bool = False
+    display_order: int = 0
+
+class CourseForumCategoryUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    is_locked: Optional[bool] = None
+    display_order: Optional[int] = None
+
+class CourseForumCategoryOut(BaseModel):
+    id: int
+    course_id: int
+    title: str
+    description: Optional[str] = None
+    is_locked: bool
+    display_order: int
+    thread_count: int = 0
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ForumThreadCreate(BaseModel):
+    category_id: int
+    title: str = Field(..., min_length=3, max_length=255)
+    content: str = Field(..., min_length=1)
+    is_pinned: bool = False
+
+class ForumThreadUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    is_pinned: Optional[bool] = None
+    is_locked: Optional[bool] = None
+    category_id: Optional[int] = None
+
+class ForumPostReactionOut(BaseModel):
+    id: int
+    post_id: int
+    user_id: int
+    reaction_type: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class ForumPostOut(BaseModel):
+    id: int
+    thread_id: int
+    author_id: int
+    author_name: Optional[str] = None
+    parent_post_id: Optional[int] = None
+    content: str
+    is_endorsed_by_instructor: bool
+    is_solution: bool
+    upvotes: int
+    user_has_reacted: Optional[bool] = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ForumPostCreate(BaseModel):
+    content: str = Field(..., min_length=1)
+    parent_post_id: Optional[int] = None
+
+class ForumPostUpdate(BaseModel):
+    content: str = Field(..., min_length=1)
+
+class ForumThreadSummaryOut(BaseModel):
+    id: int
+    course_id: int
+    category_id: int
+    category_title: Optional[str] = None
+    author_id: int
+    author_name: Optional[str] = None
+    title: str
+    is_pinned: bool
+    is_locked: bool
+    view_count: int
+    reply_count: int
+    has_solution: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ForumThreadDetailOut(BaseModel):
+    id: int
+    course_id: int
+    category_id: int
+    category_title: Optional[str] = None
+    author_id: int
+    author_name: Optional[str] = None
+    title: str
+    content: str
+    is_pinned: bool
+    is_locked: bool
+    view_count: int
+    reply_count: int
+    posts: List[ForumPostOut] = []
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)

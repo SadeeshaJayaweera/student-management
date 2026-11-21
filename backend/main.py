@@ -49,6 +49,7 @@ from backend.routers.documents import router as documents_router
 from backend.routers.videos import router as videos_router
 from backend.routers.progress import router as progress_router
 from backend.routers.announcements import router as announcements_router
+from backend.routers.forums import router as forums_router
 from backend.routers.v1 import v1_router
 
 
@@ -159,6 +160,7 @@ app.include_router(documents_router)
 app.include_router(videos_router)
 app.include_router(progress_router)
 app.include_router(announcements_router)
+app.include_router(forums_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
