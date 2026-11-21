@@ -739,12 +739,55 @@ class CoursePrerequisiteOut(BaseModel):
     class Config:
         from_attributes = True
 
+class CourseLessonBase(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    lesson_type: str = "reading"
+    content: Optional[str] = None
+    resource_url: Optional[str] = None
+    estimated_minutes: int = 15
+    order_index: int = 1
+    is_required: bool = True
+    is_published: bool = True
+    unlock_at: Optional[datetime] = None
+
+class CourseLessonCreate(CourseLessonBase):
+    pass
+
+class CourseLessonUpdate(BaseModel):
+    title: Optional[str] = None
+    lesson_type: Optional[str] = None
+    content: Optional[str] = None
+    resource_url: Optional[str] = None
+    estimated_minutes: Optional[int] = None
+    order_index: Optional[int] = None
+    is_required: Optional[bool] = None
+    is_published: Optional[bool] = None
+    unlock_at: Optional[datetime] = None
+
+class CourseLessonOut(CourseLessonBase):
+    id: int
+    module_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class ModuleReorderRequest(BaseModel):
+    module_ids: List[int]
+
+class LessonReorderRequest(BaseModel):
+    lesson_ids: List[int]
+
 class CourseModuleCreate(BaseModel):
     order_index: int = 1
     title: str = Field(..., min_length=2, max_length=255)
     description: Optional[str] = None
     learning_objectives: Optional[List[str]] = None
     estimated_hours: float = 10.0
+    status: str = "published"
+    unlock_at: Optional[datetime] = None
+    prerequisite_module_id: Optional[int] = None
     is_active: bool = True
 
 class CourseModuleUpdate(BaseModel):
@@ -753,6 +796,9 @@ class CourseModuleUpdate(BaseModel):
     description: Optional[str] = None
     learning_objectives: Optional[List[str]] = None
     estimated_hours: Optional[float] = None
+    status: Optional[str] = None
+    unlock_at: Optional[datetime] = None
+    prerequisite_module_id: Optional[int] = None
     is_active: Optional[bool] = None
 
 class CourseModuleOut(BaseModel):
@@ -763,7 +809,13 @@ class CourseModuleOut(BaseModel):
     description: Optional[str] = None
     learning_objectives: Optional[List[str]] = None
     estimated_hours: float
+    status: str = "published"
+    unlock_at: Optional[datetime] = None
+    prerequisite_module_id: Optional[int] = None
     is_active: bool
+    is_locked: Optional[bool] = False
+    lock_reason: Optional[str] = None
+    lessons: List[CourseLessonOut] = []
     created_at: datetime
     updated_at: Optional[datetime] = None
 
