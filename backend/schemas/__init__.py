@@ -1668,6 +1668,8 @@ class AssignmentOut(BaseModel):
     file_url: Optional[str] = None
     published_at: Optional[datetime] = None
     rubric_id: Optional[int] = None
+    grades_released: bool = True
+    grades_released_at: Optional[datetime] = None
     submissions_count: int = 0
     is_available: bool = True
     is_past_due: bool = False
@@ -2329,3 +2331,60 @@ class AdminDashboard(BaseModel):
     total_news: int
     recent_registrations: List[Dict]
     active_borrows: int
+
+# ─── Grading Workflows & Feedback Delivery Schemas ────────────────────────────
+
+class SubmissionGradePayload(BaseModel):
+    marks: float = Field(..., ge=0)
+    feedback: Optional[str] = None
+    rubric_evaluation_id: Optional[int] = None
+
+class SubmissionAnnotationCreate(BaseModel):
+    page_number: Optional[int] = None
+    coordinates: Optional[dict] = None
+    comment_text: str = Field(..., min_length=1)
+
+class SubmissionAnnotationOut(BaseModel):
+    id: int
+    submission_id: int
+    page_number: Optional[int] = None
+    coordinates: Optional[dict] = None
+    comment_text: str
+    author_id: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class GradeAppealCreate(BaseModel):
+    reason: str = Field(..., min_length=10)
+    requested_marks: Optional[float] = None
+
+class GradeAppealResolve(BaseModel):
+    status: str  # approved, rejected, in_review
+    adjusted_marks: Optional[float] = None
+    resolution_notes: str = Field(..., min_length=2)
+
+class GradeAppealOut(BaseModel):
+    id: int
+    assignment_id: int
+    submission_id: int
+    student_id: int
+    reason: str
+    requested_marks: Optional[float] = None
+    status: str
+    resolution_notes: Optional[str] = None
+    resolved_by_id: Optional[int] = None
+    resolved_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class AssignmentGradeReleaseOut(BaseModel):
+    assignment_id: int
+    grades_released: bool
+    grades_released_at: datetime
+    submissions_graded_count: int
