@@ -63,6 +63,18 @@ class AssignmentStatus(str, enum.Enum):
     GRADED = "graded"
     LATE = "late"
 
+class UserAccountStatus(str, enum.Enum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    PENDING_ACTIVATION = "pending_activation"
+    DEACTIVATED = "deactivated"
+
+class InvitationStatus(str, enum.Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
 
 # ─── Multi-Tenant Institution Model ──────────────────────────────────────────
 
@@ -107,6 +119,10 @@ class User(Base):
     is_mfa_enabled = Column(Boolean, default=False, nullable=False)
     mfa_secret = Column(String(255), nullable=True)
     mfa_backup_codes = Column(JSON, nullable=True)
+    account_status = Column(Enum(UserAccountStatus), nullable=False, default=UserAccountStatus.ACTIVE)
+    suspended_at = Column(DateTime, nullable=True)
+    suspended_reason = Column(String(255), nullable=True)
+    suspended_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
@@ -207,6 +223,38 @@ class UserRoleAssignment(Base):
 
     user = relationship("User", back_populates="assigned_roles")
     role = relationship("Role", back_populates="user_assignments")
+
+
+# ─── Account Lifecycle Models ────────────────────────────────────────────────
+
+class UserInvitation(Base):
+    __tablename__ = "user_invitations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), index=True, nullable=False)
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.STUDENT)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="CASCADE"), nullable=True, index=True)
+    token_hash = Column(String(64), unique=True, index=True, nullable=False)
+    invited_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    status = Column(Enum(InvitationStatus), nullable=False, default=InvitationStatus.PENDING)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    institution = relationship("Institution")
+    invited_by = relationship("User", foreign_keys=[invited_by_id])
+
+
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String(64), unique=True, index=True, nullable=False)
+    is_used = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    user = relationship("User")
 
 
 # ─── Student Model ────────────────────────────────────────────────────────────
