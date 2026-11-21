@@ -11,7 +11,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm.attributes import flag_modified
 
 from backend.config import settings
-from backend.models import User, UserRole, UserSession, RefreshToken
+from backend.models import User, UserRole, UserSession, RefreshToken, UserAccountStatus
 from backend.repositories.user_repository import UserRepository
 from backend.schemas import (
     UserCreate,
@@ -79,7 +79,11 @@ class AuthService:
             await self.db.commit()
             raise UnauthorizedException("Invalid username or password.")
 
-        if not user.is_active:
+        if user.account_status == UserAccountStatus.SUSPENDED:
+            reason = f": {user.suspended_reason}" if user.suspended_reason else "."
+            raise UnauthorizedException(f"Account is suspended{reason} Please contact institutional administration.")
+
+        if not user.is_active or user.account_status == UserAccountStatus.DEACTIVATED:
             raise UnauthorizedException("Account is disabled. Please contact your institutional administrator.")
 
         # Reset failed attempts and clear lockout on successful authentication

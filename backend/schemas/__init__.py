@@ -160,9 +160,48 @@ class UserOut(UserBase):
     avatar_url: Optional[str] = None
     is_active: bool
     is_verified: bool
+    account_status: str = "active"
+    institution_id: Optional[int] = None
     created_at: datetime
     class Config:
         from_attributes = True
+
+
+# ─── Account Lifecycle Schemas ────────────────────────────────────────────────
+
+class InvitationCreateRequest(BaseModel):
+    email: EmailStr
+    role: str = "student"
+    institution_id: Optional[int] = None
+
+class InvitationOut(BaseModel):
+    id: int
+    email: str
+    role: str
+    institution_id: Optional[int] = None
+    status: str
+    created_at: datetime
+    expires_at: datetime
+    invitation_token: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class AcceptInvitationRequest(BaseModel):
+    token: str
+    username: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8)
+    full_name: str = Field(..., min_length=2, max_length=100)
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(..., min_length=8)
+
+class SuspendAccountRequest(BaseModel):
+    reason: str = Field(..., min_length=3, max_length=255)
 
 class UserLogin(BaseModel):
     username: str
