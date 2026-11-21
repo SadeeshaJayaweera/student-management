@@ -20,6 +20,7 @@ import CalendarTasks from '@/pages/CalendarTasks'
 import CollaborationSpaces from '@/pages/CollaborationSpaces'
 import Messaging from '@/pages/Messaging'
 import Notifications from '@/pages/Notifications'
+import CourseEvaluations from '@/pages/CourseEvaluations'
 import { AlumniNetwork, Experiences } from '@/pages/Alumni'
 
 function StubPage({ title, icon, desc }: { title: string; icon: string; desc?: string }) {
@@ -58,6 +59,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/grades" element={<Grades />} />
         <Route path="/assignments" element={<Assignments />} />
         <Route path="/attendance" element={<Attendance />} />
+        <Route path="/evaluations" element={<CourseEvaluations />} />
         <Route path="/timetable" element={<Timetable />} />
         <Route path="/calendar" element={<CalendarTasks />} />
         <Route path="/tasks" element={<CalendarTasks />} />

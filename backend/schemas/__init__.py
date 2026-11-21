@@ -3123,6 +3123,109 @@ class NotificationStatsOut(BaseModel):
     unread_by_priority: Dict[str, int]
 
 
+# ─── Course Evaluation & Student Feedback Schemas ───────────────────────────
+
+class SurveyQuestionCreate(BaseModel):
+    question_text: str = Field(..., min_length=3)
+    question_type: str = "rating_scale_5"  # rating_scale_5, rating_scale_10, text, single_choice, multiple_choice
+    category: str = "instructor_effectiveness"  # instructor_effectiveness, course_content, facilities, assessment_fairness, overall
+    is_required: bool = True
+    options_json: Optional[List[str]] = None
+    display_order: int = 0
+
+class SurveyQuestionOut(BaseModel):
+    id: int
+    survey_id: int
+    question_text: str
+    question_type: str
+    category: str
+    is_required: bool
+    options_json: Optional[Any] = None
+    display_order: int
+
+    class Config:
+        from_attributes = True
+
+class CourseEvaluationSurveyCreate(BaseModel):
+    course_id: int
+    title: str = Field(..., min_length=3, max_length=255)
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    is_published: bool = False
+    is_anonymous: bool = True
+    questions: Optional[List[SurveyQuestionCreate]] = None
+
+class CourseEvaluationSurveyOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    course_id: int
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    is_published: bool
+    is_anonymous: bool
+    created_at: datetime
+    questions_count: int = 0
+    responses_count: int = 0
+    has_submitted: Optional[bool] = False
+
+    class Config:
+        from_attributes = True
+
+class CourseEvaluationSurveyDetailOut(BaseModel):
+    id: int
+    institution_id: Optional[int] = None
+    course_id: int
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    start_date: datetime
+    end_date: datetime
+    is_published: bool
+    is_anonymous: bool
+    created_at: datetime
+    questions: List[SurveyQuestionOut]
+    has_submitted: Optional[bool] = False
+
+    class Config:
+        from_attributes = True
+
+class SurveyAnswerPayload(BaseModel):
+    question_id: int
+    numeric_rating: Optional[float] = None
+    text_response: Optional[str] = None
+    selected_options_json: Optional[Any] = None
+
+class SurveySubmissionPayload(BaseModel):
+    answers: List[SurveyAnswerPayload]
+
+class QuestionAnalyticsOut(BaseModel):
+    question_id: int
+    question_text: str
+    category: str
+    question_type: str
+    average_rating: Optional[float] = None
+    response_count: int
+    rating_distribution: Dict[str, int]
+    text_feedback: List[str]
+
+class SurveyAnalyticsOut(BaseModel):
+    survey_id: int
+    title: str
+    course_code: str
+    course_title: str
+    total_responses: int
+    category_averages: Dict[str, float]
+    overall_average: Optional[float] = None
+    question_analytics: List[QuestionAnalyticsOut]
+
+
+
 
 
 

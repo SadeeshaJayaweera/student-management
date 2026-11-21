@@ -2180,5 +2180,72 @@ class CollaborationWorkspaceMessage(Base):
     sender = relationship("Student", foreign_keys=[sender_student_id])
 
 
+# ─── Student Feedback and Course Evaluation Models ─────────────────────────────
+
+class CourseEvaluationSurvey(Base):
+    __tablename__ = "course_evaluation_surveys"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    start_date = Column(DateTime, nullable=False)
+    end_date = Column(DateTime, nullable=False)
+    is_published = Column(Boolean, default=False, nullable=False)
+    is_anonymous = Column(Boolean, default=True, nullable=False)
+    created_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    course = relationship("Course")
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    questions = relationship("SurveyQuestion", back_populates="survey", cascade="all, delete-orphan", order_by="SurveyQuestion.display_order")
+    responses = relationship("SurveyResponse", back_populates="survey", cascade="all, delete-orphan")
+
+
+class SurveyQuestion(Base):
+    __tablename__ = "survey_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    survey_id = Column(Integer, ForeignKey("course_evaluation_surveys.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_text = Column(Text, nullable=False)
+    question_type = Column(String(50), default="rating_scale_5", nullable=False)  # rating_scale_5, rating_scale_10, text, single_choice, multiple_choice
+    category = Column(String(50), default="instructor_effectiveness", nullable=False)  # instructor_effectiveness, course_content, facilities, assessment_fairness, overall
+    is_required = Column(Boolean, default=True, nullable=False)
+    options_json = Column(JSON, nullable=True)
+    display_order = Column(Integer, default=0, nullable=False)
+
+    survey = relationship("CourseEvaluationSurvey", back_populates="questions")
+    answers = relationship("SurveyAnswer", back_populates="question", cascade="all, delete-orphan")
+
+
+class SurveyResponse(Base):
+    __tablename__ = "survey_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    survey_id = Column(Integer, ForeignKey("course_evaluation_surveys.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="SET NULL"), nullable=True, index=True)
+    student_hash = Column(String(64), nullable=True, index=True)
+    submitted_at = Column(DateTime, default=func.now(), nullable=False)
+
+    survey = relationship("CourseEvaluationSurvey", back_populates="responses")
+    answers = relationship("SurveyAnswer", back_populates="response", cascade="all, delete-orphan")
+
+
+class SurveyAnswer(Base):
+    __tablename__ = "survey_answers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    response_id = Column(Integer, ForeignKey("survey_responses.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_id = Column(Integer, ForeignKey("survey_questions.id", ondelete="CASCADE"), nullable=False, index=True)
+    numeric_rating = Column(Float, nullable=True)
+    text_response = Column(Text, nullable=True)
+    selected_options_json = Column(JSON, nullable=True)
+
+    response = relationship("SurveyResponse", back_populates="answers")
+    question = relationship("SurveyQuestion", back_populates="answers")
+
+
+
 
 

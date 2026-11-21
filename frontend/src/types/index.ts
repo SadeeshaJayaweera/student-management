@@ -700,6 +700,64 @@ export interface NotificationStats {
   unread_by_priority: Record<string, number>;
 }
 
+// ── Course Evaluation & Student Feedback ──────────────────────
+
+export interface SurveyQuestion {
+  id: number;
+  survey_id: number;
+  question_text: string;
+  question_type: string;
+  category: string;
+  is_required: boolean;
+  options_json?: any;
+  display_order: number;
+}
+
+export interface CourseEvaluationSurveyItem {
+  id: number;
+  institution_id?: number | null;
+  course_id: number;
+  course_code?: string | null;
+  course_title?: string | null;
+  title: string;
+  description?: string | null;
+  start_date: string;
+  end_date: string;
+  is_published: boolean;
+  is_anonymous: boolean;
+  created_at: string;
+  questions_count: number;
+  responses_count: number;
+  has_submitted?: boolean;
+}
+
+export interface CourseEvaluationSurveyDetail extends CourseEvaluationSurveyItem {
+  questions: SurveyQuestion[];
+}
+
+export interface QuestionAnalytics {
+  question_id: number;
+  question_text: string;
+  category: string;
+  question_type: string;
+  average_rating?: number | null;
+  response_count: number;
+  rating_distribution: Record<string, number>;
+  text_feedback: string[];
+}
+
+export interface SurveyAnalytics {
+  survey_id: number;
+  title: string;
+  course_code: string;
+  course_title: string;
+  total_responses: number;
+  category_averages: Record<string, number>;
+  overall_average?: number | null;
+  question_analytics: QuestionAnalytics[];
+}
+
+
 
 
 
