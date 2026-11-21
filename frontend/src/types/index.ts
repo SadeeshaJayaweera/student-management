@@ -996,6 +996,63 @@ export interface DigitalLibraryStats {
   subject_breakdown: Record<string, number>;
 }
 
+// ── Circulation and Borrowing Workflows ──────────────────────────────
+
+export interface CirculationLoan {
+  id: number;
+  book_id: number;
+  book_title: string;
+  book_author: string;
+  student_id: number;
+  student_name?: string | null;
+  borrowed_at: string;
+  due_date: string;
+  returned_at?: string | null;
+  renewals_count: number;
+  renewed_at?: string | null;
+  status: string;
+  fine_amount: number;
+  fine_paid: boolean;
+  notes?: string | null;
+}
+
+export interface CirculationReservation {
+  id: number;
+  book_id: number;
+  book_title: string;
+  student_id: number;
+  student_name?: string | null;
+  priority_number: number;
+  reserved_at: string;
+  expires_at: string;
+  notified_at?: string | null;
+  status: string;
+}
+
+export interface LibraryFineRecord {
+  id: number;
+  borrow_id: number;
+  student_id: number;
+  student_name?: string | null;
+  book_title?: string | null;
+  amount: number;
+  overdue_days: number;
+  status: string;
+  waived_by_name?: string | null;
+  waiver_reason?: string | null;
+  paid_at?: string | null;
+  created_at: string;
+}
+
+export interface CirculationStats {
+  active_loans_count: number;
+  overdue_loans_count: number;
+  active_reservations_count: number;
+  unpaid_fines_total: number;
+  collected_fines_total: number;
+}
+
+
 
 
 

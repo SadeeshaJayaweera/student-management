@@ -1706,6 +1706,8 @@ class BorrowRecord(Base):
     borrowed_at = Column(DateTime, default=func.now())
     due_date = Column(DateTime, nullable=False)
     returned_at = Column(DateTime, nullable=True)
+    renewals_count = Column(Integer, default=0, nullable=False)
+    renewed_at = Column(DateTime, nullable=True)
     status = Column(Enum(BorrowStatus), default=BorrowStatus.ACTIVE)
     fine_amount = Column(Float, default=0.0)
     fine_paid = Column(Boolean, default=False)
@@ -1721,11 +1723,34 @@ class BookReservation(Base):
     id = Column(Integer, primary_key=True, index=True)
     book_id = Column(Integer, ForeignKey("books.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    priority_number = Column(Integer, default=1, nullable=False)
     reserved_at = Column(DateTime, default=func.now())
     expires_at = Column(DateTime, nullable=False)
+    notified_at = Column(DateTime, nullable=True)
     status = Column(String(20), default="active")  # active, fulfilled, cancelled
 
     book = relationship("Book", back_populates="reservations")
+    student = relationship("Student")
+
+
+class LibraryFineRecord(Base):
+    __tablename__ = "library_fine_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    borrow_id = Column(Integer, ForeignKey("borrow_records.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    overdue_days = Column(Integer, default=0, nullable=False)
+    status = Column(String(30), default="unpaid", nullable=False)  # unpaid, paid, waived
+    waived_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    waiver_reason = Column(Text, nullable=True)
+    paid_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    borrow = relationship("BorrowRecord")
+    student = relationship("Student")
+    waived_by = relationship("User")
+
 
 
 # ─── Sports & Clubs Models ────────────────────────────────────────────────────

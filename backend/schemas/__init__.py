@@ -3619,6 +3619,73 @@ class DigitalLibraryStatsOut(BaseModel):
     subject_breakdown: Dict[str, int]
 
 
+# ─── Circulation and Borrowing Workflows Schemas ─────────────────────────────
+
+class BorrowRecordOut(BaseModel):
+    id: int
+    book_id: int
+    book_title: str
+    book_author: str
+    student_id: int
+    student_name: Optional[str] = None
+    borrowed_at: datetime
+    due_date: datetime
+    returned_at: Optional[datetime] = None
+    renewals_count: int
+    renewed_at: Optional[datetime] = None
+    status: str
+    fine_amount: float
+    fine_paid: bool
+    notes: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class BookReservationOut(BaseModel):
+    id: int
+    book_id: int
+    book_title: str
+    student_id: int
+    student_name: Optional[str] = None
+    priority_number: int
+    reserved_at: datetime
+    expires_at: datetime
+    notified_at: Optional[datetime] = None
+    status: str
+
+    class Config:
+        from_attributes = True
+
+class LibraryFineRecordOut(BaseModel):
+    id: int
+    borrow_id: int
+    student_id: int
+    student_name: Optional[str] = None
+    book_title: Optional[str] = None
+    amount: float
+    overdue_days: int
+    status: str
+    waived_by_name: Optional[str] = None
+    waiver_reason: Optional[str] = None
+    paid_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CirculationCheckoutRequest(BaseModel):
+    book_id: int
+    student_id: Optional[int] = None
+
+class CirculationStatsOut(BaseModel):
+    active_loans_count: int
+    overdue_loans_count: int
+    active_reservations_count: int
+    unpaid_fines_total: float
+    collected_fines_total: float
+
+
+
 
 
 

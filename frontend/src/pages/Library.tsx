@@ -19,7 +19,17 @@ const RESOURCE_ICONS: Record<string, string> = {
   audio_resource: '🎧',
 }
 
-function BookCard({ book, canBorrow, onBorrow }: { book: Book; canBorrow: boolean; onBorrow: (id: number, title: string) => void }) {
+function BookCard({
+  book,
+  canBorrow,
+  onBorrow,
+  onReserve,
+}: {
+  book: Book
+  canBorrow: boolean
+  onBorrow: (id: number, title: string) => void
+  onReserve: (id: number, title: string) => void
+}) {
   const emoji = BOOK_EMOJI[book.category] ?? '📖'
   const available = book.available_copies > 0
   return (
@@ -42,7 +52,7 @@ function BookCard({ book, canBorrow, onBorrow }: { book: Book; canBorrow: boolea
         {canBorrow && (
           available
             ? <button className="btn btn-teal btn-sm btn-full" onClick={() => onBorrow(book.id, book.title)}>📖 Borrow</button>
-            : <button className="btn btn-ghost btn-sm btn-full" disabled>🔖 Unavailable</button>
+            : <button className="btn btn-secondary btn-sm btn-full" onClick={() => onReserve(book.id, book.title)}>🔖 Reserve Priority Queue</button>
         )}
       </div>
     </div>
@@ -271,6 +281,36 @@ export default function Library() {
       api.get<BorrowRecord[]>('/library/my-borrows').then(r => setBorrows(r.data)).catch(() => {})
     } catch (e: any) {
       toast.error(e.response?.data?.detail || 'Cannot borrow')
+    }
+  }
+
+  const handleRenew = async (borrowId: number) => {
+    try {
+      await api.post(`/circulation/renew/${borrowId}`)
+      toast.success('Book loan renewed for an additional 14 days!')
+      api.get<BorrowRecord[]>('/library/my-borrows').then(r => setBorrows(r.data)).catch(() => {})
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Cannot renew loan.')
+    }
+  }
+
+  const handleReturn = async (borrowId: number) => {
+    try {
+      await api.post(`/circulation/return/${borrowId}`)
+      toast.success('Book returned successfully!')
+      fetchBooks()
+      api.get<BorrowRecord[]>('/library/my-borrows').then(r => setBorrows(r.data)).catch(() => {})
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Failed to process return.')
+    }
+  }
+
+  const handleReserve = async (bookId: number, title: string) => {
+    try {
+      const res = await api.post<{ priority_number: number }>(`/circulation/reserve/${bookId}`)
+      toast.success(`Book reserved! You are priority #${res.data.priority_number} in queue.`)
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Failed to place reservation.')
     }
   }
 
@@ -586,16 +626,32 @@ export default function Library() {
 
           <div className="grid-4">
             {books.map(b => (
-              <BookCard key={b.id} book={b} canBorrow={user?.role === 'student'} onBorrow={handleBorrow} />
+              <BookCard
+                key={b.id}
+                book={b}
+                canBorrow={user?.role === 'student'}
+                onBorrow={handleBorrow}
+                onReserve={handleReserve}
+              />
             ))}
           </div>
 
           {borrows.length > 0 && (
             <div className="card mt-24">
-              <div className="card-title mb-16">📖 My Borrowed Books</div>
+              <div className="card-title mb-16">📖 My Borrowed Books & Active Loans</div>
               <div className="table-wrap">
                 <table>
-                  <thead><tr><th>Book</th><th>Author</th><th>Borrowed</th><th>Due Date</th><th>Status</th><th>Fine</th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Book</th>
+                      <th>Author</th>
+                      <th>Borrowed</th>
+                      <th>Due Date</th>
+                      <th>Status</th>
+                      <th>Fine</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {borrows.map(b => (
                       <tr key={b.id}>
@@ -605,6 +661,28 @@ export default function Library() {
                         <td className="text-sm">{new Date(b.due_date).toLocaleDateString()}</td>
                         <td><span className={`badge ${b.status === 'active' ? 'badge-info' : b.status === 'overdue' ? 'badge-danger' : 'badge-success'}`}>{b.status}</span></td>
                         <td style={{ color: b.fine > 0 ? '#FF6B6B' : 'var(--text-muted)' }}>{b.fine > 0 ? `LKR ${b.fine}` : '—'}</td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            {b.status === 'active' && (
+                              <button
+                                onClick={() => handleRenew(b.id)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                              >
+                                Renew 🔄
+                              </button>
+                            )}
+                            {(b.status === 'active' || b.status === 'overdue') && (
+                              <button
+                                onClick={() => handleReturn(b.id)}
+                                className="btn btn-teal btn-sm"
+                                style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                              >
+                                Return 📥
+                              </button>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
