@@ -648,11 +648,36 @@ class CourseModule(Base):
     description = Column(Text, nullable=True)
     learning_objectives = Column(JSON, nullable=True)
     estimated_hours = Column(Float, default=10.0, nullable=False)
+    status = Column(String(50), default="published", nullable=False) # draft, published, archived
+    unlock_at = Column(DateTime, nullable=True)
+    prerequisite_module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     course = relationship("Course", back_populates="modules")
+    prerequisite = relationship("CourseModule", remote_side=[id])
+    lessons = relationship("CourseLesson", back_populates="module", cascade="all, delete-orphan", order_by="CourseLesson.order_index")
+
+
+class CourseLesson(Base):
+    __tablename__ = "course_lessons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    lesson_type = Column(String(50), default="reading", nullable=False) # reading, video, assignment, quiz, external_link, file_resource, interactive
+    content = Column(Text, nullable=True)
+    resource_url = Column(String(1024), nullable=True)
+    estimated_minutes = Column(Integer, default=15, nullable=False)
+    order_index = Column(Integer, default=1, nullable=False)
+    is_required = Column(Boolean, default=True, nullable=False)
+    is_published = Column(Boolean, default=True, nullable=False)
+    unlock_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    module = relationship("CourseModule", back_populates="lessons")
 
 
 class Enrollment(Base):

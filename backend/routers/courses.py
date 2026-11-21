@@ -2,20 +2,24 @@
 NSBM EduSphere — Course & Module Management Router
 Manages course catalog, credits, prerequisites, delivery methods, and structured learning modules.
 """
+from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
+from sqlalchemy.orm import selectinload
 
 from backend.database import get_db
 from backend.models import (
-    Course, CoursePrerequisite, CourseModule, Institution, Program, Lecturer,
+    Course, CoursePrerequisite, CourseModule, CourseLesson, Institution, Program, Lecturer,
     User, UserRole, Enrollment, Assignment, Student
 )
 from backend.schemas import (
     CourseCreate, CourseUpdate, CourseOut,
     CoursePrerequisiteCreate, CoursePrerequisiteOut,
     CourseModuleCreate, CourseModuleUpdate, CourseModuleOut,
+    CourseLessonBase, CourseLessonCreate, CourseLessonUpdate, CourseLessonOut,
+    ModuleReorderRequest, LessonReorderRequest,
     CourseWorkspaceSettingsUpdate, CourseWorkspaceOut
 )
 from backend.core.dependencies import get_current_user
@@ -315,17 +319,75 @@ async def list_course_modules(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all structured modules for a course ordered sequentially"""
+    """List all structured modules for a course ordered sequentially with lesson hierarchies and drip status"""
     c_res = await db.execute(select(Course).where(Course.id == course_id))
-    if not c_res.scalar_one_or_none():
+    course = c_res.scalar_one_or_none()
+    if not course:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
-    res = await db.execute(
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val == UserRole.ADMIN.value
+    is_instructor = bool(
+        course.lecturer_id and hasattr(current_user, "lecturer_profile") and
+        current_user.lecturer_profile and current_user.lecturer_profile.id == course.lecturer_id
+    )
+
+    q = (
         select(CourseModule)
         .where(CourseModule.course_id == course_id)
+        .options(selectinload(CourseModule.lessons), selectinload(CourseModule.prerequisite))
         .order_by(CourseModule.order_index)
     )
-    return list(res.scalars().all())
+    res = await db.execute(q)
+    modules = list(res.scalars().all())
+
+    now = datetime.utcnow()
+    output = []
+    for mod in modules:
+        # Filter unpublished or inactive modules for students
+        if not (is_admin or is_instructor):
+            if not mod.is_active or mod.status != "published":
+                continue
+
+        # Evaluate drip lock
+        is_locked = False
+        lock_reason = None
+        if not (is_admin or is_instructor):
+            if mod.unlock_at and mod.unlock_at > now:
+                is_locked = True
+                lock_reason = f"Unlocks on {mod.unlock_at.strftime('%Y-%m-%d %H:%M')}"
+            elif mod.prerequisite_module_id and mod.prerequisite:
+                is_locked = True
+                lock_reason = f"Requires completion of prerequisite module: {mod.prerequisite.title}"
+
+        # Lessons filtering
+        lessons_data = []
+        for les in sorted(mod.lessons, key=lambda l: l.order_index):
+            if not (is_admin or is_instructor) and not les.is_published:
+                continue
+            lessons_data.append(les)
+
+        mod_dict = {
+            "id": mod.id,
+            "course_id": mod.course_id,
+            "order_index": mod.order_index,
+            "title": mod.title,
+            "description": mod.description,
+            "learning_objectives": mod.learning_objectives,
+            "estimated_hours": mod.estimated_hours,
+            "status": mod.status,
+            "unlock_at": mod.unlock_at,
+            "prerequisite_module_id": mod.prerequisite_module_id,
+            "is_active": mod.is_active,
+            "is_locked": is_locked,
+            "lock_reason": lock_reason,
+            "lessons": lessons_data,
+            "created_at": mod.created_at,
+            "updated_at": mod.updated_at,
+        }
+        output.append(CourseModuleOut(**mod_dict))
+
+    return output
 
 
 @router.post("/api/courses/{course_id}/modules", response_model=CourseModuleOut, status_code=201)
@@ -349,12 +411,49 @@ async def create_course_module(
         description=payload.description,
         learning_objectives=payload.learning_objectives,
         estimated_hours=payload.estimated_hours,
+        status=payload.status,
+        unlock_at=payload.unlock_at,
+        prerequisite_module_id=payload.prerequisite_module_id,
         is_active=payload.is_active,
     )
     db.add(mod)
     await db.commit()
-    await db.refresh(mod)
-    return mod
+    
+    q = (
+        select(CourseModule)
+        .where(CourseModule.id == mod.id)
+        .options(selectinload(CourseModule.lessons), selectinload(CourseModule.prerequisite))
+    )
+    res = await db.execute(q)
+    loaded_mod = res.scalar_one()
+    loaded_mod.is_locked = False
+    loaded_mod.lock_reason = None
+    return loaded_mod
+
+
+@router.put("/api/courses/{course_id}/modules/reorder")
+async def reorder_course_modules(
+    course_id: int,
+    payload: ModuleReorderRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reorder modules within a course sequentially"""
+    course = await db.get(Course, course_id)
+    if not course:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    check_course_admin_or_faculty_access(current_user, course)
+
+    res = await db.execute(select(CourseModule).where(CourseModule.course_id == course_id))
+    modules = {m.id: m for m in res.scalars().all()}
+
+    for new_idx, mod_id in enumerate(payload.module_ids, start=1):
+        if mod_id in modules:
+            modules[mod_id].order_index = new_idx
+
+    await db.commit()
+    return {"message": "Modules reordered successfully", "reordered_count": len(payload.module_ids)}
 
 
 @router.get("/api/modules/{module_id}", response_model=CourseModuleOut)
@@ -363,11 +462,17 @@ async def get_module(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve details of a single course learning module"""
-    res = await db.execute(select(CourseModule).where(CourseModule.id == module_id))
+    """Retrieve details of a single course learning module with lessons"""
+    res = await db.execute(
+        select(CourseModule)
+        .where(CourseModule.id == module_id)
+        .options(selectinload(CourseModule.lessons), selectinload(CourseModule.prerequisite))
+    )
     mod = res.scalar_one_or_none()
     if not mod:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course module not found")
+    mod.is_locked = False
+    mod.lock_reason = None
     return mod
 
 
@@ -379,7 +484,11 @@ async def update_module(
     db: AsyncSession = Depends(get_db),
 ):
     """Update details of a learning module"""
-    res = await db.execute(select(CourseModule).where(CourseModule.id == module_id))
+    res = await db.execute(
+        select(CourseModule)
+        .where(CourseModule.id == module_id)
+        .options(selectinload(CourseModule.lessons))
+    )
     mod = res.scalar_one_or_none()
     if not mod:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course module not found")
@@ -392,8 +501,17 @@ async def update_module(
         setattr(mod, field, val)
 
     await db.commit()
-    await db.refresh(mod)
-    return mod
+    
+    q = (
+        select(CourseModule)
+        .where(CourseModule.id == module_id)
+        .options(selectinload(CourseModule.lessons), selectinload(CourseModule.prerequisite))
+    )
+    res = await db.execute(q)
+    loaded_mod = res.scalar_one()
+    loaded_mod.is_locked = False
+    loaded_mod.lock_reason = None
+    return loaded_mod
 
 
 @router.delete("/api/modules/{module_id}", status_code=204)
@@ -416,9 +534,173 @@ async def delete_module(
     return None
 
 
-# ─── Course Workspace Architecture ───────────────────────────────────────────
+# ─── Course Lesson Endpoints ──────────────────────────────────────────────────
 
-from sqlalchemy.orm import selectinload
+@router.post("/api/modules/{module_id}/lessons", response_model=CourseLessonOut, status_code=201)
+async def create_course_lesson(
+    module_id: int,
+    payload: CourseLessonCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Add a structured lesson or learning item to a course module"""
+    res = await db.execute(select(CourseModule).where(CourseModule.id == module_id))
+    mod = res.scalar_one_or_none()
+    if not mod:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course module not found")
+
+    course = await db.get(Course, mod.course_id)
+    check_course_admin_or_faculty_access(current_user, course)
+
+    lesson = CourseLesson(
+        module_id=module_id,
+        title=payload.title.strip(),
+        lesson_type=payload.lesson_type,
+        content=payload.content,
+        resource_url=payload.resource_url,
+        estimated_minutes=payload.estimated_minutes,
+        order_index=payload.order_index,
+        is_required=payload.is_required,
+        is_published=payload.is_published,
+        unlock_at=payload.unlock_at,
+    )
+    db.add(lesson)
+    await db.commit()
+    await db.refresh(lesson)
+    return lesson
+
+
+@router.get("/api/modules/{module_id}/lessons", response_model=List[CourseLessonOut])
+async def list_module_lessons(
+    module_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all lessons in a module ordered sequentially"""
+    res = await db.execute(select(CourseModule).where(CourseModule.id == module_id))
+    mod = res.scalar_one_or_none()
+    if not mod:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course module not found")
+
+    course = await db.get(Course, mod.course_id)
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val == UserRole.ADMIN.value
+    is_instructor = bool(
+        course and course.lecturer_id and hasattr(current_user, "lecturer_profile") and
+        current_user.lecturer_profile and current_user.lecturer_profile.id == course.lecturer_id
+    )
+
+    q = select(CourseLesson).where(CourseLesson.module_id == module_id).order_by(CourseLesson.order_index)
+    if not (is_admin or is_instructor):
+        q = q.where(CourseLesson.is_published == True)
+
+    l_res = await db.execute(q)
+    return list(l_res.scalars().all())
+
+
+@router.put("/api/modules/{module_id}/lessons/reorder")
+async def reorder_module_lessons(
+    module_id: int,
+    payload: LessonReorderRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Reorder lessons within a module sequentially"""
+    res = await db.execute(select(CourseModule).where(CourseModule.id == module_id))
+    mod = res.scalar_one_or_none()
+    if not mod:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course module not found")
+
+    course = await db.get(Course, mod.course_id)
+    check_course_admin_or_faculty_access(current_user, course)
+
+    l_res = await db.execute(select(CourseLesson).where(CourseLesson.module_id == module_id))
+    lessons = {l.id: l for l in l_res.scalars().all()}
+
+    for new_idx, lesson_id in enumerate(payload.lesson_ids, start=1):
+        if lesson_id in lessons:
+            lessons[lesson_id].order_index = new_idx
+
+    await db.commit()
+    return {"message": "Lessons reordered successfully", "reordered_count": len(payload.lesson_ids)}
+
+
+@router.get("/api/lessons/{lesson_id}", response_model=CourseLessonOut)
+async def get_lesson(
+    lesson_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Retrieve details of a single lesson"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+
+    role_val = current_user.role.value if hasattr(current_user.role, "value") else str(current_user.role)
+    is_admin = role_val == UserRole.ADMIN.value
+    is_instructor = bool(
+        course and course.lecturer_id and hasattr(current_user, "lecturer_profile") and
+        current_user.lecturer_profile and current_user.lecturer_profile.id == course.lecturer_id
+    )
+
+    if not (is_admin or is_instructor) and not lesson.is_published:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    return lesson
+
+
+@router.put("/api/lessons/{lesson_id}", response_model=CourseLessonOut)
+async def update_lesson(
+    lesson_id: int,
+    payload: CourseLessonUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update details of a lesson"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    update_data = payload.model_dump(exclude_unset=True)
+    for field, val in update_data.items():
+        setattr(lesson, field, val)
+
+    await db.commit()
+    await db.refresh(lesson)
+    return lesson
+
+
+@router.delete("/api/lessons/{lesson_id}", status_code=204)
+async def delete_lesson(
+    lesson_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a lesson from a course module"""
+    res = await db.execute(select(CourseLesson).where(CourseLesson.id == lesson_id))
+    lesson = res.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    mod = await db.get(CourseModule, lesson.module_id)
+    course = await db.get(Course, mod.course_id) if mod else None
+    check_course_admin_or_faculty_access(current_user, course)
+
+    await db.delete(lesson)
+    await db.commit()
+    return None
+
+
+# ─── Course Workspace Architecture ───────────────────────────────────────────
 
 @router.get("/api/courses/{course_id}/workspace", response_model=CourseWorkspaceOut)
 async def get_course_workspace(
@@ -432,7 +714,7 @@ async def get_course_workspace(
     """
     q = select(Course).where(Course.id == course_id).options(
         selectinload(Course.lecturer).selectinload(Lecturer.user),
-        selectinload(Course.modules),
+        selectinload(Course.modules).selectinload(CourseModule.lessons),
         selectinload(Course.assignments),
         selectinload(Course.enrollments).selectinload(Enrollment.student)
     )
@@ -475,7 +757,22 @@ async def get_course_workspace(
             "description": m.description,
             "learning_objectives": m.learning_objectives,
             "estimated_hours": m.estimated_hours,
-            "is_active": m.is_active
+            "status": m.status,
+            "unlock_at": m.unlock_at.isoformat() if m.unlock_at else None,
+            "is_active": m.is_active,
+            "lessons": [
+                {
+                    "id": l.id,
+                    "title": l.title,
+                    "lesson_type": l.lesson_type,
+                    "estimated_minutes": l.estimated_minutes,
+                    "order_index": l.order_index,
+                    "is_required": l.is_required,
+                    "is_published": l.is_published,
+                }
+                for l in sorted(m.lessons, key=lambda x: x.order_index)
+                if l.is_published or is_admin or is_instructor
+            ]
         }
         for m in sorted_modules if m.is_active or is_admin or is_instructor
     ]
