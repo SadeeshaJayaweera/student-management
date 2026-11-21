@@ -2781,5 +2781,103 @@ class CourseAttendanceSummary(BaseModel):
     avg_participation_score: float
 
 
+# ─── Student Calendar & Task Schemas ──────────────────────────────────────────
+
+class StudentTaskCreate(BaseModel):
+    course_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    priority: str = "medium"  # urgent, high, medium, low
+    category: str = "study"   # study, assignment, revision, exam_prep, personal, admin
+    estimated_minutes: int = 60
+    reminder_at: Optional[datetime] = None
+
+class StudentTaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None
+    category: Optional[str] = None
+    estimated_minutes: Optional[int] = None
+    reminder_at: Optional[datetime] = None
+
+class StudentTaskStatusPatch(BaseModel):
+    status: str  # todo, in_progress, completed, cancelled
+
+class StudentTaskOut(BaseModel):
+    id: int
+    student_id: int
+    course_id: Optional[int] = None
+    course_code: Optional[str] = None
+    course_title: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    due_date: Optional[datetime] = None
+    priority: str
+    status: str
+    category: str
+    estimated_minutes: int
+    completed_at: Optional[datetime] = None
+    reminder_at: Optional[datetime] = None
+    is_overdue: bool = False
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class StudentTaskMetrics(BaseModel):
+    total_tasks: int
+    completed_tasks: int
+    pending_tasks: int
+    overdue_tasks: int
+    completion_rate: float
+    due_today_count: int
+    urgent_priority_count: int
+
+class CalendarEventCreate(BaseModel):
+    course_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    event_type: str = "personal"  # academic, exam, assignment_due, lecture, holiday, campus, personal
+    start_time: datetime
+    end_time: datetime
+    all_day: bool = False
+    location: Optional[str] = None
+    color: str = "#4F46E5"
+
+class CalendarEventUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    event_type: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    all_day: Optional[bool] = None
+    location: Optional[str] = None
+    color: Optional[str] = None
+
+class CalendarEventOut(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    course_id: Optional[int] = None
+    course_code: Optional[str] = None
+    title: str
+    description: Optional[str] = None
+    event_type: str
+    start_time: datetime
+    end_time: datetime
+    all_day: bool
+    location: Optional[str] = None
+    color: str
+    is_system_generated: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
 
 

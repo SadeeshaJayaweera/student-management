@@ -15,6 +15,7 @@ function studentNav(): NavItem[] {
     { to: '/assignments',  icon: '📝', label: 'Assignments' },
     { to: '/attendance',   icon: '📅', label: 'Attendance' },
     { to: '/timetable',    icon: '⏰', label: 'Timetable' },
+    { to: '/calendar',     icon: '📆', label: 'Calendar & Tasks' },
   ]
 }
 
@@ -24,6 +25,7 @@ function lecturerNav(): NavItem[] {
     { to: '/courses',   icon: '📖', label: 'My Courses' },
     { to: '/grading',   icon: '✅', label: 'Grading' },
     { to: '/analytics', icon: '📈', label: 'Analytics' },
+    { to: '/calendar',  icon: '📆', label: 'Calendar & Tasks' },
   ]
 }
 

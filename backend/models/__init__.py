@@ -1997,3 +1997,48 @@ class AttendanceCorrectionRequest(Base):
     reviewed_by = relationship("User", foreign_keys=[reviewed_by_id])
 
 
+class StudentTask(Base):
+    __tablename__ = "student_tasks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(DateTime, nullable=True, index=True)
+    priority = Column(String(20), default="medium", nullable=False)  # urgent, high, medium, low
+    status = Column(String(20), default="todo", nullable=False)      # todo, in_progress, completed, cancelled
+    category = Column(String(50), default="study", nullable=False)   # study, assignment, revision, exam_prep, personal, admin
+    estimated_minutes = Column(Integer, default=60, nullable=False)
+    completed_at = Column(DateTime, nullable=True)
+    reminder_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student")
+    course = relationship("Course")
+
+
+class CalendarEvent(Base):
+    __tablename__ = "calendar_events"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    event_type = Column(String(50), default="personal", nullable=False)  # academic, exam, assignment_due, lecture, holiday, campus, personal
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False, index=True)
+    all_day = Column(Boolean, default=False, nullable=False)
+    location = Column(String(200), nullable=True)
+    color = Column(String(20), default="#4F46E5", nullable=False)
+    is_system_generated = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    user = relationship("User")
+    course = relationship("Course")
+
+
+
