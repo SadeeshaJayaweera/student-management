@@ -773,6 +773,41 @@ class CourseLessonOut(CourseLessonBase):
     class Config:
         from_attributes = True
 
+class LessonContentCreate(BaseModel):
+    raw_content: str = Field(..., min_length=1)
+    content_format: str = "markdown"
+    widget_configs: Optional[Dict[str, Any]] = None
+    change_summary: Optional[str] = None
+
+class LessonContentOut(BaseModel):
+    id: int
+    lesson_id: int
+    version_number: int
+    content_format: str
+    raw_content: str
+    rendered_content: str
+    widget_configs: Optional[Dict[str, Any]] = None
+    author_id: Optional[int] = None
+    change_summary: Optional[str] = None
+    is_current: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class LessonContentVersionSummary(BaseModel):
+    id: int
+    lesson_id: int
+    version_number: int
+    content_format: str
+    change_summary: Optional[str] = None
+    author_id: Optional[int] = None
+    is_current: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
 class ModuleReorderRequest(BaseModel):
     module_ids: List[int]
 
