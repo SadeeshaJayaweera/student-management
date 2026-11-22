@@ -13,6 +13,7 @@ import News from '@/pages/News'
 import Hostels from '@/pages/Hostels'
 import Transport from '@/pages/Transport'
 import Facilities from '@/pages/Facilities'
+import CampusOperations from '@/pages/CampusOperations'
 import AIChat from '@/pages/AIChat'
 import Assignments from '@/pages/Assignments'
 import Attendance from '@/pages/Attendance'
@@ -93,6 +94,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/ai-chat" element={<AIChat />} />
 
         {/* Administration */}
+        <Route path="/campus-operations" element={<CampusOperations />} />
         <Route path="/manage-users" element={<ManageUsers />} />
 
         {/* User Account */}

@@ -4358,6 +4358,78 @@ class FacilityBookingSummaryOut(BaseModel):
     pending_approvals: int
 
 
+# ─── Comprehensive Campus Operations Schemas ─────────────────────────────────
+
+class CampusOperationsDomainFinance(BaseModel):
+    total_invoiced: float
+    total_collected: float
+    collection_rate: float
+    outstanding_balance: float
+
+
+class CampusOperationsDomainLibrary(BaseModel):
+    total_digital_resources: int
+    total_physical_books: int
+    active_borrowings: int
+    overdue_loans: int
+
+
+class CampusOperationsDomainAthletics(BaseModel):
+    active_teams: int
+    roster_athletes: int
+    upcoming_fixtures: int
+
+
+class CampusOperationsDomainMedia(BaseModel):
+    published_articles: int
+    total_views: int
+    total_likes: int
+
+
+class CampusOperationsDomainAccommodation(BaseModel):
+    total_capacity: int
+    occupied_beds: int
+    available_beds: int
+    occupancy_rate: float
+    pending_repairs: int
+
+
+class CampusOperationsDomainTransport(BaseModel):
+    fleet_vehicles: int
+    active_routes: int
+    daily_trips: int
+    active_transit_passes: int
+
+
+class CampusOperationsDomainFacilities(BaseModel):
+    total_venues: int
+    combined_capacity: int
+    reservations_today: int
+    pending_approvals: int
+
+
+class CampusOperationsOverviewOut(BaseModel):
+    generated_at: datetime
+    institution_name: str
+    finance: CampusOperationsDomainFinance
+    library: CampusOperationsDomainLibrary
+    athletics: CampusOperationsDomainAthletics
+    media: CampusOperationsDomainMedia
+    accommodation: CampusOperationsDomainAccommodation
+    transport: CampusOperationsDomainTransport
+    facilities: CampusOperationsDomainFacilities
+
+
+class CampusOperationalAlertOut(BaseModel):
+    id: str
+    domain: str
+    level: str  # info, warning, critical
+    title: str
+    message: str
+    timestamp: datetime
+
+
+
 
 
 

@@ -1375,6 +1375,78 @@ export interface FacilityBookingSummary {
   pending_approvals: number;
 }
 
+// ── Comprehensive Campus Operations ─────────────────────────
+
+export interface CampusOperationsDomainFinance {
+  total_invoiced: number;
+  total_collected: number;
+  collection_rate: number;
+  outstanding_balance: number;
+}
+
+export interface CampusOperationsDomainLibrary {
+  total_digital_resources: number;
+  total_physical_books: number;
+  active_borrowings: number;
+  overdue_loans: number;
+}
+
+export interface CampusOperationsDomainAthletics {
+  active_teams: number;
+  roster_athletes: number;
+  upcoming_fixtures: number;
+}
+
+export interface CampusOperationsDomainMedia {
+  published_articles: number;
+  total_views: number;
+  total_likes: number;
+}
+
+export interface CampusOperationsDomainAccommodation {
+  total_capacity: number;
+  occupied_beds: number;
+  available_beds: number;
+  occupancy_rate: number;
+  pending_repairs: number;
+}
+
+export interface CampusOperationsDomainTransport {
+  fleet_vehicles: number;
+  active_routes: number;
+  daily_trips: number;
+  active_transit_passes: number;
+}
+
+export interface CampusOperationsDomainFacilities {
+  total_venues: number;
+  combined_capacity: number;
+  reservations_today: number;
+  pending_approvals: number;
+}
+
+export interface CampusOperationsOverview {
+  generated_at: string;
+  institution_name: string;
+  finance: CampusOperationsDomainFinance;
+  library: CampusOperationsDomainLibrary;
+  athletics: CampusOperationsDomainAthletics;
+  media: CampusOperationsDomainMedia;
+  accommodation: CampusOperationsDomainAccommodation;
+  transport: CampusOperationsDomainTransport;
+  facilities: CampusOperationsDomainFacilities;
+}
+
+export interface CampusOperationalAlert {
+  id: string;
+  domain: string;
+  level: string;
+  title: string;
+  message: string;
+  timestamp: string;
+}
+
+
 
 
 

@@ -47,6 +47,7 @@ function alumniNav(): NavItem[] {
 function adminNav(): NavItem[] {
   return [
     { to: '/dashboard',     icon: '🏠', label: 'Dashboard' },
+    { to: '/campus-operations', icon: '🎛️', label: 'Operations Command' },
     { to: '/manage-users',  icon: '👥', label: 'Users' },
     { to: '/manage-courses',icon: '📖', label: 'Courses' },
     { to: '/billing',       icon: '💳', label: 'Fees & Billing' },

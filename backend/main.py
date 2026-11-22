@@ -78,6 +78,7 @@ from backend.routers.news_publication import router as news_publication_router
 from backend.routers.hostels import router as hostels_router
 from backend.routers.transport import router as transport_router
 from backend.routers.facilities import router as facilities_router
+from backend.routers.campus_operations import router as campus_operations_router
 from backend.routers.v1 import v1_router
 
 
@@ -217,6 +218,7 @@ app.include_router(news_publication_router)
 app.include_router(hostels_router)
 app.include_router(transport_router)
 app.include_router(facilities_router)
+app.include_router(campus_operations_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 
