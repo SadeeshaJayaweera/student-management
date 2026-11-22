@@ -1158,6 +1158,87 @@ export interface NewsPublicationStats {
   category_breakdown: Record<string, number>;
 }
 
+// ── Hostel & Accommodation ──────────────────────────────────
+
+export interface HostelRoom {
+  id: number;
+  building_id: number;
+  building_name?: string | null;
+  room_number: string;
+  floor: number;
+  room_type: string;
+  capacity: number;
+  occupied_count: number;
+  monthly_fee: number;
+  status: string;
+  created_at: string;
+}
+
+export interface HostelBuilding {
+  id: number;
+  name: string;
+  code: string;
+  gender_type: string;
+  total_floors: number;
+  warden_name: string;
+  warden_contact: string;
+  campus_location: string;
+  amenities?: string[] | null;
+  is_active: boolean;
+  total_rooms: number;
+  total_capacity: number;
+  occupied_beds: number;
+  available_beds: number;
+  created_at: string;
+  rooms?: HostelRoom[];
+}
+
+export interface HostelAllocation {
+  id: number;
+  student_id: number;
+  student_name?: string | null;
+  student_reg_number?: string | null;
+  room_id: number;
+  room_number?: string | null;
+  building_name?: string | null;
+  academic_year: string;
+  semester: number;
+  check_in_date: string;
+  check_out_date?: string | null;
+  status: string;
+  deposit_paid: number;
+  emergency_contact?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface HostelMaintenanceRequest {
+  id: number;
+  room_id: number;
+  room_number?: string | null;
+  building_name?: string | null;
+  student_id: number;
+  student_name?: string | null;
+  issue_type: string;
+  description: string;
+  priority: string;
+  status: string;
+  resolution_notes?: string | null;
+  reported_at: string;
+  resolved_at?: string | null;
+}
+
+export interface HostelOccupancySummary {
+  total_buildings: number;
+  total_rooms: number;
+  total_capacity: number;
+  occupied_beds: number;
+  available_beds: number;
+  occupancy_rate: number;
+  active_maintenance_issues: number;
+}
+
+
 
 
 

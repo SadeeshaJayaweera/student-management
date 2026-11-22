@@ -75,6 +75,7 @@ from backend.routers.digital_library import router as digital_library_router
 from backend.routers.circulation import router as circulation_router
 from backend.routers.athletics import router as athletics_router
 from backend.routers.news_publication import router as news_publication_router
+from backend.routers.hostels import router as hostels_router
 from backend.routers.v1 import v1_router
 
 
@@ -211,6 +212,7 @@ app.include_router(digital_library_router)
 app.include_router(circulation_router)
 app.include_router(athletics_router)
 app.include_router(news_publication_router)
+app.include_router(hostels_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

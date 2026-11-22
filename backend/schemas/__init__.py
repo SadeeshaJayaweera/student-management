@@ -3899,6 +3899,174 @@ class NewsPublicationStatsOut(BaseModel):
     category_breakdown: Dict[str, int]
 
 
+# ─── Hostel and Accommodation Schemas ────────────────────────────────────────
+
+class HostelBuildingCreate(BaseModel):
+    name: str = Field(..., max_length=150)
+    code: str = Field(..., max_length=50)
+    gender_type: str = Field("mixed", pattern="^(male|female|mixed)$")
+    total_floors: int = Field(4, ge=1, le=50)
+    warden_name: str = Field(..., max_length=150)
+    warden_contact: str = Field(..., max_length=100)
+    campus_location: str = Field(..., max_length=200)
+    amenities: Optional[List[str]] = None
+    is_active: bool = True
+
+
+class HostelBuildingUpdate(BaseModel):
+    name: Optional[str] = None
+    code: Optional[str] = None
+    gender_type: Optional[str] = Field(None, pattern="^(male|female|mixed)$")
+    total_floors: Optional[int] = Field(None, ge=1, le=50)
+    warden_name: Optional[str] = None
+    warden_contact: Optional[str] = None
+    campus_location: Optional[str] = None
+    amenities: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+
+class HostelRoomCreate(BaseModel):
+    building_id: int
+    room_number: str = Field(..., max_length=50)
+    floor: int = Field(1, ge=0)
+    room_type: str = Field("double", pattern="^(single|double|triple|quad)$")
+    capacity: int = Field(2, ge=1, le=10)
+    monthly_fee: float = Field(15000.0, ge=0)
+    status: str = Field("available", pattern="^(available|full|maintenance)$")
+
+
+class HostelRoomUpdate(BaseModel):
+    room_number: Optional[str] = None
+    floor: Optional[int] = Field(None, ge=0)
+    room_type: Optional[str] = Field(None, pattern="^(single|double|triple|quad)$")
+    capacity: Optional[int] = Field(None, ge=1, le=10)
+    monthly_fee: Optional[float] = Field(None, ge=0)
+    status: Optional[str] = Field(None, pattern="^(available|full|maintenance)$")
+
+
+class HostelRoomOut(BaseModel):
+    id: int
+    building_id: int
+    building_name: Optional[str] = None
+    room_number: str
+    floor: int
+    room_type: str
+    capacity: int
+    occupied_count: int
+    monthly_fee: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HostelBuildingOut(BaseModel):
+    id: int
+    name: str
+    code: str
+    gender_type: str
+    total_floors: int
+    warden_name: str
+    warden_contact: str
+    campus_location: str
+    amenities: Optional[List[str]] = None
+    is_active: bool
+    total_rooms: int = 0
+    total_capacity: int = 0
+    occupied_beds: int = 0
+    available_beds: int = 0
+    created_at: datetime
+    rooms: List[HostelRoomOut] = []
+
+    class Config:
+        from_attributes = True
+
+
+class HostelAllocationCreate(BaseModel):
+    student_id: int
+    room_id: int
+    academic_year: str = Field(..., max_length=30)
+    semester: int = Field(1, ge=1, le=2)
+    check_in_date: date
+    check_out_date: Optional[date] = None
+    deposit_paid: float = Field(0.0, ge=0)
+    emergency_contact: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class HostelAllocationUpdate(BaseModel):
+    status: Optional[str] = Field(None, pattern="^(pending|active|checked_out|cancelled)$")
+    check_out_date: Optional[date] = None
+    emergency_contact: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class HostelAllocationOut(BaseModel):
+    id: int
+    student_id: int
+    student_name: Optional[str] = None
+    student_reg_number: Optional[str] = None
+    room_id: int
+    room_number: Optional[str] = None
+    building_name: Optional[str] = None
+    academic_year: str
+    semester: int
+    check_in_date: date
+    check_out_date: Optional[date] = None
+    status: str
+    deposit_paid: float
+    emergency_contact: Optional[str] = None
+    notes: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HostelMaintenanceRequestCreate(BaseModel):
+    room_id: int
+    issue_type: str = Field(..., pattern="^(plumbing|electrical|furniture|cleanliness|hvac|other)$")
+    description: str
+    priority: str = Field("medium", pattern="^(low|medium|high|urgent)$")
+
+
+class HostelMaintenanceRequestUpdate(BaseModel):
+    priority: Optional[str] = Field(None, pattern="^(low|medium|high|urgent)$")
+    status: Optional[str] = Field(None, pattern="^(reported|in_progress|resolved|cancelled)$")
+    resolution_notes: Optional[str] = None
+
+
+class HostelMaintenanceRequestOut(BaseModel):
+    id: int
+    room_id: int
+    room_number: Optional[str] = None
+    building_name: Optional[str] = None
+    student_id: int
+    student_name: Optional[str] = None
+    issue_type: str
+    description: str
+    priority: str
+    status: str
+    resolution_notes: Optional[str] = None
+    reported_at: datetime
+    resolved_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class HostelOccupancySummaryOut(BaseModel):
+    total_buildings: int
+    total_rooms: int
+    total_capacity: int
+    occupied_beds: int
+    available_beds: int
+    occupancy_rate: float
+    active_maintenance_issues: int
+
+
+
 
 
 

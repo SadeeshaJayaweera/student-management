@@ -2652,6 +2652,84 @@ class SportsFacilityBooking(Base):
     team = relationship("AthleticTeam")
 
 
+# ─── Hostel and Accommodation Management ────────────────────────────────────
+
+class HostelBuilding(Base):
+    __tablename__ = "hostel_buildings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), nullable=False, unique=True, index=True)
+    code = Column(String(50), nullable=False, unique=True, index=True)
+    gender_type = Column(String(20), default="mixed", nullable=False)  # male, female, mixed
+    total_floors = Column(Integer, default=4, nullable=False)
+    warden_name = Column(String(150), nullable=False)
+    warden_contact = Column(String(100), nullable=False)
+    campus_location = Column(String(200), nullable=False)
+    amenities = Column(JSON, nullable=True)  # list of strings (wifi, laundry, study_room, gym, cafeteria)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    rooms = relationship("HostelRoom", back_populates="building", cascade="all, delete-orphan")
+
+
+class HostelRoom(Base):
+    __tablename__ = "hostel_rooms"
+
+    id = Column(Integer, primary_key=True, index=True)
+    building_id = Column(Integer, ForeignKey("hostel_buildings.id", ondelete="CASCADE"), nullable=False, index=True)
+    room_number = Column(String(50), nullable=False, index=True)
+    floor = Column(Integer, default=1, nullable=False)
+    room_type = Column(String(30), default="double", nullable=False)  # single, double, triple, quad
+    capacity = Column(Integer, default=2, nullable=False)
+    occupied_count = Column(Integer, default=0, nullable=False)
+    monthly_fee = Column(Float, default=15000.0, nullable=False)
+    status = Column(String(30), default="available", nullable=False)  # available, full, maintenance
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    building = relationship("HostelBuilding", back_populates="rooms")
+    allocations = relationship("HostelAllocation", back_populates="room", cascade="all, delete-orphan")
+    maintenance_requests = relationship("HostelMaintenanceRequest", back_populates="room", cascade="all, delete-orphan")
+
+
+class HostelAllocation(Base):
+    __tablename__ = "hostel_allocations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    room_id = Column(Integer, ForeignKey("hostel_rooms.id", ondelete="CASCADE"), nullable=False, index=True)
+    academic_year = Column(String(30), nullable=False)
+    semester = Column(Integer, default=1, nullable=False)
+    check_in_date = Column(Date, nullable=False)
+    check_out_date = Column(Date, nullable=True)
+    status = Column(String(30), default="active", nullable=False)  # pending, active, checked_out, cancelled
+    deposit_paid = Column(Float, default=0.0, nullable=False)
+    emergency_contact = Column(String(100), nullable=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    student = relationship("Student")
+    room = relationship("HostelRoom", back_populates="allocations")
+
+
+class HostelMaintenanceRequest(Base):
+    __tablename__ = "hostel_maintenance_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("hostel_rooms.id", ondelete="CASCADE"), nullable=False, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    issue_type = Column(String(50), nullable=False)  # plumbing, electrical, furniture, cleanliness, hvac, other
+    description = Column(Text, nullable=False)
+    priority = Column(String(20), default="medium", nullable=False)  # low, medium, high, urgent
+    status = Column(String(30), default="reported", nullable=False)  # reported, in_progress, resolved, cancelled
+    resolution_notes = Column(Text, nullable=True)
+    reported_at = Column(DateTime, default=func.now(), nullable=False)
+    resolved_at = Column(DateTime, nullable=True)
+
+    room = relationship("HostelRoom", back_populates="maintenance_requests")
+    student = relationship("Student")
+
+
+
 
 
 

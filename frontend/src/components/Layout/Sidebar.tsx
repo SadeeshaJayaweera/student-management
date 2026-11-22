@@ -68,6 +68,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
     { to: '/library',       icon: '📚', label: 'Library' },
     { to: '/sports',        icon: '⚽', label: 'Sports & Clubs' },
     { to: '/news',          icon: '📰', label: 'News Portal' },
+    { to: '/hostels',       icon: '🏢', label: 'Hostel & Housing' },
     { to: '/alumni-network',icon: '🌐', label: 'Alumni Network' },
   ]
 
