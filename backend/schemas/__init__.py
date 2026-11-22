@@ -4429,6 +4429,102 @@ class CampusOperationalAlertOut(BaseModel):
     timestamp: datetime
 
 
+# ─── Course RAG & Semantic Retrieval Schemas ─────────────────────────────────
+
+class CourseKnowledgeDocumentCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=255)
+    content: str = Field(..., min_length=10)
+    module_id: Optional[int] = None
+    document_type: str = Field(default="lecture_notes")
+    source_citation: Optional[str] = Field(default=None, max_length=255)
+
+
+class CourseKnowledgeDocumentOut(BaseModel):
+    id: int
+    course_id: int
+    module_id: Optional[int] = None
+    title: str
+    document_type: str
+    source_citation: Optional[str] = None
+    token_count: int
+    chunk_count: int
+    status: str
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class CourseKnowledgeChunkOut(BaseModel):
+    id: int
+    document_id: int
+    course_id: int
+    chunk_index: int
+    chunk_text: str
+    page_number: int
+    line_start: int
+    line_end: int
+    chunk_metadata: Optional[Dict[str, Any]] = None
+    class Config:
+        from_attributes = True
+
+
+class CourseRAGSearchQuery(BaseModel):
+    query: str = Field(..., min_length=2)
+    top_k: int = Field(default=4, ge=1, le=20)
+    module_id: Optional[int] = None
+
+
+class CourseRAGSearchResult(BaseModel):
+    chunk_id: int
+    document_id: int
+    document_title: str
+    source_citation: Optional[str] = None
+    page_number: int
+    line_start: int
+    line_end: int
+    content: str
+    relevance_score: float
+
+
+class CourseRAGGroundedQuery(BaseModel):
+    question: str = Field(..., min_length=3)
+    module_id: Optional[int] = None
+
+
+class CourseRAGCitation(BaseModel):
+    citation_index: int
+    document_id: int
+    document_title: str
+    source: Optional[str] = None
+    page: int
+    lines: str
+    snippet: str
+
+
+class CourseRAGGroundedAnswer(BaseModel):
+    query_id: int
+    question: str
+    answer: str
+    citations: List[CourseRAGCitation]
+    latency_ms: float
+    context_used: bool
+
+
+class RAGFeedbackCreate(BaseModel):
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = None
+
+
+class CourseRAGAnalyticsOut(BaseModel):
+    course_id: int
+    document_count: int
+    chunk_count: int
+    query_count: int
+    avg_latency_ms: float
+    avg_feedback_rating: Optional[float] = None
+
+
+
 
 
 

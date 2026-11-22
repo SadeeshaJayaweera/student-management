@@ -42,6 +42,18 @@ export interface StudentDashboard {
   upcoming_events: EventSummary[];
 }
 
+export interface Course {
+  id: number;
+  course_code: string;
+  title: string;
+  description?: string | null;
+  faculty?: string;
+  department?: string;
+  credits: number;
+  semester?: number;
+  is_active: boolean;
+}
+
 export interface CourseProgressSummary {
   course_id: number;
   course_code: string;
@@ -1445,6 +1457,72 @@ export interface CampusOperationalAlert {
   message: string;
   timestamp: string;
 }
+
+export interface CourseKnowledgeDocument {
+  id: number;
+  course_id: number;
+  module_id?: number | null;
+  title: string;
+  document_type: string;
+  source_citation?: string | null;
+  token_count: number;
+  chunk_count: number;
+  status: string;
+  created_at: string;
+}
+
+export interface CourseKnowledgeChunk {
+  id: number;
+  document_id: number;
+  course_id: number;
+  chunk_index: number;
+  chunk_text: string;
+  page_number: number;
+  line_start: number;
+  line_end: number;
+  metadata?: Record<string, any>;
+}
+
+export interface CourseRAGCitation {
+  citation_index: number;
+  document_id: number;
+  document_title: string;
+  source?: string | null;
+  page: number;
+  lines: string;
+  snippet: string;
+}
+
+export interface CourseRAGGroundedAnswer {
+  query_id: number;
+  question: string;
+  answer: string;
+  citations: CourseRAGCitation[];
+  latency_ms: number;
+  context_used: boolean;
+}
+
+export interface CourseRAGSearchResult {
+  chunk_id: number;
+  document_id: number;
+  document_title: string;
+  source_citation?: string | null;
+  page_number: number;
+  line_start: number;
+  line_end: number;
+  content: string;
+  relevance_score: number;
+}
+
+export interface CourseRAGAnalytics {
+  course_id: number;
+  document_count: number;
+  chunk_count: number;
+  query_count: number;
+  avg_latency_ms: number;
+  avg_feedback_rating?: number | null;
+}
+
 
 
 

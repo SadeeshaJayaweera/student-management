@@ -2871,6 +2871,69 @@ class FacilityReservation(Base):
     reserved_by = relationship("User")
 
 
+# ─── Course RAG & Semantic Retrieval Models ──────────────────────────────────
+
+class CourseKnowledgeDocument(Base):
+    __tablename__ = "course_knowledge_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    module_id = Column(Integer, ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True, index=True)
+    title = Column(String(255), nullable=False)
+    document_type = Column(String(50), default="lecture_notes", nullable=False)  # lecture_notes, syllabus, textbook_excerpt, lab_sheet, assignment_brief
+    source_citation = Column(String(255), nullable=True)
+    content = Column(Text, nullable=False)
+    file_path = Column(String(500), nullable=True)
+    token_count = Column(Integer, default=0, nullable=False)
+    chunk_count = Column(Integer, default=0, nullable=False)
+    status = Column(String(30), default="indexed", nullable=False)  # indexing, indexed, failed
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    course = relationship("Course")
+    module = relationship("CourseModule")
+    chunks = relationship("CourseKnowledgeChunk", back_populates="document", cascade="all, delete-orphan")
+
+
+class CourseKnowledgeChunk(Base):
+    __tablename__ = "course_knowledge_chunks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    document_id = Column(Integer, ForeignKey("course_knowledge_documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    chunk_index = Column(Integer, nullable=False)
+    chunk_text = Column(Text, nullable=False)
+    page_number = Column(Integer, default=1, nullable=False)
+    line_start = Column(Integer, default=1, nullable=False)
+    line_end = Column(Integer, default=1, nullable=False)
+    embedding_id = Column(String(100), nullable=True, index=True)
+    chunk_metadata = Column(JSON, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    document = relationship("CourseKnowledgeDocument", back_populates="chunks")
+    course = relationship("Course")
+
+
+class RAGQueryLog(Base):
+    __tablename__ = "rag_query_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    query_text = Column(Text, nullable=False)
+    response_text = Column(Text, nullable=False)
+    retrieved_chunks_json = Column(JSON, nullable=True)
+    citations_json = Column(JSON, nullable=True)
+    latency_ms = Column(Float, default=0.0, nullable=False)
+    feedback_rating = Column(Integer, nullable=True)
+    feedback_comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    user = relationship("User")
+    course = relationship("Course")
+
+
+
 
 
 
