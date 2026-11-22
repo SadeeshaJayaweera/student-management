@@ -1852,11 +1852,18 @@ class News(Base):
     views = Column(Integer, default=0)
     is_published = Column(Boolean, default=True)
     is_featured = Column(Boolean, default=False)
+    status = Column(String(30), default="published", nullable=False)  # draft, submitted, published, archived
+    editorial_notes = Column(Text, nullable=True)
+    likes_count = Column(Integer, default=0, nullable=False)
+    target_audience = Column(String(30), default="all", nullable=False)  # all, students, faculty, public
     published_at = Column(DateTime, default=func.now())
     created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     author = relationship("User")
     comments = relationship("NewsComment", back_populates="news", cascade="all, delete-orphan")
+    gallery = relationship("MediaGalleryItem", back_populates="news", cascade="all, delete-orphan", order_by="MediaGalleryItem.sort_order.asc()")
+    reactions = relationship("NewsReaction", back_populates="news", cascade="all, delete-orphan")
 
 
 class NewsComment(Base):
@@ -1869,6 +1876,34 @@ class NewsComment(Base):
     created_at = Column(DateTime, default=func.now())
 
     news = relationship("News", back_populates="comments")
+    user = relationship("User")
+
+
+class MediaGalleryItem(Base):
+    __tablename__ = "media_gallery_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    news_id = Column(Integer, ForeignKey("news.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    media_type = Column(String(30), default="image", nullable=False)  # image, video, audio
+    media_url = Column(String(500), nullable=False)
+    caption = Column(String(300), nullable=True)
+    sort_order = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    news = relationship("News", back_populates="gallery")
+
+
+class NewsReaction(Base):
+    __tablename__ = "news_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    news_id = Column(Integer, ForeignKey("news.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    reaction_type = Column(String(30), default="like", nullable=False)  # like, applause, insightful
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    news = relationship("News", back_populates="reactions")
     user = relationship("User")
 
 

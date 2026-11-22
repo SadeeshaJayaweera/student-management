@@ -3805,6 +3805,101 @@ class AthleticStatsOut(BaseModel):
     facilities_booked_count: int
 
 
+# ─── Campus News and Media Publication Schemas ───────────────────────────────
+
+class MediaGalleryItemCreate(BaseModel):
+    title: str = Field(..., min_length=2, max_length=200)
+    media_type: str = "image"
+    media_url: str = Field(..., min_length=3, max_length=500)
+    caption: Optional[str] = None
+    sort_order: int = 0
+
+class MediaGalleryItemOut(BaseModel):
+    id: int
+    news_id: int
+    title: str
+    media_type: str
+    media_url: str
+    caption: Optional[str] = None
+    sort_order: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NewsCommentCreate(BaseModel):
+    content: str = Field(..., min_length=1, max_length=1000)
+
+class NewsCommentOut(BaseModel):
+    id: int
+    news_id: int
+    user_id: int
+    user_name: Optional[str] = None
+    content: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class NewsArticleCreate(BaseModel):
+    title: str = Field(..., min_length=3, max_length=300)
+    content: str = Field(..., min_length=10)
+    summary: Optional[str] = None
+    category: str = "general"
+    cover_image_url: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_featured: bool = False
+    status: str = "published"
+    target_audience: str = "all"
+
+class NewsArticleUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    summary: Optional[str] = None
+    category: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    tags: Optional[List[str]] = None
+    is_featured: Optional[bool] = None
+    status: Optional[str] = None
+    target_audience: Optional[str] = None
+    editorial_notes: Optional[str] = None
+
+class NewsArticleOut(BaseModel):
+    id: int
+    title: str
+    slug: str
+    content: str
+    summary: Optional[str] = None
+    category: str
+    author_id: int
+    author_name: Optional[str] = None
+    cover_image_url: Optional[str] = None
+    tags: Optional[List[str]] = None
+    views: int
+    likes_count: int
+    is_published: bool
+    is_featured: bool
+    status: str
+    target_audience: str
+    editorial_notes: Optional[str] = None
+    published_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    gallery: List[MediaGalleryItemOut] = []
+    comments: List[NewsCommentOut] = []
+    user_has_liked: Optional[bool] = False
+
+    class Config:
+        from_attributes = True
+
+class NewsPublicationStatsOut(BaseModel):
+    total_articles: int
+    total_views: int
+    total_likes: int
+    category_breakdown: Dict[str, int]
+
+
+
 
 
 

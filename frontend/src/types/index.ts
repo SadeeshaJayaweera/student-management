@@ -359,31 +359,6 @@ export interface ClubEvent {
   image_url: string | null;
 }
 
-// ── News ──────────────────────────────────────────────────────
-
-export interface NewsArticle {
-  id: number;
-  title: string;
-  slug: string;
-  summary: string;
-  content?: string;
-  category: string;
-  author: string;
-  cover_image_url: string | null;
-  tags: string[];
-  views: number;
-  is_featured: boolean;
-  published_at: string;
-  comments?: NewsComment[];
-}
-
-export interface NewsComment {
-  id: number;
-  user: { full_name: string };
-  content: string;
-  created_at: string;
-}
-
 // ── Admin ─────────────────────────────────────────────────────
 
 export interface AdminDashboard {
@@ -1125,6 +1100,64 @@ export interface AthleticStats {
   matches_lost: number;
   facilities_booked_count: number;
 }
+
+// ── Campus News and Media Publication ────────────────────────────────
+
+export interface MediaGalleryItem {
+  id: number;
+  news_id: number;
+  title: string;
+  media_type: string;
+  media_url: string;
+  caption?: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface NewsComment {
+  id: number;
+  news_id?: number;
+  user_id?: number;
+  user?: { full_name: string };
+  user_name?: string | null;
+  content: string;
+  created_at: string;
+}
+
+export interface NewsArticle {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  summary?: string | null;
+  category: string;
+  author?: string;
+  author_id?: number;
+  author_name?: string | null;
+  cover_image_url?: string | null;
+  tags?: string[] | null;
+  views: number;
+  likes_count?: number;
+  is_published?: boolean;
+  is_featured?: boolean;
+  status?: string;
+  target_audience?: string;
+  editorial_notes?: string | null;
+  published_at?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+  gallery?: MediaGalleryItem[];
+  comments?: NewsComment[];
+  user_has_liked?: boolean;
+}
+
+export interface NewsPublicationStats {
+  total_articles: number;
+  total_views: number;
+  total_likes: number;
+  category_breakdown: Record<string, number>;
+}
+
 
 
 
