@@ -4066,6 +4066,185 @@ class HostelOccupancySummaryOut(BaseModel):
     active_maintenance_issues: int
 
 
+# ─── Transport & Shuttle Schemas ─────────────────────────────────────────────
+
+class TransportVehicleCreate(BaseModel):
+    vehicle_number: str = Field(..., max_length=50)
+    vehicle_type: str = Field("bus", pattern="^(bus|coaster|van|shuttle)$")
+    capacity: int = Field(54, ge=4, le=100)
+    driver_name: str = Field(..., max_length=150)
+    driver_contact: str = Field(..., max_length=100)
+    status: str = Field("active", pattern="^(active|maintenance|standby)$")
+
+
+class TransportVehicleUpdate(BaseModel):
+    vehicle_type: Optional[str] = Field(None, pattern="^(bus|coaster|van|shuttle)$")
+    capacity: Optional[int] = Field(None, ge=4, le=100)
+    driver_name: Optional[str] = None
+    driver_contact: Optional[str] = None
+    status: Optional[str] = Field(None, pattern="^(active|maintenance|standby)$")
+
+
+class TransportVehicleTelemetryUpdate(BaseModel):
+    current_lat: float
+    current_lng: float
+
+
+class TransportVehicleOut(BaseModel):
+    id: int
+    vehicle_number: str
+    vehicle_type: str
+    capacity: int
+    driver_name: str
+    driver_contact: str
+    status: str
+    current_lat: Optional[float] = None
+    current_lng: Optional[float] = None
+    last_telemetry_at: Optional[datetime] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ShuttleStopCreate(BaseModel):
+    stop_name: str = Field(..., max_length=150)
+    stop_order: int = Field(..., ge=1)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    estimated_time_offset_mins: int = Field(0, ge=0)
+
+
+class ShuttleStopOut(BaseModel):
+    id: int
+    route_id: int
+    stop_name: str
+    stop_order: int
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    estimated_time_offset_mins: int
+
+    class Config:
+        from_attributes = True
+
+
+class ShuttleScheduleCreate(BaseModel):
+    route_id: int
+    vehicle_id: Optional[int] = None
+    departure_time: str = Field(..., pattern=r"^\d{2}:\d{2}$")
+    arrival_time: str = Field(..., pattern=r"^\d{2}:\d{2}$")
+    days_of_week: Optional[List[str]] = None
+    shift_type: str = Field("morning_inbound", pattern="^(morning_inbound|evening_outbound|midday_shuttle|special)$")
+    is_active: bool = True
+
+
+class ShuttleScheduleUpdate(BaseModel):
+    vehicle_id: Optional[int] = None
+    departure_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    arrival_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    days_of_week: Optional[List[str]] = None
+    shift_type: Optional[str] = Field(None, pattern="^(morning_inbound|evening_outbound|midday_shuttle|special)$")
+    is_active: Optional[bool] = None
+
+
+class ShuttleScheduleOut(BaseModel):
+    id: int
+    route_id: int
+    route_name: Optional[str] = None
+    route_code: Optional[str] = None
+    vehicle_id: Optional[int] = None
+    vehicle_number: Optional[str] = None
+    departure_time: str
+    arrival_time: str
+    days_of_week: Optional[List[str]] = None
+    shift_type: str
+    is_active: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ShuttleRouteCreate(BaseModel):
+    route_name: str = Field(..., max_length=150)
+    route_code: str = Field(..., max_length=50)
+    origin: str = Field(..., max_length=150)
+    destination: str = Field(..., max_length=150)
+    distance_km: float = Field(25.0, ge=0.5)
+    estimated_duration_mins: int = Field(45, ge=5)
+    fare_amount: float = Field(150.0, ge=0)
+    is_active: bool = True
+    stops: Optional[List[ShuttleStopCreate]] = None
+
+
+class ShuttleRouteUpdate(BaseModel):
+    route_name: Optional[str] = None
+    origin: Optional[str] = None
+    destination: Optional[str] = None
+    distance_km: Optional[float] = Field(None, ge=0.5)
+    estimated_duration_mins: Optional[int] = Field(None, ge=5)
+    fare_amount: Optional[float] = Field(None, ge=0)
+    is_active: Optional[bool] = None
+
+
+class ShuttleRouteOut(BaseModel):
+    id: int
+    route_name: str
+    route_code: str
+    origin: str
+    destination: str
+    distance_km: float
+    estimated_duration_mins: int
+    fare_amount: float
+    is_active: bool
+    created_at: datetime
+    stops: List[ShuttleStopOut] = []
+    schedules: List[ShuttleScheduleOut] = []
+
+    class Config:
+        from_attributes = True
+
+
+class StudentTransportPassCreate(BaseModel):
+    student_id: int
+    route_id: int
+    pass_type: str = Field("semester", pattern="^(semester|monthly|single_trip)$")
+    valid_from: date
+    valid_until: date
+    fare_paid: float = Field(12000.0, ge=0)
+
+
+class StudentTransportPassOut(BaseModel):
+    id: int
+    student_id: int
+    student_name: Optional[str] = None
+    student_reg_number: Optional[str] = None
+    route_id: int
+    route_name: Optional[str] = None
+    route_code: Optional[str] = None
+    pass_type: str
+    valid_from: date
+    valid_until: date
+    qr_code_token: str
+    fare_paid: float
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TransportFleetSummaryOut(BaseModel):
+    total_vehicles: int
+    active_vehicles: int
+    maintenance_vehicles: int
+    total_routes: int
+    active_schedules: int
+    active_passes: int
+    fleet_capacity: int
+
+
+
 
 
 

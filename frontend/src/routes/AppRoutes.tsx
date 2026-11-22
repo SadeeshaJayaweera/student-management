@@ -11,6 +11,7 @@ import Library from '@/pages/Library'
 import Sports from '@/pages/Sports'
 import News from '@/pages/News'
 import Hostels from '@/pages/Hostels'
+import Transport from '@/pages/Transport'
 import AIChat from '@/pages/AIChat'
 import Assignments from '@/pages/Assignments'
 import Attendance from '@/pages/Attendance'
@@ -80,6 +81,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/sports" element={<Sports />} />
         <Route path="/news" element={<News />} />
         <Route path="/hostels" element={<Hostels />} />
+        <Route path="/transport" element={<Transport />} />
         <Route path="/alumni-network" element={<AlumniNetwork />} />
         <Route path="/experiences" element={<Experiences />} />
         <Route path="/mentorship" element={<Mentorship />} />

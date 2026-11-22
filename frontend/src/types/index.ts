@@ -1238,6 +1238,90 @@ export interface HostelOccupancySummary {
   active_maintenance_issues: number;
 }
 
+// ── Transport & Shuttle ─────────────────────────────────────
+
+export interface TransportVehicle {
+  id: number;
+  vehicle_number: string;
+  vehicle_type: string;
+  capacity: number;
+  driver_name: string;
+  driver_contact: string;
+  status: string;
+  current_lat?: number | null;
+  current_lng?: number | null;
+  last_telemetry_at?: string | null;
+  created_at: string;
+}
+
+export interface ShuttleStop {
+  id: number;
+  route_id: number;
+  stop_name: string;
+  stop_order: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  estimated_time_offset_mins: number;
+}
+
+export interface ShuttleSchedule {
+  id: number;
+  route_id: number;
+  route_name?: string | null;
+  route_code?: string | null;
+  vehicle_id?: number | null;
+  vehicle_number?: string | null;
+  departure_time: string;
+  arrival_time: string;
+  days_of_week?: string[] | null;
+  shift_type: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ShuttleRoute {
+  id: number;
+  route_name: string;
+  route_code: string;
+  origin: string;
+  destination: string;
+  distance_km: number;
+  estimated_duration_mins: number;
+  fare_amount: number;
+  is_active: boolean;
+  created_at: string;
+  stops?: ShuttleStop[];
+  schedules?: ShuttleSchedule[];
+}
+
+export interface StudentTransportPass {
+  id: number;
+  student_id: number;
+  student_name?: string | null;
+  student_reg_number?: string | null;
+  route_id: number;
+  route_name?: string | null;
+  route_code?: string | null;
+  pass_type: string;
+  valid_from: string;
+  valid_until: string;
+  qr_code_token: string;
+  fare_paid: number;
+  status: string;
+  created_at: string;
+}
+
+export interface TransportFleetSummary {
+  total_vehicles: number;
+  active_vehicles: number;
+  maintenance_vehicles: number;
+  total_routes: number;
+  active_schedules: number;
+  active_passes: number;
+  fleet_capacity: number;
+}
+
+
 
 
 

@@ -2729,6 +2729,95 @@ class HostelMaintenanceRequest(Base):
     student = relationship("Student")
 
 
+# ─── Transport & Shuttle Management ──────────────────────────────────────────
+
+class TransportVehicle(Base):
+    __tablename__ = "transport_vehicles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    vehicle_number = Column(String(50), nullable=False, unique=True, index=True)
+    vehicle_type = Column(String(30), default="bus", nullable=False)  # bus, coaster, van, shuttle
+    capacity = Column(Integer, default=54, nullable=False)
+    driver_name = Column(String(150), nullable=False)
+    driver_contact = Column(String(100), nullable=False)
+    status = Column(String(30), default="active", nullable=False)  # active, maintenance, standby
+    current_lat = Column(Float, nullable=True)
+    current_lng = Column(Float, nullable=True)
+    last_telemetry_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    schedules = relationship("ShuttleSchedule", back_populates="vehicle")
+
+
+class ShuttleRoute(Base):
+    __tablename__ = "shuttle_routes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    route_name = Column(String(150), nullable=False, index=True)
+    route_code = Column(String(50), nullable=False, unique=True, index=True)
+    origin = Column(String(150), nullable=False)
+    destination = Column(String(150), nullable=False)
+    distance_km = Column(Float, default=25.0, nullable=False)
+    estimated_duration_mins = Column(Integer, default=45, nullable=False)
+    fare_amount = Column(Float, default=150.0, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    stops = relationship("ShuttleStop", back_populates="route", cascade="all, delete-orphan", order_by="ShuttleStop.stop_order")
+    schedules = relationship("ShuttleSchedule", back_populates="route", cascade="all, delete-orphan")
+    passes = relationship("StudentTransportPass", back_populates="route", cascade="all, delete-orphan")
+
+
+class ShuttleStop(Base):
+    __tablename__ = "shuttle_stops"
+
+    id = Column(Integer, primary_key=True, index=True)
+    route_id = Column(Integer, ForeignKey("shuttle_routes.id", ondelete="CASCADE"), nullable=False, index=True)
+    stop_name = Column(String(150), nullable=False)
+    stop_order = Column(Integer, default=1, nullable=False)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    estimated_time_offset_mins = Column(Integer, default=0, nullable=False)
+
+    route = relationship("ShuttleRoute", back_populates="stops")
+
+
+class ShuttleSchedule(Base):
+    __tablename__ = "shuttle_schedules"
+
+    id = Column(Integer, primary_key=True, index=True)
+    route_id = Column(Integer, ForeignKey("shuttle_routes.id", ondelete="CASCADE"), nullable=False, index=True)
+    vehicle_id = Column(Integer, ForeignKey("transport_vehicles.id", ondelete="SET NULL"), nullable=True, index=True)
+    departure_time = Column(String(10), nullable=False)  # e.g. "07:15"
+    arrival_time = Column(String(10), nullable=False)    # e.g. "08:15"
+    days_of_week = Column(JSON, nullable=True)           # ["monday", "tuesday", "wednesday", "thursday", "friday"]
+    shift_type = Column(String(30), default="morning_inbound", nullable=False)  # morning_inbound, evening_outbound, midday_shuttle, special
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    route = relationship("ShuttleRoute", back_populates="schedules")
+    vehicle = relationship("TransportVehicle", back_populates="schedules")
+
+
+class StudentTransportPass(Base):
+    __tablename__ = "student_transport_passes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    route_id = Column(Integer, ForeignKey("shuttle_routes.id", ondelete="CASCADE"), nullable=False, index=True)
+    pass_type = Column(String(30), default="semester", nullable=False)  # semester, monthly, single_trip
+    valid_from = Column(Date, nullable=False)
+    valid_until = Column(Date, nullable=False)
+    qr_code_token = Column(String(100), unique=True, index=True, nullable=False)
+    fare_paid = Column(Float, default=12000.0, nullable=False)
+    status = Column(String(30), default="active", nullable=False)  # active, expired, suspended
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    student = relationship("Student")
+    route = relationship("ShuttleRoute", back_populates="passes")
+
+
+
 
 
 
