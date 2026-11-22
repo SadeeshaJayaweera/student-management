@@ -2817,6 +2817,61 @@ class StudentTransportPass(Base):
     route = relationship("ShuttleRoute", back_populates="passes")
 
 
+# ─── Campus Facility and Resource Booking ────────────────────────────────────
+
+class CampusFacility(Base):
+    __tablename__ = "campus_facilities"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(150), nullable=False, index=True)
+    facility_code = Column(String(50), nullable=False, unique=True, index=True)
+    facility_type = Column(String(50), default="lecture_hall", nullable=False)  # auditorium, lecture_hall, computer_lab, seminar_room, conference_room, multipurpose_hall, study_pod
+    building_name = Column(String(150), nullable=False)
+    floor = Column(Integer, default=1, nullable=False)
+    capacity = Column(Integer, default=60, nullable=False)
+    hourly_rate = Column(Float, default=0.0, nullable=False)
+    amenities = Column(JSON, nullable=True)  # list of strings: ["projector", "smart_board", "sound_system", "ac"]
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    equipment = relationship("FacilityEquipment", back_populates="facility", cascade="all, delete-orphan")
+    reservations = relationship("FacilityReservation", back_populates="facility", cascade="all, delete-orphan")
+
+
+class FacilityEquipment(Base):
+    __tablename__ = "facility_equipment"
+
+    id = Column(Integer, primary_key=True, index=True)
+    facility_id = Column(Integer, ForeignKey("campus_facilities.id", ondelete="SET NULL"), nullable=True, index=True)
+    name = Column(String(150), nullable=False)
+    asset_tag = Column(String(50), nullable=False, unique=True, index=True)
+    equipment_type = Column(String(50), default="av_projector", nullable=False)  # av_projector, wireless_mic, laptop_cart, smart_lectern, vr_headset, sound_mixer
+    status = Column(String(30), default="available", nullable=False)  # available, in_use, maintenance
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    facility = relationship("CampusFacility", back_populates="equipment")
+
+
+class FacilityReservation(Base):
+    __tablename__ = "facility_reservations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    facility_id = Column(Integer, ForeignKey("campus_facilities.id", ondelete="CASCADE"), nullable=False, index=True)
+    reserved_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, nullable=False, index=True)
+    purpose = Column(String(255), nullable=False)
+    attendee_count = Column(Integer, default=20, nullable=False)
+    status = Column(String(30), default="confirmed", nullable=False)  # pending, confirmed, cancelled, rejected
+    approval_notes = Column(Text, nullable=True)
+    equipment_requested = Column(JSON, nullable=True)  # list of requested equipment names
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    facility = relationship("CampusFacility", back_populates="reservations")
+    reserved_by = relationship("User")
+
+
+
 
 
 

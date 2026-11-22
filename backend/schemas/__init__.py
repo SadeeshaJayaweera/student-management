@@ -4244,6 +4244,121 @@ class TransportFleetSummaryOut(BaseModel):
     fleet_capacity: int
 
 
+# ─── Campus Facility and Resource Booking Schemas ────────────────────────────
+
+class CampusFacilityCreate(BaseModel):
+    name: str = Field(..., max_length=150)
+    facility_code: str = Field(..., max_length=50)
+    facility_type: str = Field("lecture_hall", pattern="^(auditorium|lecture_hall|computer_lab|seminar_room|conference_room|multipurpose_hall|study_pod)$")
+    building_name: str = Field(..., max_length=150)
+    floor: int = Field(1, ge=0)
+    capacity: int = Field(60, ge=1, le=2000)
+    hourly_rate: float = Field(0.0, ge=0)
+    amenities: Optional[List[str]] = None
+    is_active: bool = True
+
+
+class CampusFacilityUpdate(BaseModel):
+    name: Optional[str] = None
+    facility_type: Optional[str] = Field(None, pattern="^(auditorium|lecture_hall|computer_lab|seminar_room|conference_room|multipurpose_hall|study_pod)$")
+    building_name: Optional[str] = None
+    floor: Optional[int] = Field(None, ge=0)
+    capacity: Optional[int] = Field(None, ge=1, le=2000)
+    hourly_rate: Optional[float] = Field(None, ge=0)
+    amenities: Optional[List[str]] = None
+    is_active: Optional[bool] = None
+
+
+class FacilityEquipmentCreate(BaseModel):
+    facility_id: Optional[int] = None
+    name: str = Field(..., max_length=150)
+    asset_tag: str = Field(..., max_length=50)
+    equipment_type: str = Field("av_projector", pattern="^(av_projector|wireless_mic|laptop_cart|smart_lectern|vr_headset|sound_mixer)$")
+    status: str = Field("available", pattern="^(available|in_use|maintenance)$")
+
+
+class FacilityEquipmentUpdate(BaseModel):
+    facility_id: Optional[int] = None
+    name: Optional[str] = None
+    status: Optional[str] = Field(None, pattern="^(available|in_use|maintenance)$")
+
+
+class FacilityEquipmentOut(BaseModel):
+    id: int
+    facility_id: Optional[int] = None
+    name: str
+    asset_tag: str
+    equipment_type: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class FacilityReservationCreate(BaseModel):
+    facility_id: int
+    start_time: datetime
+    end_time: datetime
+    purpose: str = Field(..., max_length=255)
+    attendee_count: int = Field(20, ge=1)
+    equipment_requested: Optional[List[str]] = None
+
+
+class FacilityReservationUpdate(BaseModel):
+    status: Optional[str] = Field(None, pattern="^(pending|confirmed|cancelled|rejected)$")
+    approval_notes: Optional[str] = None
+
+
+class FacilityReservationOut(BaseModel):
+    id: int
+    facility_id: int
+    facility_name: Optional[str] = None
+    facility_code: Optional[str] = None
+    reserved_by_user_id: int
+    reserved_by_name: Optional[str] = None
+    reserved_by_role: Optional[str] = None
+    start_time: datetime
+    end_time: datetime
+    purpose: str
+    attendee_count: int
+    status: str
+    approval_notes: Optional[str] = None
+    equipment_requested: Optional[List[str]] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CampusFacilityOut(BaseModel):
+    id: int
+    name: str
+    facility_code: str
+    facility_type: str
+    building_name: str
+    floor: int
+    capacity: int
+    hourly_rate: float
+    amenities: Optional[List[str]] = None
+    is_active: bool
+    created_at: datetime
+    equipment: List[FacilityEquipmentOut] = []
+    active_reservations_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class FacilityBookingSummaryOut(BaseModel):
+    total_facilities: int
+    total_capacity: int
+    total_equipment: int
+    confirmed_reservations_today: int
+    pending_approvals: int
+
+
+
 
 
 

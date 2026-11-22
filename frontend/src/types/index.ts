@@ -1321,6 +1321,61 @@ export interface TransportFleetSummary {
   fleet_capacity: number;
 }
 
+// ── Campus Facility & Resource Booking ──────────────────────
+
+export interface FacilityEquipment {
+  id: number;
+  facility_id?: number | null;
+  name: string;
+  asset_tag: string;
+  equipment_type: string;
+  status: string;
+  created_at: string;
+}
+
+export interface FacilityReservation {
+  id: number;
+  facility_id: number;
+  facility_name?: string | null;
+  facility_code?: string | null;
+  reserved_by_user_id: number;
+  reserved_by_name?: string | null;
+  reserved_by_role?: string | null;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  attendee_count: number;
+  status: string;
+  approval_notes?: string | null;
+  equipment_requested?: string[] | null;
+  created_at: string;
+}
+
+export interface CampusFacility {
+  id: number;
+  name: string;
+  facility_code: string;
+  facility_type: string;
+  building_name: string;
+  floor: number;
+  capacity: number;
+  hourly_rate: number;
+  amenities?: string[] | null;
+  is_active: boolean;
+  created_at: string;
+  equipment?: FacilityEquipment[];
+  active_reservations_count?: number;
+}
+
+export interface FacilityBookingSummary {
+  total_facilities: number;
+  total_capacity: number;
+  total_equipment: number;
+  confirmed_reservations_today: number;
+  pending_approvals: number;
+}
+
+
 
 
 

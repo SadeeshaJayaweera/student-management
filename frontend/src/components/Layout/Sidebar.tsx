@@ -70,6 +70,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
     { to: '/news',          icon: '📰', label: 'News Portal' },
     { to: '/hostels',       icon: '🏢', label: 'Hostel & Housing' },
     { to: '/transport',     icon: '🚌', label: 'Transport & Shuttles' },
+    { to: '/facilities',    icon: '🏛️', label: 'Facility Booking' },
     { to: '/alumni-network',icon: '🌐', label: 'Alumni Network' },
   ]
 
