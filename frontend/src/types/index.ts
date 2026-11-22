@@ -1523,6 +1523,36 @@ export interface CourseRAGAnalytics {
   avg_feedback_rating?: number | null;
 }
 
+export interface AITeachingMessage {
+  id: number;
+  session_id: number;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  socratic_phase: string;
+  tokens_used: number;
+  guardrail_triggered: boolean;
+  suggested_followups?: string[] | null;
+  hints?: string[] | null;
+  created_at: string;
+}
+
+export interface AITeachingSession {
+  id: number;
+  student_id: number;
+  course_id: number;
+  title: string;
+  teaching_mode: 'socratic' | 'explainer' | 'exam_prep' | 'code_mentor';
+  is_active: boolean;
+  turn_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AITeachingSessionDetail extends AITeachingSession {
+  messages: AITeachingMessage[];
+}
+
+
 
 
 

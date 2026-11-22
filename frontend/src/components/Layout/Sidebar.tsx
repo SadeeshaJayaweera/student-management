@@ -78,6 +78,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   const account: NavItem[] = [
     { to: '/ai-chat',       icon: '🤖', label: 'AI Assistant', badge: 'AI' },
     { to: '/course-rag',    icon: '📚', label: 'Course RAG', badge: 'RAG' },
+    { to: '/ai-tutor',      icon: '🎓', label: 'Socratic Tutor', badge: 'Tutor' },
     { to: '/notifications', icon: '🔔', label: 'Notifications' },
     { to: '/profile',       icon: '👤', label: 'My Profile' },
   ]

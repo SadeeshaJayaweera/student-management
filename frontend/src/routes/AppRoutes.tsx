@@ -16,6 +16,7 @@ import Facilities from '@/pages/Facilities'
 import CampusOperations from '@/pages/CampusOperations'
 import AIChat from '@/pages/AIChat'
 import CourseRAG from '@/pages/CourseRAG'
+import AITeachingAssistant from '@/pages/AITeachingAssistant'
 import Assignments from '@/pages/Assignments'
 import Attendance from '@/pages/Attendance'
 import Courses from '@/pages/Courses'
@@ -94,6 +95,7 @@ export const AppRoutes: React.FC = () => {
         {/* AI Assistant */}
         <Route path="/ai-chat" element={<AIChat />} />
         <Route path="/course-rag" element={<CourseRAG />} />
+        <Route path="/ai-tutor" element={<AITeachingAssistant />} />
 
         {/* Administration */}
         <Route path="/campus-operations" element={<CampusOperations />} />

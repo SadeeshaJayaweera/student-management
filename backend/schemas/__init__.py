@@ -4524,6 +4524,52 @@ class CourseRAGAnalyticsOut(BaseModel):
     avg_feedback_rating: Optional[float] = None
 
 
+# ─── Conversational AI Teaching Assistant Schemas ────────────────────────────
+
+class AITeachingSessionCreate(BaseModel):
+    course_id: int
+    title: Optional[str] = Field(default="Tutoring Session", max_length=200)
+    teaching_mode: str = Field(default="socratic")  # socratic, explainer, exam_prep, code_mentor
+
+
+class AITeachingMessageOut(BaseModel):
+    id: int
+    session_id: int
+    role: str
+    content: str
+    socratic_phase: str
+    tokens_used: int
+    guardrail_triggered: bool
+    suggested_followups: Optional[List[str]] = None
+    hints: Optional[List[str]] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class AITeachingSessionOut(BaseModel):
+    id: int
+    student_id: int
+    course_id: int
+    title: str
+    teaching_mode: str
+    is_active: bool
+    turn_count: int
+    created_at: datetime
+    updated_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class AITeachingSessionDetailOut(AITeachingSessionOut):
+    messages: List[AITeachingMessageOut] = []
+
+
+class AITeachingMessageCreate(BaseModel):
+    content: str = Field(..., min_length=1)
+
+
+
 
 
 

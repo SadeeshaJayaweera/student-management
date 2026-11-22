@@ -2933,6 +2933,44 @@ class RAGQueryLog(Base):
     course = relationship("Course")
 
 
+# ─── Conversational AI Teaching Assistant Models ─────────────────────────────
+
+class AITeachingSession(Base):
+    __tablename__ = "ai_teaching_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), default="Tutoring Session", nullable=False)
+    teaching_mode = Column(String(50), default="socratic", nullable=False)  # socratic, explainer, exam_prep, code_mentor
+    is_active = Column(Boolean, default=True, nullable=False)
+    turn_count = Column(Integer, default=0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    student = relationship("Student")
+    course = relationship("Course")
+    messages = relationship("AITeachingMessage", back_populates="session", cascade="all, delete-orphan", order_by="AITeachingMessage.created_at")
+
+
+class AITeachingMessage(Base):
+    __tablename__ = "ai_teaching_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("ai_teaching_sessions.id", ondelete="CASCADE"), nullable=False, index=True)
+    role = Column(String(20), nullable=False)  # user, assistant, system
+    content = Column(Text, nullable=False)
+    socratic_phase = Column(String(50), default="inquiry", nullable=False)  # inquiry, hint, reflection, verification, summary, guardrail
+    tokens_used = Column(Integer, default=0, nullable=False)
+    guardrail_triggered = Column(Boolean, default=False, nullable=False)
+    suggested_followups = Column(JSON, nullable=True)  # list of string followups
+    hints = Column(JSON, nullable=True)  # list of hint strings
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    session = relationship("AITeachingSession", back_populates="messages")
+
+
+
 
 
 
