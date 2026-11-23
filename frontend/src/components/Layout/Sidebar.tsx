@@ -12,9 +12,42 @@ import {
   Chip,
   Divider,
 } from '@mui/material'
+import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined'
+import SchoolOutlinedIcon from '@mui/icons-material/SchoolOutlined'
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
+import HowToRegOutlinedIcon from '@mui/icons-material/HowToRegOutlined'
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
+import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined'
+import VolunteerActivismOutlinedIcon from '@mui/icons-material/VolunteerActivismOutlined'
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
+import EventNoteOutlinedIcon from '@mui/icons-material/EventNoteOutlined'
+import Diversity3OutlinedIcon from '@mui/icons-material/Diversity3Outlined'
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined'
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined'
+import FactCheckOutlinedIcon from '@mui/icons-material/FactCheckOutlined'
+import TaskAltOutlinedIcon from '@mui/icons-material/TaskAltOutlined'
+import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined'
+import HubOutlinedIcon from '@mui/icons-material/HubOutlined'
+import RecordVoiceOverOutlinedIcon from '@mui/icons-material/RecordVoiceOverOutlined'
+import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined'
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
+import LocalLibraryOutlinedIcon from '@mui/icons-material/LocalLibraryOutlined'
+import SportsSoccerOutlinedIcon from '@mui/icons-material/SportsSoccerOutlined'
+import NewspaperOutlinedIcon from '@mui/icons-material/NewspaperOutlined'
+import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'
+import DirectionsBusOutlinedIcon from '@mui/icons-material/DirectionsBusOutlined'
+import MeetingRoomOutlinedIcon from '@mui/icons-material/MeetingRoomOutlined'
+import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined'
+import FindInPageOutlinedIcon from '@mui/icons-material/FindInPageOutlined'
+import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined'
+import TerminalOutlinedIcon from '@mui/icons-material/TerminalOutlined'
+import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 import { useAuth } from '@/contexts/AuthContext'
 
-const DRAWER_WIDTH = 260
+const DRAWER_WIDTH = 270
 
 const initials = (name: string) =>
   name
@@ -26,57 +59,57 @@ const initials = (name: string) =>
 
 interface NavItem {
   to: string
-  icon: string
+  icon: React.ReactNode
   label: string
   badge?: string
 }
 
 function studentNav(): NavItem[] {
   return [
-    { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
-    { to: '/courses', icon: '📖', label: 'My Courses' },
-    { to: '/grades', icon: '📊', label: 'Grades & GPA' },
-    { to: '/assignments', icon: '📝', label: 'Assignments' },
-    { to: '/attendance', icon: '📅', label: 'Attendance' },
-    { to: '/timetable', icon: '⏰', label: 'Timetable' },
-    { to: '/evaluations', icon: '⭐', label: 'Course Feedback' },
-    { to: '/wellbeing', icon: '💚', label: 'Student Wellbeing' },
-    { to: '/billing', icon: '💳', label: 'Fees & Billing' },
-    { to: '/calendar', icon: '📆', label: 'Calendar & Tasks' },
-    { to: '/collaboration', icon: '👥', label: 'Study Groups' },
-    { to: '/messages', icon: '💬', label: 'Messages' },
+    { to: '/dashboard', icon: <DashboardOutlinedIcon fontSize="small" />, label: 'Dashboard' },
+    { to: '/courses', icon: <SchoolOutlinedIcon fontSize="small" />, label: 'My Courses' },
+    { to: '/grades', icon: <AssessmentOutlinedIcon fontSize="small" />, label: 'Grades & GPA' },
+    { to: '/assignments', icon: <AssignmentOutlinedIcon fontSize="small" />, label: 'Assignments' },
+    { to: '/attendance', icon: <HowToRegOutlinedIcon fontSize="small" />, label: 'Attendance' },
+    { to: '/timetable', icon: <CalendarMonthOutlinedIcon fontSize="small" />, label: 'Timetable' },
+    { to: '/evaluations', icon: <RateReviewOutlinedIcon fontSize="small" />, label: 'Course Feedback' },
+    { to: '/wellbeing', icon: <VolunteerActivismOutlinedIcon fontSize="small" />, label: 'Student Wellbeing' },
+    { to: '/billing', icon: <AccountBalanceWalletOutlinedIcon fontSize="small" />, label: 'Fees & Billing' },
+    { to: '/calendar', icon: <EventNoteOutlinedIcon fontSize="small" />, label: 'Calendar & Tasks' },
+    { to: '/collaboration', icon: <Diversity3OutlinedIcon fontSize="small" />, label: 'Study Groups' },
+    { to: '/messages', icon: <ForumOutlinedIcon fontSize="small" />, label: 'Messages' },
   ]
 }
 
 function lecturerNav(): NavItem[] {
   return [
-    { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
-    { to: '/courses', icon: '📖', label: 'My Courses' },
-    { to: '/ai-quiz-generator', icon: '📝', label: 'Quiz Generator' },
-    { to: '/ai-grading', icon: '⚖️', label: 'AI Grading' },
-    { to: '/grading', icon: '✅', label: 'Grading' },
-    { to: '/analytics', icon: '📈', label: 'Analytics' },
-    { to: '/calendar', icon: '📆', label: 'Calendar & Tasks' },
-    { to: '/messages', icon: '💬', label: 'Messages' },
+    { to: '/dashboard', icon: <DashboardOutlinedIcon fontSize="small" />, label: 'Dashboard' },
+    { to: '/courses', icon: <SchoolOutlinedIcon fontSize="small" />, label: 'My Courses' },
+    { to: '/ai-quiz-generator', icon: <AutoAwesomeOutlinedIcon fontSize="small" />, label: 'Quiz Generator' },
+    { to: '/ai-grading', icon: <FactCheckOutlinedIcon fontSize="small" />, label: 'AI Grading' },
+    { to: '/grading', icon: <TaskAltOutlinedIcon fontSize="small" />, label: 'Submissions' },
+    { to: '/analytics', icon: <InsightsOutlinedIcon fontSize="small" />, label: 'Analytics' },
+    { to: '/calendar', icon: <EventNoteOutlinedIcon fontSize="small" />, label: 'Calendar & Tasks' },
+    { to: '/messages', icon: <ForumOutlinedIcon fontSize="small" />, label: 'Messages' },
   ]
 }
 
 function alumniNav(): NavItem[] {
   return [
-    { to: '/dashboard', icon: '🏠', label: 'Alumni Hub' },
-    { to: '/alumni-network', icon: '🌐', label: 'Network' },
-    { to: '/experiences', icon: '💬', label: 'Experiences' },
-    { to: '/mentorship', icon: '🤝', label: 'Mentorship' },
+    { to: '/dashboard', icon: <DashboardOutlinedIcon fontSize="small" />, label: 'Alumni Hub' },
+    { to: '/alumni-network', icon: <HubOutlinedIcon fontSize="small" />, label: 'Network' },
+    { to: '/experiences', icon: <RecordVoiceOverOutlinedIcon fontSize="small" />, label: 'Experiences' },
+    { to: '/mentorship', icon: <HandshakeOutlinedIcon fontSize="small" />, label: 'Mentorship' },
   ]
 }
 
 function adminNav(): NavItem[] {
   return [
-    { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
-    { to: '/campus-operations', icon: '🎛️', label: 'Operations Command' },
-    { to: '/manage-users', icon: '👥', label: 'Users' },
-    { to: '/manage-courses', icon: '📖', label: 'Courses' },
-    { to: '/billing', icon: '💳', label: 'Fees & Billing' },
+    { to: '/dashboard', icon: <DashboardOutlinedIcon fontSize="small" />, label: 'Dashboard' },
+    { to: '/campus-operations', icon: <TuneOutlinedIcon fontSize="small" />, label: 'Operations Command' },
+    { to: '/manage-users', icon: <PeopleAltOutlinedIcon fontSize="small" />, label: 'Users & Roles' },
+    { to: '/manage-courses', icon: <SchoolOutlinedIcon fontSize="small" />, label: 'Course Catalog' },
+    { to: '/billing', icon: <AccountBalanceWalletOutlinedIcon fontSize="small" />, label: 'Fees & Billing' },
   ]
 }
 
@@ -98,32 +131,30 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
   }
 
   const campus: NavItem[] = [
-    { to: '/library', icon: '📚', label: 'Library' },
-    { to: '/sports', icon: '⚽', label: 'Sports & Clubs' },
-    { to: '/news', icon: '📰', label: 'News Portal' },
-    { to: '/hostels', icon: '🏢', label: 'Hostel & Housing' },
-    { to: '/transport', icon: '🚌', label: 'Transport & Shuttles' },
-    { to: '/facilities', icon: '🏛️', label: 'Facility Booking' },
-    { to: '/alumni-network', icon: '🌐', label: 'Alumni Network' },
+    { to: '/library', icon: <LocalLibraryOutlinedIcon fontSize="small" />, label: 'Library & E-Resources' },
+    { to: '/sports', icon: <SportsSoccerOutlinedIcon fontSize="small" />, label: 'Sports & Clubs' },
+    { to: '/news', icon: <NewspaperOutlinedIcon fontSize="small" />, label: 'Campus News' },
+    { to: '/hostels', icon: <ApartmentOutlinedIcon fontSize="small" />, label: 'Hostel & Housing' },
+    { to: '/transport', icon: <DirectionsBusOutlinedIcon fontSize="small" />, label: 'Transport & Shuttles' },
+    { to: '/facilities', icon: <MeetingRoomOutlinedIcon fontSize="small" />, label: 'Facility Booking' },
+    { to: '/alumni-network', icon: <HubOutlinedIcon fontSize="small" />, label: 'Alumni Network' },
   ]
 
   const account: NavItem[] = [
-    { to: '/ai-chat', icon: '🤖', label: 'AI Assistant', badge: 'AI' },
-    { to: '/course-rag', icon: '📚', label: 'Course RAG', badge: 'RAG' },
-    { to: '/ai-tutor', icon: '🎓', label: 'Socratic Tutor', badge: 'Tutor' },
-    { to: '/mcp-console', icon: '⚙️', label: 'MCP Tools', badge: 'MCP' },
-    { to: '/ai-quiz-generator', icon: '📝', label: 'AI Quiz Gen', badge: 'Quiz' },
-    { to: '/ai-grading', icon: '⚖️', label: 'AI Grading', badge: 'Grade' },
-    { to: '/notifications', icon: '🔔', label: 'Notifications' },
-    { to: '/profile', icon: '👤', label: 'My Profile' },
+    { to: '/ai-chat', icon: <SmartToyOutlinedIcon fontSize="small" />, label: 'AI Assistant', badge: 'PRO' },
+    { to: '/course-rag', icon: <FindInPageOutlinedIcon fontSize="small" />, label: 'Course RAG', badge: 'RAG' },
+    { to: '/ai-tutor', icon: <PsychologyOutlinedIcon fontSize="small" />, label: 'Socratic Tutor', badge: 'Tutor' },
+    { to: '/mcp-console', icon: <TerminalOutlinedIcon fontSize="small" />, label: 'MCP Dev Console', badge: 'MCP' },
+    { to: '/notifications', icon: <NotificationsNoneOutlinedIcon fontSize="small" />, label: 'Notifications' },
+    { to: '/profile', icon: <PersonOutlineOutlinedIcon fontSize="small" />, label: 'My Profile' },
   ]
 
   const roleLabel: Record<string, string> = {
     student: 'Student Portal',
-    lecturer: 'Lecturer Portal',
-    alumni: 'Alumni Network',
-    admin: 'Administrator',
-    librarian: 'Librarian',
+    lecturer: 'Faculty Portal',
+    alumni: 'Alumni Portal',
+    admin: 'Command Admin',
+    librarian: 'Library Staff',
   }
 
   const drawerContent = (
@@ -134,33 +165,34 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#FFFFFF',
-        pt: '70px',
+        pt: '64px',
         px: 2,
         pb: 3,
         overflowY: 'auto',
       }}
     >
-      {/* Profile Card */}
+      {/* User Information Card */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
           p: 1.75,
-          mt: 1.5,
-          mb: 2,
+          mt: 2,
+          mb: 2.5,
           borderRadius: 3,
           backgroundColor: '#F8FAFC',
-          border: '1px solid rgba(0, 0, 0, 0.06)',
+          border: '1px solid #E2E8F0',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.02)',
         }}
       >
         <Avatar
           sx={{
-            width: 44,
-            height: 44,
-            fontSize: '0.95rem',
+            width: 42,
+            height: 42,
+            fontSize: '0.9rem',
             fontWeight: 800,
-            bgcolor: 'rgba(0, 132, 61, 0.12)',
+            bgcolor: 'rgba(0, 132, 61, 0.1)',
             color: '#00843D',
             border: '1.5px solid rgba(0, 132, 61, 0.25)',
           }}
@@ -171,7 +203,7 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
           <Typography
             variant="subtitle2"
             noWrap
-            sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#1A1A2E' }}
+            sx={{ fontWeight: 700, fontSize: '0.875rem', color: '#0F172A', lineHeight: 1.25 }}
           >
             {user.full_name}
           </Typography>
@@ -182,7 +214,9 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
               fontWeight: 700,
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
-              fontSize: '0.65rem',
+              fontSize: '0.66rem',
+              display: 'block',
+              mt: 0.25,
             }}
           >
             {roleLabel[user.role] || user.role}
@@ -190,21 +224,22 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
         </Box>
       </Box>
 
-      {/* Portal Navigation */}
+      {/* Main Portal Section */}
       {portalNav[user.role] && (
-        <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2.5 }}>
           <Typography
             variant="overline"
             sx={{
               px: 1.5,
               fontWeight: 800,
-              color: 'text.secondary',
+              color: '#94A3B8',
               letterSpacing: '0.08em',
+              fontSize: '0.68rem',
               display: 'block',
-              mb: 0.5,
+              mb: 0.75,
             }}
           >
-            Portal
+            Academic Portal
           </Typography>
           <List disablePadding>
             {portalNav[user.role].map((item) => (
@@ -216,27 +251,30 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
                 onClick={onClose}
                 sx={{
                   borderRadius: 2.5,
-                  mb: 0.5,
-                  py: 1,
+                  mb: 0.4,
+                  py: 0.85,
                   px: 1.5,
                   color: '#475569',
+                  transition: 'all 0.18s ease',
                   '&.active': {
-                    backgroundColor: 'rgba(0, 132, 61, 0.1)',
+                    backgroundColor: 'rgba(0, 132, 61, 0.08)',
                     color: '#00843D',
                     fontWeight: 700,
+                    borderLeft: '3px solid #00843D',
                     '& .MuiListItemIcon-root': {
-                      transform: 'scale(1.1)',
+                      color: '#00843D',
                     },
                   },
                   '&:hover': {
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    backgroundColor: '#F1F5F9',
+                    color: '#0F172A',
                   },
                 }}
               >
-                <ListItemIcon sx={{ minWidth: 32, fontSize: '1.15rem' }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ minWidth: 32, color: '#64748B' }}>{item.icon}</ListItemIcon>
                 <ListItemText
                   primary={
-                    <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
                       {item.label}
                     </Typography>
                   }
@@ -246,11 +284,12 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
                     label={item.badge}
                     size="small"
                     sx={{
-                      height: 20,
-                      fontSize: '0.68rem',
+                      height: 18,
+                      fontSize: '0.65rem',
                       fontWeight: 700,
                       bgcolor: '#00843D',
                       color: '#FFFFFF',
+                      borderRadius: 1,
                     }}
                   />
                 )}
@@ -260,20 +299,21 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
         </Box>
       )}
 
-      {/* Campus */}
-      <Box sx={{ mb: 2 }}>
+      {/* Campus Life Section */}
+      <Box sx={{ mb: 2.5 }}>
         <Typography
           variant="overline"
           sx={{
             px: 1.5,
             fontWeight: 800,
-            color: 'text.secondary',
+            color: '#94A3B8',
             letterSpacing: '0.08em',
+            fontSize: '0.68rem',
             display: 'block',
-            mb: 0.5,
+            mb: 0.75,
           }}
         >
-          Campus
+          Campus Ecosystem
         </Typography>
         <List disablePadding>
           {campus.map((item) => (
@@ -284,24 +324,30 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
               onClick={onClose}
               sx={{
                 borderRadius: 2.5,
-                mb: 0.5,
-                py: 1,
+                mb: 0.4,
+                py: 0.85,
                 px: 1.5,
                 color: '#475569',
+                transition: 'all 0.18s ease',
                 '&.active': {
-                  backgroundColor: 'rgba(0, 132, 61, 0.1)',
+                  backgroundColor: 'rgba(0, 132, 61, 0.08)',
                   color: '#00843D',
                   fontWeight: 700,
+                  borderLeft: '3px solid #00843D',
+                  '& .MuiListItemIcon-root': {
+                    color: '#00843D',
+                  },
                 },
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  backgroundColor: '#F1F5F9',
+                  color: '#0F172A',
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 32, fontSize: '1.15rem' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 32, color: '#64748B' }}>{item.icon}</ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
                     {item.label}
                   </Typography>
                 }
@@ -311,17 +357,18 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
         </List>
       </Box>
 
-      {/* Account & AI */}
+      {/* AI Services Section */}
       <Box sx={{ mb: 2 }}>
         <Typography
           variant="overline"
           sx={{
             px: 1.5,
             fontWeight: 800,
-            color: 'text.secondary',
+            color: '#94A3B8',
             letterSpacing: '0.08em',
+            fontSize: '0.68rem',
             display: 'block',
-            mb: 0.5,
+            mb: 0.75,
           }}
         >
           AI & Services
@@ -335,24 +382,30 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
               onClick={onClose}
               sx={{
                 borderRadius: 2.5,
-                mb: 0.5,
-                py: 1,
+                mb: 0.4,
+                py: 0.85,
                 px: 1.5,
                 color: '#475569',
+                transition: 'all 0.18s ease',
                 '&.active': {
-                  backgroundColor: 'rgba(0, 132, 61, 0.1)',
+                  backgroundColor: 'rgba(0, 132, 61, 0.08)',
                   color: '#00843D',
                   fontWeight: 700,
+                  borderLeft: '3px solid #00843D',
+                  '& .MuiListItemIcon-root': {
+                    color: '#00843D',
+                  },
                 },
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  backgroundColor: '#F1F5F9',
+                  color: '#0F172A',
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 32, fontSize: '1.15rem' }}>{item.icon}</ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 32, color: '#64748B' }}>{item.icon}</ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+                  <Typography sx={{ fontSize: '0.85rem', fontWeight: 600 }}>
                     {item.label}
                   </Typography>
                 }
@@ -362,11 +415,12 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
                   label={item.badge}
                   size="small"
                   sx={{
-                    height: 20,
-                    fontSize: '0.68rem',
+                    height: 18,
+                    fontSize: '0.65rem',
                     fontWeight: 700,
-                    bgcolor: 'rgba(21, 101, 192, 0.1)',
-                    color: '#1565C0',
+                    bgcolor: 'rgba(37, 99, 235, 0.1)',
+                    color: '#2563EB',
+                    borderRadius: 1,
                   }}
                 />
               )}
@@ -380,29 +434,36 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
         <Box
           sx={{
             p: 1.75,
-            backgroundColor: '#E8F5E9',
-            border: '1px solid rgba(0, 132, 61, 0.2)',
+            backgroundColor: '#F8FAFC',
+            border: '1px solid #E2E8F0',
             borderRadius: 3,
             fontSize: '0.72rem',
-            color: 'text.secondary',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                bgcolor: '#00843D',
-                animation: 'pulse 2s infinite',
-              }}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.75 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.85 }}>
+              <Box
+                sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: '#10B981',
+                  boxShadow: '0 0 0 3px rgba(16, 185, 129, 0.2)',
+                  animation: 'pulse 2s infinite',
+                }}
+              />
+              <Typography variant="caption" sx={{ color: '#0F172A', fontWeight: 700, fontSize: '0.72rem' }}>
+                EduSphere Cloud
+              </Typography>
+            </Box>
+            <Chip
+              label="v1.4"
+              size="small"
+              sx={{ height: 16, fontSize: '0.62rem', fontWeight: 700, bgcolor: '#E2E8F0', color: '#475569' }}
             />
-            <Typography variant="caption" sx={{ color: '#00843D', fontWeight: 700 }}>
-              System Online
-            </Typography>
           </Box>
-          <Typography variant="caption" sx={{ color: '#5A6474', display: 'block' }}>
-            EduSphere v1.0 · AI: RAG+MCP
+          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem' }}>
+            FastAPI + ChromaDB • 99.98% SLA
           </Typography>
         </Box>
       </Box>
@@ -422,7 +483,7 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
-              borderRight: '1px solid rgba(0,0,0,0.08)',
+              borderRight: '1px solid #E2E8F0',
             },
           }}
         >
@@ -436,7 +497,7 @@ export default function Sidebar({ isOpen, onClose, variant = 'permanent' }: Side
             '& .MuiDrawer-paper': {
               boxSizing: 'border-box',
               width: DRAWER_WIDTH,
-              borderRight: '1px solid rgba(0,0,0,0.08)',
+              borderRight: '1px solid #E2E8F0',
             },
           }}
           open

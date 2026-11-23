@@ -8,7 +8,7 @@ interface LoadingSpinnerProps {
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   message = 'Loading EduSphere…',
-  height = 300,
+  height = 340,
 }) => {
   return (
     <Box
@@ -18,22 +18,41 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         justifyContent: 'center',
         height,
         flexDirection: 'column',
-        gap: 2,
+        gap: 2.5,
       }}
     >
-      <Box
-        component="img"
-        src="/nsbm-logo.svg"
-        alt="NSBM Logo"
-        sx={{
-          width: 56,
-          height: 56,
-          animation: 'pulse 2s infinite ease-in-out',
-        }}
-      />
-      <CircularProgress size={32} thickness={4} color="primary" />
+      <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress
+          size={64}
+          thickness={3}
+          sx={{
+            color: '#00843D',
+            position: 'absolute',
+            zIndex: 1,
+          }}
+        />
+        <CircularProgress
+          variant="determinate"
+          value={100}
+          size={64}
+          thickness={3}
+          sx={{
+            color: '#E2E8F0',
+          }}
+        />
+        <Box
+          component="img"
+          src="/nsbm-logo.svg"
+          alt="NSBM Logo"
+          sx={{
+            width: 32,
+            height: 32,
+            objectFit: 'contain',
+          }}
+        />
+      </Box>
       {message && (
-        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+        <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 600, fontSize: '0.85rem' }}>
           {message}
         </Typography>
       )}
