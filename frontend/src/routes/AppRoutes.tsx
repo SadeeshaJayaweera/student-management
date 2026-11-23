@@ -19,6 +19,7 @@ import CourseRAG from '@/pages/CourseRAG'
 import AITeachingAssistant from '@/pages/AITeachingAssistant'
 import MCPConsole from '@/pages/MCPConsole'
 import AIQuizGenerator from '@/pages/AIQuizGenerator'
+import AIGradingAssistant from '@/pages/AIGradingAssistant'
 import Assignments from '@/pages/Assignments'
 import Attendance from '@/pages/Attendance'
 import Courses from '@/pages/Courses'
@@ -100,6 +101,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/ai-tutor" element={<AITeachingAssistant />} />
         <Route path="/mcp-console" element={<MCPConsole />} />
         <Route path="/ai-quiz-generator" element={<AIQuizGenerator />} />
+        <Route path="/ai-grading" element={<AIGradingAssistant />} />
 
         {/* Administration */}
         <Route path="/campus-operations" element={<CampusOperations />} />

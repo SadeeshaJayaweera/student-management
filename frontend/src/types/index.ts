@@ -1607,6 +1607,34 @@ export interface AIQuizGenerationJob {
   questions: AIGeneratedQuestion[];
 }
 
+export interface AIAssistedGradingReview {
+  id: number;
+  submission_id: number;
+  rubric_id?: number | null;
+  reviewer_lecturer_id?: number | null;
+  submission_type: string;
+  ai_suggested_score: number;
+  final_score?: number | null;
+  ai_feedback: string;
+  lecturer_feedback?: string | null;
+  rubric_breakdown_json?: Array<{ criterion: string; max_points: number; ai_points: number; comment?: string }> | null;
+  code_analysis_json?: { syntax_valid: boolean; complexity_score: string; style_warnings?: string[]; logic_suggestions?: string[] } | null;
+  status: string;
+  score_delta: number;
+  created_at: string;
+  reviewed_at?: string | null;
+}
+
+export interface AIGradingAuditStats {
+  course_id: number;
+  total_reviews: number;
+  approved_count: number;
+  overridden_count: number;
+  avg_score_delta: number;
+  agreement_rate_percentage: number;
+}
+
+
 
 
 

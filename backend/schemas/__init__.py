@@ -4653,6 +4653,49 @@ class PublishQuizRequest(BaseModel):
     time_limit_minutes: int = Field(default=30, ge=5, le=180)
 
 
+# ─── AI-Assisted Essay & Code Grading Schemas ────────────────────────────────
+
+class AIGradingEvaluateRequest(BaseModel):
+    submission_type: str = Field(default="essay")  # essay, code_snippet, lab_report
+    rubric_id: Optional[int] = None
+
+
+class AIAssistedGradingReviewOut(BaseModel):
+    id: int
+    submission_id: int
+    rubric_id: Optional[int] = None
+    reviewer_lecturer_id: Optional[int] = None
+    submission_type: str
+    ai_suggested_score: float
+    final_score: Optional[float] = None
+    ai_feedback: str
+    lecturer_feedback: Optional[str] = None
+    rubric_breakdown_json: Optional[List[Dict[str, Any]]] = None
+    code_analysis_json: Optional[Dict[str, Any]] = None
+    status: str
+    score_delta: float
+    created_at: datetime
+    reviewed_at: Optional[datetime] = None
+    class Config:
+        from_attributes = True
+
+
+class AIGradingApproveRequest(BaseModel):
+    final_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    lecturer_feedback: Optional[str] = None
+    rubric_adjustments: Optional[List[Dict[str, Any]]] = None
+
+
+class AIGradingAuditStatsOut(BaseModel):
+    course_id: int
+    total_reviews: int
+    approved_count: int
+    overridden_count: int
+    avg_score_delta: float
+    agreement_rate_percentage: float
+
+
+
 
 
 

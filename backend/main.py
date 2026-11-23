@@ -83,6 +83,7 @@ from backend.routers.course_rag import router as course_rag_router
 from backend.routers.ai_teaching_assistant import router as ai_teaching_assistant_router
 from backend.routers.mcp_tools import router as mcp_tools_router
 from backend.routers.ai_quiz_generation import router as ai_quiz_generation_router
+from backend.routers.ai_grading_assistant import router as ai_grading_assistant_router
 from backend.routers.v1 import v1_router
 
 
@@ -227,6 +228,7 @@ app.include_router(course_rag_router)
 app.include_router(ai_teaching_assistant_router)
 app.include_router(mcp_tools_router)
 app.include_router(ai_quiz_generation_router)
+app.include_router(ai_grading_assistant_router)
 app.include_router(ai_router)
 app.include_router(ws_router)
 

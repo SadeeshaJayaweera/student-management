@@ -58,7 +58,7 @@ async def list_courses(
     db: AsyncSession = Depends(get_db),
 ):
     """Retrieve catalog of courses with multi-dimensional filtering"""
-    q = select(Course).where(Course.is_active == True)
+    q = select(Course).options(selectinload(Course.lecturer).selectinload(Lecturer.user)).where(Course.is_active == True)
 
     if institution_id is not None:
         q = q.where(Course.institution_id == institution_id)
