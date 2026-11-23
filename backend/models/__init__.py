@@ -3030,6 +3030,33 @@ class AIGeneratedQuestion(Base):
     question_bank_item = relationship("QuestionBankItem")
 
 
+# ─── AI-Assisted Essay & Code Grading Models ─────────────────────────────────
+
+class AIAssistedGradingReview(Base):
+    __tablename__ = "ai_assisted_grading_reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    submission_id = Column(Integer, ForeignKey("assignment_submissions.id", ondelete="CASCADE"), nullable=False, index=True)
+    rubric_id = Column(Integer, ForeignKey("rubrics.id", ondelete="SET NULL"), nullable=True, index=True)
+    reviewer_lecturer_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    submission_type = Column(String(50), default="essay", nullable=False)  # essay, code_snippet, lab_report
+    ai_suggested_score = Column(Float, nullable=False)
+    final_score = Column(Float, nullable=True)
+    ai_feedback = Column(Text, nullable=False)
+    lecturer_feedback = Column(Text, nullable=True)
+    rubric_breakdown_json = Column(JSON, nullable=True)
+    code_analysis_json = Column(JSON, nullable=True)
+    status = Column(String(30), default="ai_draft", nullable=False)  # ai_draft, lecturer_approved, overridden
+    score_delta = Column(Float, default=0.0, nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    reviewed_at = Column(DateTime, nullable=True)
+
+    submission = relationship("AssignmentSubmission")
+    rubric = relationship("Rubric")
+    reviewer = relationship("User")
+
+
+
 
 
 

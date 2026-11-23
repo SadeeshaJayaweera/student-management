@@ -29,6 +29,7 @@ function lecturerNav(): NavItem[] {
     { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
     { to: '/courses',   icon: '📖', label: 'My Courses' },
     { to: '/ai-quiz-generator', icon: '📝', label: 'Quiz Generator' },
+    { to: '/ai-grading',icon: '⚖️', label: 'AI Grading' },
     { to: '/grading',   icon: '✅', label: 'Grading' },
     { to: '/analytics', icon: '📈', label: 'Analytics' },
     { to: '/calendar',  icon: '📆', label: 'Calendar & Tasks' },
@@ -82,6 +83,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
     { to: '/ai-tutor',      icon: '🎓', label: 'Socratic Tutor', badge: 'Tutor' },
     { to: '/mcp-console',   icon: '⚙️', label: 'MCP Tools', badge: 'MCP' },
     { to: '/ai-quiz-generator', icon: '📝', label: 'AI Quiz Gen', badge: 'Quiz' },
+    { to: '/ai-grading',    icon: '⚖️', label: 'AI Grading', badge: 'Grade' },
     { to: '/notifications', icon: '🔔', label: 'Notifications' },
     { to: '/profile',       icon: '👤', label: 'My Profile' },
   ]
