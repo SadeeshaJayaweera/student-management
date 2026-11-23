@@ -4569,6 +4569,41 @@ class AITeachingMessageCreate(BaseModel):
     content: str = Field(..., min_length=1)
 
 
+# ─── Model Context Protocol (MCP) Tool Schemas ───────────────────────────────
+
+class MCPToolDefinitionOut(BaseModel):
+    name: str
+    description: str
+    inputSchema: Dict[str, Any]
+    required_roles: List[str]
+    category: str
+
+
+class MCPToolExecuteRequest(BaseModel):
+    arguments: Dict[str, Any] = Field(default_factory=dict)
+
+
+class MCPToolExecuteResponse(BaseModel):
+    tool_name: str
+    result: Any
+    execution_time_ms: float
+    status: str
+
+
+class MCPToolInvocationLogOut(BaseModel):
+    id: int
+    user_id: Optional[int] = None
+    tool_name: str
+    arguments_json: Optional[Dict[str, Any]] = None
+    result_status: str
+    execution_time_ms: float
+    error_message: Optional[str] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+
 
 
 

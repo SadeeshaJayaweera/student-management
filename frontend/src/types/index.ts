@@ -1552,6 +1552,33 @@ export interface AITeachingSessionDetail extends AITeachingSession {
   messages: AITeachingMessage[];
 }
 
+export interface MCPToolDefinition {
+  name: string;
+  description: string;
+  inputSchema: Record<string, any>;
+  required_roles: string[];
+  category: string;
+}
+
+export interface MCPToolExecutionResponse {
+  tool_name: string;
+  result: any;
+  execution_time_ms: number;
+  status: string;
+}
+
+export interface MCPToolInvocationLog {
+  id: number;
+  user_id?: number | null;
+  tool_name: string;
+  arguments_json?: Record<string, any> | null;
+  result_status: string;
+  execution_time_ms: number;
+  error_message?: string | null;
+  created_at: string;
+}
+
+
 
 
 

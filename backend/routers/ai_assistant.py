@@ -60,14 +60,16 @@ async def list_mcp_tools(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/mcp/execute")
-async def execute_mcp_tool(
+async def execute_mcp_tool_legacy(
     tool_name: str,
     arguments: dict,
+    db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Execute an MCP tool"""
-    result = await mcp_server.execute_tool(tool_name, arguments)
+    result = await mcp_server.execute_tool(db, tool_name, arguments, caller=current_user)
     return {"tool": tool_name, "result": result}
+
 
 
 @router.post("/mcp/agent")

@@ -2970,6 +2970,24 @@ class AITeachingMessage(Base):
     session = relationship("AITeachingSession", back_populates="messages")
 
 
+# ─── Model Context Protocol (MCP) Tool Models ───────────────────────────────
+
+class MCPToolExecutionLog(Base):
+    __tablename__ = "mcp_tool_execution_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    tool_name = Column(String(100), nullable=False, index=True)
+    arguments_json = Column(JSON, nullable=True)
+    result_status = Column(String(30), default="success", nullable=False)  # success, error, unauthorized
+    execution_time_ms = Column(Float, default=0.0, nullable=False)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    user = relationship("User")
+
+
+
 
 
 
