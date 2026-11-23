@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Paper, Box, Typography, Button } from '@mui/material'
 
 interface Props {
   children: ReactNode
@@ -28,21 +29,34 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="card" style={{ padding: 48, textAlign: 'center', margin: '24px auto', maxWidth: 600 }}>
-            <div style={{ fontSize: '3rem', marginBottom: 16 }}>⚠️</div>
-            <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: '1.4rem', fontWeight: 800, marginBottom: 8 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 6,
+              textAlign: 'center',
+              my: 4,
+              mx: 'auto',
+              maxWidth: 600,
+              borderRadius: 4,
+              border: '1px solid rgba(0,0,0,0.08)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
+            }}
+          >
+            <Box sx={{ fontSize: '3rem', mb: 2 }}>⚠️</Box>
+            <Typography variant="h5" sx={{ fontWeight: 800 }} gutterBottom>
               Something went wrong
-            </h2>
-            <p className="text-muted text-sm mb-24">
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               {this.state.error?.message || 'An unexpected rendering error occurred.'}
-            </p>
-            <button
-              className="btn btn-primary"
+            </Typography>
+            <Button
+              variant="contained"
+              color="primary"
               onClick={() => this.setState({ hasError: false, error: null })}
             >
               Try Again
-            </button>
-          </div>
+            </Button>
+          </Paper>
         )
       )
     }

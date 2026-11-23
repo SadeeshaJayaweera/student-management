@@ -1,6 +1,11 @@
-# 🎓 NSBM EduSphere — Advanced Student Management System
+<div align="center">
+  <img src="frontend/public/nsbm-logo.svg" alt="NSBM Green University Crest" width="90" />
+  <h1>NSBM EduSphere — Advanced Student Management System</h1>
+  <p><strong>Official Intelligent University Portal for NSBM Green University</strong></p>
+  <p><em>Clean Modern White Theme · Material UI (MUI) · Python FastAPI · Gemini AI RAG · MCP Tools</em></p>
+</div>
 
-An enterprise-grade, production-level Student Management System engineered with a **Python FastAPI** backend, **Async SQLAlchemy** ORM, **ChromaDB + Gemini AI** (Grounded RAG + Model Context Protocol tools), and a **React 19 + TypeScript + Vite** frontend.
+An enterprise-grade, production-level Student Management System engineered with a **Python FastAPI** backend, **Async SQLAlchemy** ORM, **ChromaDB + Gemini AI** (Grounded RAG + Model Context Protocol tools), and a **React 19 + TypeScript + Vite + Material UI (MUI)** frontend styled in an elegant NSBM Green University light/white theme.
 
 ---
 
@@ -137,5 +142,5 @@ The test suite covers unit and integration tests across all modules (136 tests):
 
 - **Backend**: Python 3.11+, FastAPI, Async SQLAlchemy, SQLite / PostgreSQL, Pydantic v2, Python-Jose (JWT), Passlib (Bcrypt), WebSockets
 - **AI & RAG**: Google GenAI SDK (Gemini 2.0 Flash), ChromaDB, LangChain, Custom MCP Server
-- **Frontend**: React 19, TypeScript, Vite, React Router v7, Axios, Chart.js / React-ChartJS-2, React Hot Toast, Tailwind CSS & Glassmorphism Design System
+- **Frontend**: React 19, TypeScript, Vite, Material UI (MUI v6/v7), Emotion, React Router v7, Axios, Chart.js / React-ChartJS-2, React Hot Toast, Modern NSBM White Theme Design System
 - **Testing**: Pytest, Pytest-Asyncio, AnyIO, HTTPX

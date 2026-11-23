@@ -40,15 +40,15 @@ function GpaRing({ gpa }: { gpa: number }) {
   return (
     <div className="gpa-ring">
       <svg width="160" height="160" viewBox="0 0 160 160">
-        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="12" />
+        <circle cx="80" cy="80" r={r} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="12" />
         <circle cx="80" cy="80" r={r} fill="none"
           stroke="url(#g1)" strokeWidth="12"
           strokeDasharray={`${dash} ${circ}`}
           strokeLinecap="round" />
         <defs>
           <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6C63FF" />
-            <stop offset="100%" stopColor="#00D4AA" />
+            <stop offset="0%" stopColor="#00843D" />
+            <stop offset="100%" stopColor="#1565C0" />
           </linearGradient>
         </defs>
       </svg>
@@ -168,7 +168,7 @@ function StudentDash() {
           </div>
           <div className="grid-2 gap-16">
             {personalized.courses_progress.map(cp => (
-              <div key={cp.course_id} style={{ padding: 14, background: 'rgba(255,255,255,.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,.06)' }}>
+              <div key={cp.course_id} style={{ padding: 14, background: '#F8FAFC', borderRadius: 10, border: '1px solid rgba(0,0,0,0.06)' }}>
                 <div className="flex justify-between items-center mb-6">
                   <div style={{ fontWeight: 600, fontSize: '.9rem' }}>{cp.course_code}: {cp.course_title}</div>
                   {cp.letter_grade && <span className={`badge ${letterClass(cp.letter_grade)}`}>{cp.letter_grade}</span>}
@@ -202,7 +202,7 @@ function StudentDash() {
             {personalized.upcoming_deadlines.length > 0 ? (
               <div className="flex flex-col gap-10">
                 {personalized.upcoming_deadlines.slice(0, 4).map(d => (
-                  <div key={`${d.item_type}-${d.id}`} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                  <div key={`${d.item_type}-${d.id}`} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: '.85rem' }}>{d.title}</div>
                       <div className="text-xs text-muted">{d.course_code} · Due {new Date(d.due_date).toLocaleDateString()}</div>
@@ -229,7 +229,7 @@ function StudentDash() {
             {personalized.upcoming_classes.length > 0 ? (
               <div className="flex flex-col gap-10">
                 {personalized.upcoming_classes.slice(0, 4).map(s => (
-                  <div key={s.session_id} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+                  <div key={s.session_id} className="flex justify-between items-center" style={{ padding: '8px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: '.85rem' }}>
                         {s.is_live && <span style={{ color: '#FF453A', marginRight: 6 }}>● LIVE</span>}
@@ -263,7 +263,7 @@ function StudentDash() {
           </div>
           {data.recent_grades.map((g, i) => (
             <div key={i} className="flex justify-between items-center"
-              style={{ padding: '11px 0', borderBottom: '1px solid rgba(255,255,255,.05)' }}>
+              style={{ padding: '11px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '.875rem' }}>{g.course}</div>
                 <div className="text-xs text-muted">{g.course_code}</div>
@@ -459,7 +459,7 @@ function AlumniDash() {
           <button className="btn btn-secondary btn-sm" onClick={() => navigate('/experiences')}>View All →</button>
         </div>
         {data.featured_stories.map((e: any) => (
-          <div key={e.id} style={{ padding: '14px', background: 'rgba(255,255,255,.03)', border: '1px solid rgba(255,255,255,.06)', borderRadius: 12, marginBottom: 10 }}>
+          <div key={e.id} style={{ padding: '14px', background: '#F8FAFC', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, marginBottom: 10 }}>
             <div style={{ fontWeight: 700, marginBottom: 6 }}>{e.title}</div>
             <div className="text-xs text-muted">✍️ {e.author} · {e.category} · ❤️ {e.likes}</div>
           </div>
