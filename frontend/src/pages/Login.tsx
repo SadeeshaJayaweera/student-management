@@ -1,25 +1,49 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Chip,
+  Alert,
+  CircularProgress,
+} from '@mui/material'
+import SchoolIcon from '@mui/icons-material/School'
+import SmartToyIcon from '@mui/icons-material/SmartToy'
+import MenuBookIcon from '@mui/icons-material/MenuBook'
+import AnalyticsIcon from '@mui/icons-material/Analytics'
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!username || !password) { toast.error('Please fill in all fields'); return }
+    if (!username || !password) {
+      toast.error('Please enter both username and password')
+      return
+    }
+    setError(null)
     setLoading(true)
     try {
       await login(username, password)
-      toast.success('Welcome back! 🎓')
+      toast.success('Welcome back to NSBM EduSphere!')
       navigate('/dashboard')
     } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Invalid credentials')
+      const msg = err.response?.data?.detail || 'Invalid credentials'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setLoading(false)
     }
@@ -27,133 +51,332 @@ export default function Login() {
 
   const fillDemo = (role: string) => {
     const accounts: Record<string, [string, string]> = {
-      admin:    ['admin',    'Admin@123'],
-      student:  ['student01','Student@123'],
-      lecturer: ['kperera',  'Lecturer@123'],
-      alumni:   ['alumni01', 'Alumni@123'],
+      student: ['student01', 'Student@123'],
+      lecturer: ['kperera', 'Lecturer@123'],
+      admin: ['admin', 'Admin@123'],
+      alumni: ['alumni01', 'Alumni@123'],
     }
     const [u, p] = accounts[role]
-    setUsername(u); setPassword(p)
+    setUsername(u)
+    setPassword(p)
+    setError(null)
   }
 
   return (
-    <>
-      <div className="bg-orbs">
-        <div className="bg-orb bg-orb-1" />
-        <div className="bg-orb bg-orb-2" />
-        <div className="bg-orb bg-orb-3" />
-      </div>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        backgroundColor: '#F5F7FA',
+      }}
+    >
+      <Grid container sx={{ minHeight: '100vh' }}>
+        {/* Left Side: NSBM Green University Showcase */}
+        <Grid
+          size={{ xs: 0, md: 6, lg: 7 }}
+          sx={{
+            display: { xs: 'none', md: 'flex' },
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: 6,
+            background: 'linear-gradient(135deg, #00843D 0%, #005020 100%)',
+            color: '#FFFFFF',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Subtle background circles */}
+          <Box
+            sx={{
+              position: 'absolute',
+              width: 500,
+              height: 500,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
+              top: -100,
+              right: -100,
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              width: 400,
+              height: 400,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)',
+              bottom: -50,
+              left: -50,
+            }}
+          />
 
-      <div className="login-page">
-        {/* Left — branding */}
-        <div className="login-left">
-          {/* Floating shapes */}
-          {[
-            { w: 200, h: 200, t: '10%',  l: '10%', delay: '0s'  },
-            { w: 150, h: 150, t: '60%',  l: '70%', delay: '3s'  },
-            { w: 100, h: 100, t: '80%',  l: '20%', delay: '6s'  },
-            { w:  80, h:  80, t: '30%',  l: '80%', delay: '2s'  },
-          ].map((s, i) => (
-            <div key={i} className="float-shape" style={{
-              width: s.w, height: s.h, top: s.t, left: s.l,
-              animationDelay: s.delay,
-            }} />
-          ))}
+          <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 560, textAlign: 'center' }}>
+            {/* NSBM Crest */}
+            <Box
+              component="img"
+              src="/nsbm-logo.svg"
+              alt="NSBM Logo"
+              sx={{
+                width: 100,
+                height: 100,
+                mx: 'auto',
+                mb: 3,
+                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.25))',
+              }}
+            />
 
-          <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 520 }}>
-            <div style={{
-              width: 90, height: 90, borderRadius: 24,
-              background: 'var(--grad-primary)', margin: '0 auto 28px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '2.5rem', boxShadow: 'var(--shadow-glow)',
-            }}>🎓</div>
+            <Typography
+              variant="h2"
+              sx={{
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: 900,
+                fontSize: { md: '2.5rem', lg: '3.2rem' },
+                lineHeight: 1.15,
+                mb: 2,
+                color: '#FFFFFF',
+              }}
+            >
+              NSBM EduSphere
+            </Typography>
 
-            <h1 style={{ fontFamily: "'Outfit',sans-serif", fontSize: '2.8rem', fontWeight: 900, lineHeight: 1.1, marginBottom: 16 }}>
-              NSBM<br />
-              <span style={{ background: 'var(--grad-secondary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                EduSphere
-              </span>
-            </h1>
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.88)',
+                fontSize: '1.1rem',
+                lineHeight: 1.6,
+                mb: 5,
+                fontWeight: 400,
+              }}
+            >
+              The intelligent digital campus for NSBM Green University. Seamless academic
+              management, AI-driven learning, and connected campus life.
+            </Typography>
 
-            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: 1.7, marginBottom: 36 }}>
-              Your all-in-one intelligent university portal with AI-powered assistance, real-time collaboration, and seamless academic management.
-            </p>
-
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
+            {/* Feature Badges */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
               {[
-                { icon: '🤖', label: 'RAG + MCP AI' },
-                { icon: '📚', label: 'Smart Library' },
-                { icon: '📊', label: 'Live Analytics' },
-                { icon: '⚽', label: 'Campus Life' },
+                { icon: <SmartToyIcon fontSize="small" />, label: 'AI RAG & Tutor' },
+                { icon: <MenuBookIcon fontSize="small" />, label: 'Digital Library' },
+                { icon: <AnalyticsIcon fontSize="small" />, label: 'Live Analytics' },
+                { icon: <SportsSoccerIcon fontSize="small" />, label: 'Campus Life' },
               ].map((f) => (
-                <div key={f.label} style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                  padding: '16px 20px', background: 'rgba(255,255,255,.06)',
-                  border: '1px solid rgba(255,255,255,.1)', borderRadius: 16,
-                }}>
-                  <span style={{ fontSize: '1.5rem' }}>{f.icon}</span>
-                  <span style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{f.label}</span>
-                </div>
+                <Paper
+                  key={f.label}
+                  elevation={0}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.25,
+                    px: 2.5,
+                    py: 1.5,
+                    borderRadius: 3,
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#FFFFFF',
+                  }}
+                >
+                  {f.icon}
+                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>
+                    {f.label}
+                  </Typography>
+                </Paper>
               ))}
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Grid>
 
-        {/* Right — form */}
-        <div className="login-right">
-          <div className="login-form">
-            <div className="login-logo">🎓</div>
-            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontSize: '1.7rem', fontWeight: 800, marginBottom: 6 }}>
-              Welcome back
-            </h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '.875rem', marginBottom: 28 }}>
-              Sign in to your EduSphere portal
-            </p>
+        {/* Right Side: Clean White Login Card */}
+        <Grid
+          size={{ xs: 12, md: 6, lg: 5 }}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            p: { xs: 3, sm: 6 },
+            backgroundColor: '#FFFFFF',
+          }}
+        >
+          <Box sx={{ width: '100%', maxWidth: 420 }}>
+            {/* Header */}
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Box
+                component="img"
+                src="/nsbm-logo.svg"
+                alt="NSBM Logo"
+                sx={{
+                  width: 56,
+                  height: 56,
+                  mb: 2,
+                  display: { xs: 'inline-block', md: 'none' },
+                }}
+              />
+              <Typography
+                variant="h4"
+                sx={{
+                  fontFamily: "'Outfit', sans-serif",
+                  fontWeight: 800,
+                  color: '#1A1A2E',
+                  mb: 1,
+                }}
+              >
+                Welcome Back
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Sign in to your EduSphere account
+              </Typography>
+            </Box>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="form-group">
-                <label className="form-label">Username</label>
-                <input className="form-control" type="text" placeholder="Enter your username"
-                  value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Password</label>
-                <input className="form-control" type="password" placeholder="Enter your password"
-                  value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
+            {error && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2.5 }}>
+                {error}
+              </Alert>
+            )}
 
-              <button type="submit" className="btn btn-primary btn-full btn-lg" disabled={loading}>
-                {loading ? '⏳ Signing in...' : '🚀 Sign In'}
-              </button>
+            {/* Form */}
+            <form onSubmit={handleSubmit}>
+              <Box sx={{ mb: 2.5 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#1A1A2E', mb: 0.75, display: 'block' }}>
+                  Username
+                </Typography>
+                <TextField
+                  fullWidth
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoFocus
+                  variant="outlined"
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      backgroundColor: '#F8FAFC',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="caption" sx={{ fontWeight: 700, color: '#1A1A2E', mb: 0.75, display: 'block' }}>
+                  Password
+                </Typography>
+                <TextField
+                  fullWidth
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  variant="outlined"
+                  size="medium"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2.5,
+                      backgroundColor: '#F8FAFC',
+                    },
+                  }}
+                />
+              </Box>
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                endIcon={!loading && <ArrowForwardIcon />}
+                sx={{
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  backgroundColor: '#00843D',
+                  '&:hover': {
+                    backgroundColor: '#006B30',
+                  },
+                }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
+              </Button>
             </form>
 
             {/* Quick Demo Logins */}
-            <div style={{ marginTop: 28, paddingTop: 24, borderTop: '1px solid var(--border)' }}>
-              <div style={{ fontSize: '.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--text-muted)', marginBottom: 12 }}>
-                Quick Demo Login
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: 8 }}>
+            <Box
+              sx={{
+                mt: 4,
+                pt: 3,
+                borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  fontWeight: 800,
+                  color: 'text.secondary',
+                  letterSpacing: '0.08em',
+                  mb: 1.5,
+                }}
+              >
+                Quick Demo Accounts
+              </Typography>
+
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
                 {[
-                  { role: 'student',  label: '🎓 Student',  color: '#6C63FF' },
-                  { role: 'lecturer', label: '👨‍🏫 Lecturer', color: '#00D4AA' },
-                  { role: 'alumni',   label: '🌐 Alumni',    color: '#FFD700' },
-                  { role: 'admin',    label: '⚙️ Admin',     color: '#FF6B6B' },
-                ].map((d) => (
-                  <button key={d.role} type="button"
-                    onClick={() => fillDemo(d.role)}
-                    className="btn btn-ghost btn-sm"
-                    style={{ justifyContent: 'center', borderColor: d.color + '44', color: d.color }}>
-                    {d.label}
-                  </button>
+                  { role: 'student', label: '🎓 Student', color: '#00843D' },
+                  { role: 'lecturer', label: '👨‍🏫 Lecturer', color: '#1565C0' },
+                  { role: 'admin', label: '⚙️ Admin', color: '#C62828' },
+                  { role: 'alumni', label: '🌐 Alumni', color: '#E65100' },
+                ].map((demo) => (
+                  <Button
+                    key={demo.role}
+                    variant="outlined"
+                    size="small"
+                    onClick={() => fillDemo(demo.role)}
+                    sx={{
+                      borderRadius: 2,
+                      py: 0.85,
+                      fontWeight: 600,
+                      borderColor: 'rgba(0, 0, 0, 0.12)',
+                      color: '#1A1A2E',
+                      backgroundColor: '#F8FAFC',
+                      '&:hover': {
+                        borderColor: demo.color,
+                        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                        color: demo.color,
+                      },
+                    }}
+                  >
+                    {demo.label}
+                  </Button>
                 ))}
-              </div>
-              <p style={{ fontSize: '.7rem', color: 'var(--text-muted)', marginTop: 10, textAlign: 'center' }}>
-                Click a role to auto-fill credentials, then Sign In
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
+              </Box>
+
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  color: 'text.secondary',
+                  mt: 1.5,
+                  fontSize: '0.75rem',
+                }}
+              >
+                Click any role to autofill demo credentials
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
   )
 }
