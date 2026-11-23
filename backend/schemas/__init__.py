@@ -4603,6 +4603,57 @@ class MCPToolInvocationLogOut(BaseModel):
         from_attributes = True
 
 
+# ─── AI Quiz & Question Generation Schemas ───────────────────────────────────
+
+class AIQuizGenerateRequest(BaseModel):
+    course_id: int
+    title: Optional[str] = Field(default="Generated Quiz", max_length=200)
+    source_text: str = Field(..., min_length=20)
+    blooms_level: str = Field(default="understand")  # remember, understand, apply, analyze, evaluate, create
+    difficulty: str = Field(default="medium")  # easy, medium, hard
+    question_count: int = Field(default=3, ge=1, le=20)
+    question_types: Optional[List[str]] = Field(default=None)
+
+
+class AIGeneratedQuestionOut(BaseModel):
+    id: int
+    job_id: int
+    question_type: str
+    prompt: str
+    options: Optional[List[Dict[str, Any]]] = None
+    correct_answer: str
+    explanation: Optional[str] = None
+    blooms_level: str
+    difficulty: str
+    rubric_guide: Optional[Dict[str, Any]] = None
+    is_approved: bool
+    question_bank_item_id: Optional[int] = None
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+
+class AIQuizGenerationJobOut(BaseModel):
+    id: int
+    course_id: int
+    created_by_user_id: int
+    title: str
+    blooms_level: str
+    difficulty: str
+    question_count: int
+    status: str
+    created_at: datetime
+    questions: List[AIGeneratedQuestionOut] = []
+    class Config:
+        from_attributes = True
+
+
+class PublishQuizRequest(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=200)
+    time_limit_minutes: int = Field(default=30, ge=5, le=180)
+
+
+
 
 
 

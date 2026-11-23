@@ -2987,6 +2987,50 @@ class MCPToolExecutionLog(Base):
     user = relationship("User")
 
 
+# ─── AI Quiz & Question Generation Models ───────────────────────────────────
+
+class AIQuizGenerationJob(Base):
+    __tablename__ = "ai_quiz_generation_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    course_id = Column(Integer, ForeignKey("courses.id", ondelete="CASCADE"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String(200), nullable=False)
+    source_text = Column(Text, nullable=False)
+    blooms_level = Column(String(50), default="understand", nullable=False)  # remember, understand, apply, analyze, evaluate, create
+    difficulty = Column(String(30), default="medium", nullable=False)  # easy, medium, hard
+    question_count = Column(Integer, default=5, nullable=False)
+    question_types = Column(JSON, nullable=True)
+    status = Column(String(30), default="completed", nullable=False)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    course = relationship("Course")
+    created_by = relationship("User")
+    questions = relationship("AIGeneratedQuestion", back_populates="job", cascade="all, delete-orphan")
+
+
+class AIGeneratedQuestion(Base):
+    __tablename__ = "ai_generated_questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    job_id = Column(Integer, ForeignKey("ai_quiz_generation_jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    question_type = Column(String(50), default="multiple_choice", nullable=False)  # multiple_choice, short_answer, code_analysis
+    prompt = Column(Text, nullable=False)
+    options = Column(JSON, nullable=True)
+    correct_answer = Column(Text, nullable=False)
+    explanation = Column(Text, nullable=True)
+    blooms_level = Column(String(50), nullable=False)
+    difficulty = Column(String(30), nullable=False)
+    rubric_guide = Column(JSON, nullable=True)
+    is_approved = Column(Boolean, default=False, nullable=False)
+    question_bank_item_id = Column(Integer, ForeignKey("question_bank_items.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+
+    job = relationship("AIQuizGenerationJob", back_populates="questions")
+    question_bank_item = relationship("QuestionBankItem")
+
+
+
 
 
 

@@ -1578,6 +1578,36 @@ export interface MCPToolInvocationLog {
   created_at: string;
 }
 
+export interface AIGeneratedQuestion {
+  id: number;
+  job_id: number;
+  question_type: string;
+  prompt: string;
+  options?: Array<{ id: string; text: string }> | null;
+  correct_answer: string;
+  explanation?: string | null;
+  blooms_level: string;
+  difficulty: string;
+  rubric_guide?: { criteria: Array<{ criterion: string; points: number }>; max_points: number } | null;
+  is_approved: boolean;
+  question_bank_item_id?: number | null;
+  created_at: string;
+}
+
+export interface AIQuizGenerationJob {
+  id: number;
+  course_id: number;
+  created_by_user_id: number;
+  title: string;
+  blooms_level: string;
+  difficulty: string;
+  question_count: number;
+  status: string;
+  created_at: string;
+  questions: AIGeneratedQuestion[];
+}
+
+
 
 
 

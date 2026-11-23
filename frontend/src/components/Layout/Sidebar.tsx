@@ -28,6 +28,7 @@ function lecturerNav(): NavItem[] {
   return [
     { to: '/dashboard', icon: '🏠', label: 'Dashboard' },
     { to: '/courses',   icon: '📖', label: 'My Courses' },
+    { to: '/ai-quiz-generator', icon: '📝', label: 'Quiz Generator' },
     { to: '/grading',   icon: '✅', label: 'Grading' },
     { to: '/analytics', icon: '📈', label: 'Analytics' },
     { to: '/calendar',  icon: '📆', label: 'Calendar & Tasks' },
@@ -80,6 +81,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
     { to: '/course-rag',    icon: '📚', label: 'Course RAG', badge: 'RAG' },
     { to: '/ai-tutor',      icon: '🎓', label: 'Socratic Tutor', badge: 'Tutor' },
     { to: '/mcp-console',   icon: '⚙️', label: 'MCP Tools', badge: 'MCP' },
+    { to: '/ai-quiz-generator', icon: '📝', label: 'AI Quiz Gen', badge: 'Quiz' },
     { to: '/notifications', icon: '🔔', label: 'Notifications' },
     { to: '/profile',       icon: '👤', label: 'My Profile' },
   ]
