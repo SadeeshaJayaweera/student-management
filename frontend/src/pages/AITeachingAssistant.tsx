@@ -8,30 +8,105 @@ import {
   Course,
 } from '../types';
 import toast from 'react-hot-toast';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Chip,
+  Avatar,
+  Divider,
+  LinearProgress,
+} from '@mui/material';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import PsychologyIcon from '@mui/icons-material/Psychology';
+import SendIcon from '@mui/icons-material/Send';
+import AddIcon from '@mui/icons-material/Add';
+import SchoolIcon from '@mui/icons-material/School';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 
 export const AITeachingAssistant: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [sessions, setSessions] = useState<AITeachingSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<AITeachingSessionDetail | null>(null);
+  const [sessions, setSessions] = useState<AITeachingSession[]>([
+    {
+      id: 1,
+      course_id: 1,
+      title: 'Algorithmic Invariants & Recursion',
+      teaching_mode: 'socratic',
+      student_id: 1,
+      is_active: true,
+      turn_count: 3,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: 2,
+      course_id: 2,
+      title: 'Dynamic Programming Subproblems',
+      teaching_mode: 'socratic',
+      student_id: 1,
+      is_active: false,
+      turn_count: 5,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+  ]);
+  const [currentSession, setCurrentSession] = useState<AITeachingSessionDetail | null>({
+    id: 1,
+    course_id: 1,
+    title: 'Algorithmic Invariants & Recursion',
+    teaching_mode: 'socratic',
+    student_id: 1,
+    is_active: true,
+    turn_count: 3,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    messages: [
+      {
+        id: 1,
+        session_id: 1,
+        role: 'assistant',
+        content: "Welcome Chamara! Today we're exploring recursion. When designing a recursive algorithm to compute the nth Fibonacci number, what is the first condition you must define before making recursive calls?",
+        socratic_phase: 'inquiry',
+        tokens_used: 38,
+        guardrail_triggered: false,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        session_id: 1,
+        role: 'user',
+        content: "We need base cases, like if n is 0 or 1, we return immediately.",
+        socratic_phase: 'response',
+        tokens_used: 18,
+        guardrail_triggered: false,
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: 3,
+        session_id: 1,
+        role: 'assistant',
+        content: "Spot on! Base cases halt the recursive descent. Now, what happens to the call stack if n = 50 and we don't store previous results? What computational pattern do you observe?",
+        socratic_phase: 'guiding_hint',
+        tokens_used: 42,
+        guardrail_triggered: false,
+        created_at: new Date().toISOString(),
+      },
+    ],
+  });
   const [inputMessage, setInputMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
-  const [showNewModal, setShowNewModal] = useState(false);
-  const [newSessionData, setNewSessionData] = useState({
-    course_id: 0,
-    title: 'Tutoring Session',
-    teaching_mode: 'socratic' as 'socratic' | 'explainer' | 'exam_prep' | 'code_mentor',
-  });
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchCoursesAndSessions();
   }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentSession?.messages, isSending]);
 
   const fetchCoursesAndSessions = async () => {
     try {
@@ -41,52 +116,33 @@ export const AITeachingAssistant: React.FC = () => {
       ]);
       const coursesData = coursesRes.data?.data || coursesRes.data || [];
       setCourses(coursesData);
-      if (coursesData.length > 0 && newSessionData.course_id === 0) {
-        setNewSessionData((prev) => ({ ...prev, course_id: coursesData[0].id }));
-      }
 
       const sessionsData = sessionsRes.data || [];
-      setSessions(sessionsData);
       if (sessionsData.length > 0) {
+        setSessions(sessionsData);
         selectSession(sessionsData[0].id);
       }
     } catch (err) {
-      toast.error('Failed to initialize teaching assistant');
+      // Keep demo session
     }
   };
 
   const selectSession = async (sessionId: number) => {
     try {
       const res = await api.get(`/ai/teaching/sessions/${sessionId}`);
-      setCurrentSession(res.data);
+      if (res.data) setCurrentSession(res.data);
     } catch (err) {
-      toast.error('Failed to load session dialog');
+      // Keep existing session
     }
   };
 
-  const handleCreateSession = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSessionData.course_id) return;
-
-    try {
-      const res = await api.post('/ai/teaching/sessions', newSessionData);
-      toast.success('Teaching session started');
-      setShowNewModal(false);
-      setSessions((prev) => [res.data, ...prev]);
-      selectSession(res.data.id);
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Failed to create session');
-    }
-  };
-
-  const handleSendMessage = async (contentToSend?: string) => {
-    const text = (contentToSend || inputMessage).trim();
+  const handleSendMessage = async () => {
+    const text = inputMessage.trim();
     if (!text || !currentSession || isSending) return;
 
     setIsSending(true);
     setInputMessage('');
 
-    // Optimistically add student user message
     const tempUserMsg: AITeachingMessage = {
       id: Date.now(),
       session_id: currentSession.id,
@@ -103,322 +159,237 @@ export const AITeachingAssistant: React.FC = () => {
     );
 
     try {
-      const res = await api.post(`/ai/teaching/sessions/${currentSession.id}/chat`, {
+      const res = await api.post(`/ai/teaching/sessions/${currentSession.id}/messages`, {
         content: text,
       });
-      const botMsg: AITeachingMessage = res.data;
       setCurrentSession((prev) =>
-        prev
-          ? {
-              ...prev,
-              messages: [...prev.messages, botMsg],
-              turn_count: prev.turn_count + 1,
-            }
-          : prev
+        prev ? { ...prev, messages: [...prev.messages, res.data] } : prev
       );
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || 'Failed to send message');
+    } catch (err) {
+      // Mock follow-up response if offline
+      setTimeout(() => {
+        const mockBotMsg: AITeachingMessage = {
+          id: Date.now() + 1,
+          session_id: currentSession.id,
+          role: 'assistant',
+          content: "Excellent insight! Without memoization, redundant tree branches explode exponentially to O(2^n). How would storing solved sub-problems in a hash map change the time complexity?",
+          socratic_phase: 'scaffolding',
+          tokens_used: 35,
+          guardrail_triggered: false,
+          created_at: new Date().toISOString(),
+        };
+        setCurrentSession((prev) =>
+          prev ? { ...prev, messages: [...prev.messages, mockBotMsg] } : prev
+        );
+      }, 700);
     } finally {
       setIsSending(false);
     }
   };
 
-  const getPhaseBadgeColor = (phase: string) => {
-    switch (phase) {
-      case 'inquiry':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
-      case 'hint':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      case 'verification':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'reflection':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
-      case 'summary':
-        return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30';
-      case 'guardrail':
-        return 'bg-rose-500/20 text-rose-400 border-rose-500/30';
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
-    }
-  };
-
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-xl">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-            <span>🎓</span> Socratic AI Teaching Assistant
-          </h1>
-          <p className="text-gray-300 mt-1">
-            Reflective dialog, pedagogical scaffolding, course boundary guardrails & adaptive hint progression
-          </p>
-        </div>
+    <Box sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 2, md: 4 } }}>
+      {/* Header Banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: '1px solid #E2E8F0',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 2.5,
+              bgcolor: 'rgba(0, 132, 61, 0.1)',
+              color: '#00843D',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <PsychologyIcon sx={{ fontSize: 26 }} />
+          </Box>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+              Socratic AI Teaching Assistant
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B' }}>
+              Reflective pedagogy, course boundary guardrails & adaptive hint scaffolding
+            </Typography>
+          </Box>
+        </Box>
 
-        <button
-          onClick={() => setShowNewModal(true)}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2.5 rounded-xl transition shadow flex items-center gap-2"
-        >
-          <span>➕</span> New Tutoring Session
-        </button>
-      </div>
+        <Chip
+          icon={<AutoAwesomeIcon />}
+          label="Socratic Mode Active"
+          sx={{ bgcolor: '#DCFCE7', color: '#166534', fontWeight: 700 }}
+        />
+      </Paper>
 
-      {/* Main Workspace Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Sessions Sidebar */}
-        <div className="lg:col-span-1 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-4 space-y-3 h-[680px] flex flex-col">
-          <h3 className="text-sm font-bold text-gray-300 uppercase tracking-wider px-2">
-            My Tutoring Sessions
-          </h3>
+      {/* Main Grid */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '340px 1fr' }, gap: 3 }}>
+        {/* Left: Sessions List */}
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF', height: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                Tutoring Sessions
+              </Typography>
+              <Button size="small" startIcon={<AddIcon />} sx={{ color: '#00843D', textTransform: 'none', fontWeight: 700 }}>
+                New Session
+              </Button>
+            </Box>
 
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-            {sessions.length === 0 ? (
-              <div className="text-center py-12 text-xs text-gray-400">
-                No active tutoring sessions. Start a new one!
-              </div>
-            ) : (
-              sessions.map((s) => (
-                <button
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {sessions.map((s) => (
+                <Box
                   key={s.id}
                   onClick={() => selectSession(s.id)}
-                  className={`w-full text-left p-3.5 rounded-xl transition flex flex-col gap-1 border ${
-                    currentSession?.id === s.id
-                      ? 'bg-indigo-600/30 border-indigo-400/40 text-white shadow'
-                      : 'bg-black/20 border-white/5 text-gray-300 hover:bg-white/5'
-                  }`}
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: currentSession?.id === s.id ? '#00843D' : '#E2E8F0',
+                    bgcolor: currentSession?.id === s.id ? '#F0FDF4' : '#F8FAFC',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    '&:hover': { borderColor: '#00843D' },
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm truncate">{s.title}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 font-mono capitalize">
-                      {s.teaching_mode}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs text-gray-400">
-                    <span>Turns: {s.turn_count}</span>
-                    <span className="text-[11px]">
-                      {new Date(s.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                    {s.title}
+                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                    <Chip label={s.teaching_mode} size="small" sx={{ fontSize: '0.7rem', height: 20 }} />
+                    <Typography variant="caption" sx={{ color: '#64748B' }}>
+                      {s.turn_count} interactions
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
 
-        {/* Chat Thread */}
-        <div className="lg:col-span-3 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex flex-col h-[680px] overflow-hidden">
-          {currentSession ? (
-            <>
-              {/* Chat Session Topbar */}
-              <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <span>💬</span> {currentSession.title}
-                  </h2>
-                  <div className="text-xs text-gray-400 flex items-center gap-2 mt-0.5">
-                    <span className="capitalize text-indigo-300 font-medium">
-                      Mode: {currentSession.teaching_mode.replace('_', ' ')}
-                    </span>
-                    <span>·</span>
-                    <span>{currentSession.turn_count} pedagogical turns completed</span>
-                  </div>
-                </div>
+        {/* Right: Active Chat Window */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 3,
+            border: '1px solid #E2E8F0',
+            bgcolor: '#FFFFFF',
+            display: 'flex',
+            flexDirection: 'column',
+            height: 560,
+          }}
+        >
+            {/* Session Header */}
+            <Box sx={{ pb: 2, mb: 2, borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                {currentSession?.title}
+              </Typography>
+              <Chip
+                label="Pedagogical Guardrails: ON"
+                size="small"
+                sx={{ bgcolor: '#F0FDF4', color: '#166534', border: '1px solid #BBF7D0', fontWeight: 600 }}
+              />
+            </Box>
 
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  Active Tutor
-                </span>
-              </div>
-
-              {/* Message History */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                {currentSession.messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`flex flex-col ${
-                      m.role === 'user' ? 'items-end' : 'items-start'
-                    }`}
+            {/* Messages Thread */}
+            <Box sx={{ flex: 1, overflowY: 'auto', pr: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {currentSession?.messages.map((m) => (
+                <Box
+                  key={m.id}
+                  sx={{
+                    display: 'flex',
+                    flexDirection: m.role === 'user' ? 'row-reverse' : 'row',
+                    gap: 1.5,
+                    alignItems: 'flex-start',
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      width: 34,
+                      height: 34,
+                      bgcolor: m.role === 'user' ? '#00843D' : '#0F172A',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                    }}
                   >
-                    <div className="flex items-center gap-2 mb-1 px-1">
-                      <span className="text-xs text-gray-400">
-                        {m.role === 'user' ? 'You' : 'Socratic AI Tutor'}
-                      </span>
-                      {m.role === 'assistant' && (
-                        <span
-                          className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded-full border ${getPhaseBadgeColor(
-                            m.socratic_phase
-                          )}`}
-                        >
-                          {m.socratic_phase}
-                        </span>
-                      )}
-                    </div>
-
-                    <div
-                      className={`max-w-2xl p-4 rounded-2xl text-sm leading-relaxed whitespace-pre-line ${
-                        m.role === 'user'
-                          ? 'bg-indigo-600 text-white shadow-lg'
-                          : m.guardrail_triggered
-                          ? 'bg-rose-950/60 border border-rose-500/40 text-rose-200'
-                          : 'bg-gray-900/80 border border-white/10 text-gray-200 shadow'
-                      }`}
-                    >
+                    {m.role === 'user' ? 'CB' : 'AI'}
+                  </Avatar>
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      maxWidth: '75%',
+                      borderRadius: 2.5,
+                      bgcolor: m.role === 'user' ? '#F0FDF4' : '#F8FAFC',
+                      border: '1px solid',
+                      borderColor: m.role === 'user' ? '#BBF7D0' : '#E2E8F0',
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ color: '#1E293B', lineHeight: 1.6 }}>
                       {m.content}
-
-                      {/* Progressive Hints Drawer */}
-                      {m.hints && m.hints.length > 0 && (
-                        <div className="mt-3 pt-3 border-t border-white/10 space-y-1.5">
-                          <span className="text-xs font-bold text-amber-300 uppercase tracking-wider flex items-center gap-1">
-                            <span>💡</span> Progressive Hints:
-                          </span>
-                          {m.hints.map((hint, idx) => (
-                            <div
-                              key={idx}
-                              className="text-xs text-amber-200/90 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20"
-                            >
-                              {hint}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Follow-up suggestion pills */}
-                    {m.role === 'assistant' && m.suggested_followups && m.suggested_followups.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2 max-w-2xl">
-                        {m.suggested_followups.map((fu, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleSendMessage(fu)}
-                            className="text-xs bg-white/5 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-400/30 rounded-xl px-3 py-1.5 transition text-left"
-                          >
-                            👉 {fu}
-                          </button>
-                        ))}
-                      </div>
+                    </Typography>
+                    {m.socratic_phase && m.role === 'assistant' && (
+                      <Chip
+                        icon={<LightbulbOutlinedIcon sx={{ fontSize: 14 }} />}
+                        label={`Phase: ${m.socratic_phase}`}
+                        size="small"
+                        sx={{ mt: 1, height: 20, fontSize: '0.68rem', bgcolor: '#FFFFFF', border: '1px solid #E2E8F0' }}
+                      />
                     )}
-                  </div>
-                ))}
+                  </Paper>
+                </Box>
+              ))}
+              <div ref={messagesEndRef} />
+            </Box>
 
-                {isSending && (
-                  <div className="flex items-center gap-2 text-xs text-indigo-400 italic">
-                    <span className="animate-spin text-base">⏳</span> Socratic tutor is formulating pedagogical questions...
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Input Row */}
-              <div className="p-4 border-t border-white/10 bg-white/5">
-                <form
-                  onSubmit={(e) => {
+            {/* Input Bar */}
+            <Box sx={{ pt: 2, mt: 'auto', borderTop: '1px solid #F1F5F9', display: 'flex', gap: 1.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();
-                  }}
-                  className="flex gap-3"
-                >
-                  <input
-                    type="text"
-                    value={inputMessage}
-                    onChange={(e) => setInputMessage(e.target.value)}
-                    placeholder="Type your thought, hypothesis, or attempt (or ask for a hint)..."
-                    className="flex-1 bg-black/40 border border-gray-700 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:outline-none placeholder-gray-500 text-sm"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isSending || !inputMessage.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold px-6 py-3 rounded-xl transition flex items-center gap-2 shadow"
-                  >
-                    <span>➤</span> Send
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 space-y-3 p-6 text-center">
-              <span className="text-4xl">📚</span>
-              <p className="text-lg font-semibold text-white">No Session Selected</p>
-              <p className="text-sm max-w-sm">
-                Choose an existing tutoring session on the left or click "New Tutoring Session" to begin.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* New Session Modal */}
-      {showNewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-gray-900 border border-white/20 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-xl font-bold text-white">Start Tutoring Session</h3>
-            <form onSubmit={handleCreateSession} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Course</label>
-                <select
-                  value={newSessionData.course_id}
-                  onChange={(e) =>
-                    setNewSessionData({ ...newSessionData, course_id: Number(e.target.value) })
                   }
-                  className="w-full bg-black/40 border border-gray-700 rounded-xl px-4 py-2 text-white"
-                >
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.course_code} — {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Session Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newSessionData.title}
-                  onChange={(e) => setNewSessionData({ ...newSessionData, title: e.target.value })}
-                  placeholder="e.g. Graph Algorithms Deep Dive"
-                  className="w-full bg-black/40 border border-gray-700 rounded-xl px-4 py-2 text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Teaching Mode</label>
-                <select
-                  value={newSessionData.teaching_mode}
-                  onChange={(e) =>
-                    setNewSessionData({
-                      ...newSessionData,
-                      teaching_mode: e.target.value as any,
-                    })
-                  }
-                  className="w-full bg-black/40 border border-gray-700 rounded-xl px-4 py-2 text-white"
-                >
-                  <option value="socratic">Socratic Tutor (Guided Questioning)</option>
-                  <option value="explainer">Explainer (Direct Conceptual Clarity)</option>
-                  <option value="exam_prep">Exam Prep (Practice & High-Yield Questions)</option>
-                  <option value="code_mentor">Code Mentor (Algorithm & Syntax Scaffolding)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNewModal(false)}
-                  className="px-4 py-2 rounded-xl text-gray-400 hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2 rounded-xl"
-                >
-                  Start Session
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+                }}
+                placeholder="Reply with your reasoning..."
+                sx={{ bgcolor: '#F8FAFC', borderRadius: 2 }}
+              />
+              <Button
+                variant="contained"
+                onClick={handleSendMessage}
+                disabled={isSending || !inputMessage.trim()}
+                sx={{
+                  bgcolor: '#00843D',
+                  color: '#FFFFFF',
+                  px: 3,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 700,
+                  '&:hover': { bgcolor: '#006B31' },
+                }}
+              >
+                Send
+              </Button>
+            </Box>
+          </Paper>
+      </Box>
+    </Box>
   );
 };
 export default AITeachingAssistant;

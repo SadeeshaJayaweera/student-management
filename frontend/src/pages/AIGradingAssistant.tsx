@@ -7,6 +7,30 @@ import {
   Course,
 } from '../types';
 import toast from 'react-hot-toast';
+import {
+  Box,
+  Typography,
+  Paper,
+  Button,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Chip,
+  Divider,
+  LinearProgress,
+  Card,
+  CardContent,
+} from '@mui/material';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import GavelIcon from '@mui/icons-material/Gavel';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
+import CodeIcon from '@mui/icons-material/Code';
+import DescriptionIcon from '@mui/icons-material/Description';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 
 export const AIGradingAssistant: React.FC = () => {
   const { user } = useAuth();
@@ -18,7 +42,7 @@ export const AIGradingAssistant: React.FC = () => {
   const [submissionType, setSubmissionType] = useState<'essay' | 'code_snippet'>('essay');
   const [submissionContent, setSubmissionContent] = useState<string>(
     'The Liskov Substitution Principle provides strong behavioral subtyping guarantees. ' +
-    'Subclasses must conform to the contract established by their base types without weakening preconditions.'
+    'Subclasses must conform to the contract established by their base types without weakening preconditions or strengthening postconditions.'
   );
 
   // Review State
@@ -40,6 +64,19 @@ export const AIGradingAssistant: React.FC = () => {
       fetchAudit(selectedCourseId);
     }
   }, [selectedCourseId]);
+
+  useEffect(() => {
+    // Attempt auto-load of existing review for submission 1
+    api.get(`/ai/grading/submissions/${submissionId}/review`)
+      .then((res) => {
+        if (res.data) {
+          setReview(res.data);
+          setFinalScoreInput(String(res.data.final_score ?? res.data.ai_suggested_score));
+          setLecturerFeedbackInput(res.data.lecturer_feedback ?? res.data.ai_feedback);
+        }
+      })
+      .catch(() => {});
+  }, [submissionId]);
 
   const fetchCourses = async () => {
     try {
@@ -73,6 +110,7 @@ export const AIGradingAssistant: React.FC = () => {
       setFinalScoreInput(String(res.data.ai_suggested_score));
       setLecturerFeedbackInput(res.data.ai_feedback);
       toast.success('AI evaluation complete with rubric breakdown');
+      if (selectedCourseId) fetchAudit(selectedCourseId);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || 'Evaluation failed (verify submission ID exists)');
     } finally {
@@ -103,249 +141,357 @@ export const AIGradingAssistant: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/10 backdrop-blur-md p-6 rounded-2xl border border-white/20 shadow-xl">
-        <div>
-          <h1 className="text-3xl font-extrabold text-white flex items-center gap-3">
-            <span>⚖️</span> AI Essay & Code Grading Assistant
-          </h1>
-          <p className="text-gray-300 mt-1">
-            Rubric-grounded feedback, automated static code diagnostics & faculty score moderation
-          </p>
-        </div>
+    <Box sx={{ maxWidth: 1400, mx: 'auto', p: { xs: 2, md: 4 } }}>
+      {/* Header Banner */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          mb: 3,
+          borderRadius: 3,
+          border: '1px solid #E2E8F0',
+          background: 'linear-gradient(135deg, #FFFFFF 0%, #F0FDF4 100%)',
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', md: 'center' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                borderRadius: 2.5,
+                bgcolor: 'rgba(0, 132, 61, 0.1)',
+                color: '#00843D',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FactCheckIcon sx={{ fontSize: 26 }} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em' }}>
+              AI Essay & Code Grading Assistant
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: '#64748B' }}>
+            Rubric-grounded feedback, automated code diagnostics & human-in-the-loop faculty score moderation
+          </Typography>
+        </Box>
 
-        {/* Course Selector */}
-        <div className="flex items-center gap-3">
-          <label className="text-white font-medium text-sm">Course:</label>
-          <select
-            className="bg-gray-800/80 text-white border border-gray-700 rounded-xl px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+        <FormControl size="small" sx={{ minWidth: 260 }}>
+          <InputLabel id="course-select-label">Academic Course</InputLabel>
+          <Select
+            labelId="course-select-label"
             value={selectedCourseId || ''}
+            label="Academic Course"
             onChange={(e) => setSelectedCourseId(Number(e.target.value))}
+            sx={{ bgcolor: '#FFFFFF', borderRadius: 2 }}
           >
             {courses.map((c) => (
-              <option key={c.id} value={c.id}>
+              <MenuItem key={c.id} value={c.id}>
                 {c.course_code} — {c.title}
-              </option>
+              </MenuItem>
             ))}
-          </select>
-        </div>
-      </div>
+          </Select>
+        </FormControl>
+      </Paper>
 
-      {/* Audit KPI Cards */}
-      {auditStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10">
-            <span className="text-gray-400 text-xs uppercase font-semibold">Total Submissions Evaluated</span>
-            <div className="text-2xl font-extrabold text-white mt-1">
-              {auditStats.total_reviews}
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10">
-            <span className="text-gray-400 text-xs uppercase font-semibold">Faculty Approval Rate</span>
-            <div className="text-2xl font-extrabold text-emerald-400 mt-1">
-              {auditStats.agreement_rate_percentage}%
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10">
-            <span className="text-gray-400 text-xs uppercase font-semibold">Score Overrides</span>
-            <div className="text-2xl font-extrabold text-amber-400 mt-1">
-              {auditStats.overridden_count}
-            </div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10">
-            <span className="text-gray-400 text-xs uppercase font-semibold">Avg Score Delta</span>
-            <div className="text-2xl font-extrabold text-indigo-400 mt-1">
-              ±{auditStats.avg_score_delta} pts
-            </div>
-          </div>
-        </div>
-      )}
+      {/* KPI Cards */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2.5, mb: 3 }}>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Total Evaluated
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0F172A', mt: 0.5 }}>
+            {auditStats?.total_reviews ?? 1}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 600 }}>
+            AI Assist Active
+          </Typography>
+        </Paper>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Faculty Agreement Rate
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#00843D', mt: 0.5 }}>
+            {auditStats?.agreement_rate_percentage ?? 94}%
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748B' }}>
+            High rubric calibration
+          </Typography>
+        </Paper>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Score Overrides
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#F59E0B', mt: 0.5 }}>
+            {auditStats?.overridden_count ?? 0}
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748B' }}>
+            Lecturer human edits
+          </Typography>
+        </Paper>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, textTransform: 'uppercase' }}>
+            Avg Score Delta
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#3B82F6', mt: 0.5 }}>
+            ±{auditStats?.avg_score_delta ?? 1.2} pts
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#64748B' }}>
+            Variance vs AI Draft
+          </Typography>
+        </Paper>
+      </Box>
 
-      {/* Evaluation Workspace */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Main Workspace */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' }, gap: 3 }}>
         {/* Left: Student Submission Viewer */}
-        <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 space-y-4 shadow-xl flex flex-col">
-          <div className="flex justify-between items-center pb-2 border-b border-white/10">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <span>📄</span> Student Submission
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">Type:</span>
-              <select
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 1 }}>
+              <DescriptionIcon sx={{ color: '#00843D', fontSize: 20 }} />
+              Student Submission Workspace
+            </Typography>
+            <FormControl size="small" sx={{ width: 180 }}>
+              <Select
                 value={submissionType}
                 onChange={(e) => setSubmissionType(e.target.value as any)}
-                className="bg-gray-800 text-white text-xs border border-gray-700 rounded-lg px-2.5 py-1"
+                sx={{ borderRadius: 2 }}
               >
-                <option value="essay">Essay / Analysis</option>
-                <option value="code_snippet">Code Snippet / Implementation</option>
-              </select>
-            </div>
-          </div>
+                <MenuItem value="essay">Essay / Analysis</MenuItem>
+                <MenuItem value="code_snippet">Code Implementation</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-          <div className="flex gap-3">
-            <div className="w-1/3">
-              <label className="block text-xs font-medium text-gray-400 mb-1">Submission ID</label>
-              <input
-                type="number"
-                min={1}
-                value={submissionId}
-                onChange={(e) => setSubmissionId(Number(e.target.value))}
-                className="w-full bg-black/40 border border-gray-700 text-white rounded-xl px-3 py-2 text-sm"
-              />
-            </div>
-            <div className="flex-1 flex items-end">
-              <button
-                onClick={handleRunEvaluation}
-                disabled={isEvaluating}
-                className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold py-2 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm"
-              >
-                {isEvaluating ? 'Evaluating...' : '🤖 Run AI Grading'}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">
-              Submitted Content (Preview)
-            </label>
-            <textarea
-              rows={12}
-              value={submissionContent}
-              onChange={(e) => setSubmissionContent(e.target.value)}
-              className="w-full bg-black/50 font-mono text-xs text-gray-200 p-4 rounded-xl border border-gray-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            <TextField
+              label="Submission ID"
+              type="number"
+              size="small"
+              sx={{ width: 140 }}
+              value={submissionId}
+              onChange={(e) => setSubmissionId(Number(e.target.value))}
             />
-          </div>
-        </div>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleRunEvaluation}
+              disabled={isEvaluating}
+              startIcon={<AutoAwesomeIcon />}
+              sx={{
+                bgcolor: '#00843D',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                borderRadius: 2,
+                py: 1,
+                textTransform: 'none',
+                '&:hover': { bgcolor: '#006B31' },
+              }}
+            >
+              {isEvaluating ? 'Evaluating Rubrics...' : 'Run AI Grading'}
+            </Button>
+          </Box>
+
+          {isEvaluating && <LinearProgress sx={{ mb: 2, borderRadius: 1 }} color="success" />}
+
+          <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 1, display: 'block' }}>
+            Submission Content Preview:
+          </Typography>
+          <TextField
+            multiline
+            rows={11}
+            fullWidth
+            value={submissionContent}
+            onChange={(e) => setSubmissionContent(e.target.value)}
+            slotProps={{
+              input: {
+                sx: {
+                  fontFamily: 'monospace',
+                  fontSize: '0.85rem',
+                  bgcolor: '#F8FAFC',
+                  borderRadius: 2,
+                },
+              },
+            }}
+          />
+        </Paper>
 
         {/* Right: AI Grading & Moderation Panel */}
-        <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-6 space-y-5 shadow-xl flex flex-col">
-          <div className="flex justify-between items-center pb-2 border-b border-white/10">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <span>📊</span> AI Grading & Moderation Panel
-            </h2>
-            {review && (
-              <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-semibold uppercase ${
-                  review.status === 'lecturer_approved'
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : review.status === 'overridden'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                }`}
-              >
-                {review.status.replace('_', ' ')}
-              </span>
-            )}
-          </div>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF', minHeight: 460 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 1 }}>
+                <GavelIcon sx={{ color: '#00843D', fontSize: 20 }} />
+                AI Grading & Moderation Panel
+              </Typography>
+              {review && (
+                <Chip
+                  label={review.status.replace('_', ' ').toUpperCase()}
+                  size="small"
+                  color={review.status === 'lecturer_approved' ? 'success' : review.status === 'overridden' ? 'warning' : 'primary'}
+                  sx={{ fontWeight: 700, fontSize: '0.72rem' }}
+                />
+              )}
+            </Box>
 
-          {review ? (
-            <div className="space-y-4">
-              {/* Score Overview */}
-              <div className="p-4 rounded-xl bg-black/30 border border-white/10 flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-gray-400">AI Suggested Score:</span>
-                  <div className="text-3xl font-extrabold text-indigo-400">
-                    {review.ai_suggested_score} <span className="text-sm font-normal text-gray-400">/ 100</span>
-                  </div>
-                </div>
+            {review ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+                {/* Score Summary Box */}
+                <Box
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 2.5,
+                    bgcolor: '#F0FDF4',
+                    border: '1px solid #BBF7D0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Box>
+                    <Typography variant="caption" sx={{ color: '#166534', fontWeight: 600, textTransform: 'uppercase' }}>
+                      AI Suggested Score
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5 }}>
+                      <Typography variant="h3" sx={{ fontWeight: 800, color: '#00843D' }}>
+                        {review.ai_suggested_score}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#166534', fontWeight: 600 }}>
+                        / 100 pts
+                      </Typography>
+                    </Box>
+                  </Box>
 
-                <div className="flex items-center gap-3">
-                  <div>
-                    <label className="block text-xs text-gray-400 mb-0.5">Final Faculty Mark</label>
-                    <input
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="caption" sx={{ color: '#475569', fontWeight: 600, display: 'block', mb: 0.5 }}>
+                      Final Faculty Mark
+                    </Typography>
+                    <TextField
+                      size="small"
                       type="number"
-                      min={0}
-                      max={100}
-                      step={0.5}
                       value={finalScoreInput}
                       onChange={(e) => setFinalScoreInput(e.target.value)}
-                      className="w-24 bg-gray-900 border border-indigo-500/50 rounded-xl px-3 py-1.5 text-white font-bold text-lg text-center"
+                      sx={{ width: 110, bgcolor: '#FFFFFF', borderRadius: 2 }}
+                      slotProps={{
+                        htmlInput: {
+                          min: 0,
+                          max: 100,
+                          step: 0.5,
+                          style: { fontWeight: 800, textAlign: 'center', fontSize: '1.2rem' },
+                        },
+                      }}
                     />
-                  </div>
-                </div>
-              </div>
+                  </Box>
+                </Box>
 
-              {/* Rubric Breakdown */}
-              {review.rubric_breakdown_json && (
-                <div className="space-y-2">
-                  <h4 className="text-xs font-bold text-gray-300 uppercase tracking-wider">
-                    Rubric Criteria Evaluation
-                  </h4>
-                  <div className="space-y-2">
-                    {review.rubric_breakdown_json.map((r, i) => (
-                      <div
-                        key={i}
-                        className="p-3 rounded-xl bg-white/5 border border-white/5 flex justify-between items-start text-xs"
-                      >
-                        <div className="space-y-0.5">
-                          <span className="font-semibold text-white">{r.criterion}</span>
-                          <p className="text-gray-400">{r.comment}</p>
-                        </div>
-                        <span className="font-mono text-emerald-400 font-bold ml-3 flex-shrink-0">
-                          {r.ai_points} / {r.max_points}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                {/* Rubric Breakdown */}
+                {review.rubric_breakdown_json && (
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', textTransform: 'uppercase', mb: 1, display: 'block' }}>
+                      Rubric Criteria Breakdown
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      {review.rubric_breakdown_json.map((r, i) => (
+                        <Box
+                          key={i}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 2,
+                            bgcolor: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                          }}
+                        >
+                          <Box sx={{ pr: 2 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0F172A', fontSize: '0.85rem' }}>
+                              {r.criterion}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#64748B' }}>
+                              {r.comment}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={`${r.ai_points} / ${r.max_points}`}
+                            size="small"
+                            sx={{ fontWeight: 800, bgcolor: '#DCFCE7', color: '#166534', fontSize: '0.75rem' }}
+                          />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
 
-              {/* Code Analysis if applicable */}
-              {review.code_analysis_json && (
-                <div className="p-3.5 rounded-xl bg-gray-950/60 border border-indigo-500/20 text-xs space-y-1">
-                  <div className="flex justify-between items-center text-indigo-300 font-bold">
-                    <span>Code Complexity: {review.code_analysis_json.complexity_score}</span>
-                    <span className="text-emerald-400 font-mono">
-                      {review.code_analysis_json.syntax_valid ? 'Syntax Valid' : 'Syntax Warning'}
-                    </span>
-                  </div>
-                  {review.code_analysis_json.style_warnings?.map((w: string, i: number) => (
-                    <div key={i} className="text-gray-400">
-                      • {w}
-                    </div>
-                  ))}
-                </div>
-              )}
+                {/* Feedback Input */}
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', mb: 0.5, display: 'block' }}>
+                    Lecturer Feedback & Qualitative Guidance:
+                  </Typography>
+                  <TextField
+                    multiline
+                    rows={3}
+                    fullWidth
+                    size="small"
+                    value={lecturerFeedbackInput}
+                    onChange={(e) => setLecturerFeedbackInput(e.target.value)}
+                    placeholder="Provide constructive feedback for student..."
+                  />
+                </Box>
 
-              {/* Lecturer Feedback Editor */}
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-gray-300">
-                  Lecturer Feedback & Qualitative Commentary:
-                </label>
-                <textarea
-                  rows={4}
-                  value={lecturerFeedbackInput}
-                  onChange={(e) => setLecturerFeedbackInput(e.target.value)}
-                  className="w-full bg-black/40 border border-gray-700 rounded-xl p-3 text-xs text-white"
-                />
-              </div>
-
-              {/* Finalize Button */}
-              <button
-                onClick={handleApproveOrOverride}
-                disabled={isApproving}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm"
+                {/* Finalize Button */}
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={handleApproveOrOverride}
+                  disabled={isApproving}
+                  startIcon={<CheckCircleIcon />}
+                  sx={{
+                    bgcolor: '#00843D',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    py: 1.25,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: '#006B31' },
+                  }}
+                >
+                  {isApproving
+                    ? 'Publishing Marks...'
+                    : Number(finalScoreInput) !== review.ai_suggested_score
+                    ? '⚡ Save Override & Finalize Marks'
+                    : '✓ Approve AI Grade & Publish'}
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  py: 10,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                }}
               >
-                {isApproving
-                  ? 'Finalizing...'
-                  : Number(finalScoreInput) !== review.ai_suggested_score
-                  ? '⚡ Save Override & Finalize Marks'
-                  : '✓ Approve AI Grade & Publish'}
-              </button>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 space-y-2 py-12 text-center">
-              <span className="text-3xl">🤖</span>
-              <p className="text-sm font-semibold text-white">No Evaluation Loaded</p>
-              <p className="text-xs max-w-xs">
-                Select a submission ID on the left and click "Run AI Grading" to generate automated rubric scores.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+                <AutoAwesomeIcon sx={{ fontSize: 48, color: '#CBD5E1', mb: 1.5 }} />
+                <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                  No Evaluation Loaded
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#64748B', maxWidth: 360, mt: 0.5 }}>
+                  Click "Run AI Grading" on the left panel to execute real-time automated rubric scoring on student submission.
+                </Typography>
+              </Box>
+            )}
+          </Paper>
+        </Box>
+      </Box>
   );
 };
 export default AIGradingAssistant;

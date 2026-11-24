@@ -171,7 +171,16 @@ async function main() {
     await capture('http://127.0.0.1:8000/mcp-console', '05_mcp_console.png', 2500);
 
     // 6. Digital Library
-    await capture('http://127.0.0.1:8000/library', '06_digital_library.png', 2500);
+    await capture('http://127.0.0.1:8000/library', '06_digital_library.png', 2500, async () => {
+      await send('Runtime.evaluate', {
+        expression: `
+          const buttons = Array.from(document.querySelectorAll('button'));
+          const physBtn = buttons.find(b => b.textContent && b.textContent.includes('Physical Library'));
+          if (physBtn) physBtn.click();
+        `,
+      });
+      await sleep(1500);
+    });
 
     // 7. Sports & Campus Clubs
     await capture('http://127.0.0.1:8000/sports', '07_sports_and_clubs.png', 2500);

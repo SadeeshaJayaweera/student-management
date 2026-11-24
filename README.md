@@ -1,50 +1,54 @@
 <div align="center">
-  <img src="frontend/public/nsbm-logo.png" alt="NSBM Green University Town" width="260" />
+  <img src="screenshots/nsbm-logo.png" alt="NSBM Green University Town" width="280" />
   <h1>NSBM EduSphere — Advanced Student Management System</h1>
   <p><strong>Official Intelligent University Portal for NSBM Green University Town</strong></p>
   <p><em>Clean Modern White Theme · Material UI (MUI) · Python FastAPI · Gemini AI RAG · MCP Tools</em></p>
 </div>
 
-An enterprise-grade, production-level Student Management System engineered with a **Python FastAPI** backend, **Async SQLAlchemy** ORM, **ChromaDB + Gemini AI** (Grounded RAG + Model Context Protocol tools), and a **React 19 + TypeScript + Vite + Material UI (MUI)** frontend styled in an elegant NSBM Green University light/white theme.
+An enterprise-grade, production-level Student Management System engineered with a **Python FastAPI** backend, **Async SQLAlchemy** ORM, **ChromaDB + Gemini AI** (Grounded RAG + Model Context Protocol tools), and a **React 19 + TypeScript + Vite + Material UI (MUI)** frontend styled in the official NSBM Green University Town light/white theme featuring the university logo across all views.
 
 ---
 
-## 📸 Application Previews
+## 🏛️ Official NSBM University Identity & Application Previews
 
-### 🔐 Authentication & Student Experience
-| Login Portal with Role Quick-Fill | Personalized Student Dashboard |
+The portal is styled with the authentic **NSBM Green University Town** crest, shield emblem, and brand identity, rendered in an advanced, production-level light theme using Google Material UI components.
+
+---
+
+### 🔐 1. Authentication & Student Portal
+| NSBM Authentication Portal | Personalized Student Dashboard |
 | :---: | :---: |
-| ![Login Portal](screenshots/01_login.png) | ![Student Dashboard](screenshots/02_student_dashboard.png) |
-| *Multi-role authentication supporting MFA, role-based redirection, and quick-fill demo access.* | *Real-time GPA tracker, course schedules, attendance thresholds, and notifications.* |
+| <img src="screenshots/01_login.png" alt="NSBM Authentication Portal" width="100%" /> | <img src="screenshots/02_student_dashboard.png" alt="Personalized Student Dashboard" width="100%" /> |
+| *Official NSBM login interface with dual brand crest presentation, quick-fill demo access, and multi-role routing.* | *Live student academic hub featuring the NSBM navbar crest, real-time GPA tracker, course schedules, and quick actions.* |
 
 ---
 
-### 🤖 AI-Powered Academic Intelligence
+### 🤖 2. AI-Powered Academic Intelligence Suite
 | Automated Essay & Code Grading Assistant | AI Quiz & Assessment Question Generator |
 | :---: | :---: |
-| ![AI Grading Assistant](screenshots/08_ai_grading_assistant.png) | ![AI Quiz Generator](screenshots/09_ai_quiz_generator.png) |
-| *Rubric-grounded evaluation for essays and code, confidence scoring, and lecturer override audits.* | *Instant quiz synthesis across difficulty tiers with bloom taxonomy alignments.* |
+| <img src="screenshots/08_ai_grading_assistant.png" alt="AI Essay & Code Grading Assistant" width="100%" /> | <img src="screenshots/09_ai_quiz_generator.png" alt="AI Quiz & Assessment Question Generator" width="100%" /> |
+| *Rubric-grounded evaluation engine with itemized criteria scoring, code complexity profiling, and faculty override moderation.* | *Bloom's taxonomy question synthesis across difficulty tiers with distractor rationales and question bank export.* |
 
 | Grounded Course RAG Knowledge Base | Socratic AI Teaching Assistant |
 | :---: | :---: |
-| ![Course RAG Architecture](screenshots/03_course_rag.png) | ![AI Teaching Assistant](screenshots/04_ai_teaching_assistant.png) |
-| *Vector semantic search over course syllabi and lecture slides with citation verification.* | *Interactive Socratic tutor offering step-by-step guidance without revealing solutions.* |
+| <img src="screenshots/03_course_rag.png" alt="Grounded Course RAG Knowledge Base" width="100%" /> | <img src="screenshots/04_ai_teaching_assistant.png" alt="Socratic AI Teaching Assistant" width="100%" /> |
+| *Semantic syllabus and slide retrieval with verified page and line citations grounded in official course literature.* | *Conversational Socratic tutor providing pedagogical guidance and step-by-step hints without revealing solutions.* |
 
 ---
 
-### ⚙️ Extensibility & Operations Command
+### ⚙️ 3. Extensibility & Operations Command
 | Model Context Protocol (MCP) Console | Campus Operations Command Center |
 | :---: | :---: |
-| ![MCP Tools Console](screenshots/05_mcp_console.png) | ![Campus Operations Command](screenshots/10_campus_operations.png) |
-| *Standardized MCP tool execution testbed for grades, library queries, and schedules.* | *Comprehensive facility booking, student accommodation, and shuttle fleet tracking.* |
+| <img src="screenshots/05_mcp_console.png" alt="Model Context Protocol Console" width="100%" /> | <img src="screenshots/10_campus_operations.png" alt="Campus Operations Command Center" width="100%" /> |
+| *Standardized MCP tool execution testbed for live grade checks, library queries, and timetable lookups.* | *Unified telemetry command center for student accommodation, transport shuttle fleet, and facilities booking.* |
 
 ---
 
-### 📚 Campus Ecosystem & Student Life
-| Modern Digital Library System | Sports, Athletics & Campus Clubs |
+### 📚 4. Campus Ecosystem & Student Life
+| Modern Digital & Physical Library System | Sports, Athletics & Campus Clubs |
 | :---: | :---: |
-| ![Digital Library](screenshots/06_digital_library.png) | ![Sports and Clubs](screenshots/07_sports_and_clubs.png) |
-| *Multi-category book discovery, real-time reservations, and automated borrow tracking.* | *Campus athletic events, club registrations, and fixture management.* |
+| <img src="screenshots/06_digital_library.png" alt="Modern Digital Library System" width="100%" /> | <img src="screenshots/07_sports_and_clubs.png" alt="Sports, Athletics & Campus Clubs" width="100%" /> |
+| *Catalog holdings discovery, circulation tracking, borrow status chips, and priority reservation queues.* | *Campus athletic fixtures, club registrations, facility reservations, and tournament scheduling.* |
 
 ---
 
