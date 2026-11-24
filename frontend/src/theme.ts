@@ -5,121 +5,128 @@ export const theme = createTheme({
     mode: 'light',
     primary: {
       main: '#00843D',
-      light: '#4CAF72',
-      dark: '#006B30',
+      light: '#059669',
+      dark: '#005E2B',
       contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#1565C0',
-      light: '#5E92F3',
-      dark: '#003C8F',
+      main: '#0F172A',
+      light: '#334155',
+      dark: '#020617',
       contrastText: '#FFFFFF',
     },
     background: {
-      default: '#F5F7FA',
+      default: '#F8FAFC',
       paper: '#FFFFFF',
     },
     text: {
-      primary: '#1A1A2E',
-      secondary: '#5A6474',
+      primary: '#0F172A',
+      secondary: '#475569',
     },
     error: {
-      main: '#E53935',
-      light: '#FF6F60',
-      dark: '#AB000D',
+      main: '#DC2626',
+      light: '#EF4444',
+      dark: '#B91C1C',
     },
     warning: {
-      main: '#F9A825',
-      light: '#FFD95A',
-      dark: '#C17900',
+      main: '#D97706',
+      light: '#F59E0B',
+      dark: '#B45309',
     },
     success: {
-      main: '#00843D',
-      light: '#4CAF72',
-      dark: '#006B30',
+      main: '#059669',
+      light: '#10B981',
+      dark: '#047857',
     },
     info: {
-      main: '#1565C0',
-      light: '#5E92F3',
-      dark: '#003C8F',
+      main: '#2563EB',
+      light: '#3B82F6',
+      dark: '#1D4ED8',
     },
-    divider: 'rgba(0, 0, 0, 0.08)',
+    divider: '#E2E8F0',
     action: {
-      hover: 'rgba(0, 132, 61, 0.06)',
-      selected: 'rgba(0, 132, 61, 0.1)',
+      hover: 'rgba(0, 132, 61, 0.04)',
+      selected: 'rgba(0, 132, 61, 0.08)',
     },
   },
   typography: {
-    fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     h1: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
       fontWeight: 800,
-      fontSize: '2rem',
-      color: '#1A1A2E',
+      fontSize: '2.25rem',
+      letterSpacing: '-0.025em',
+      color: '#0F172A',
     },
     h2: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
-      fontWeight: 700,
-      fontSize: '1.75rem',
-      color: '#1A1A2E',
+      fontWeight: 800,
+      fontSize: '1.875rem',
+      letterSpacing: '-0.02em',
+      color: '#0F172A',
     },
     h3: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
       fontWeight: 700,
       fontSize: '1.5rem',
-      color: '#1A1A2E',
+      letterSpacing: '-0.015em',
+      color: '#0F172A',
     },
     h4: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
       fontWeight: 700,
       fontSize: '1.25rem',
-      color: '#1A1A2E',
+      letterSpacing: '-0.01em',
+      color: '#0F172A',
     },
     h5: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
       fontWeight: 600,
       fontSize: '1.1rem',
-      color: '#1A1A2E',
+      color: '#0F172A',
     },
     h6: {
       fontFamily: "'Outfit', 'Inter', sans-serif",
       fontWeight: 600,
       fontSize: '1rem',
-      color: '#1A1A2E',
+      color: '#0F172A',
     },
     subtitle1: {
       fontWeight: 500,
       fontSize: '0.95rem',
-      color: '#5A6474',
+      color: '#475569',
     },
     subtitle2: {
       fontWeight: 600,
       fontSize: '0.85rem',
-      color: '#5A6474',
+      color: '#475569',
     },
     body1: {
       fontSize: '0.925rem',
       lineHeight: 1.6,
+      color: '#1E293B',
     },
     body2: {
       fontSize: '0.85rem',
-      lineHeight: 1.5,
-      color: '#5A6474',
+      lineHeight: 1.55,
+      color: '#475569',
     },
     button: {
       textTransform: 'none',
       fontWeight: 600,
       fontSize: '0.875rem',
+      letterSpacing: '-0.005em',
     },
     caption: {
       fontSize: '0.75rem',
-      color: '#8A94A6',
+      color: '#64748B',
     },
     overline: {
       fontSize: '0.68rem',
       fontWeight: 700,
       letterSpacing: '0.08em',
-      color: '#8A94A6',
+      color: '#64748B',
+      textTransform: 'uppercase',
     },
   },
   shape: {
@@ -127,37 +134,37 @@ export const theme = createTheme({
   },
   shadows: [
     'none',
-    '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
-    '0 2px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.06)',
-    '0 4px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04)',
-    '0 6px 16px rgba(0,0,0,0.07), 0 2px 6px rgba(0,0,0,0.04)',
-    '0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-    '0 12px 28px rgba(0,0,0,0.09), 0 4px 10px rgba(0,0,0,0.04)',
-    '0 14px 32px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.04)',
-    '0 16px 36px rgba(0,0,0,0.10), 0 6px 14px rgba(0,0,0,0.04)',
-    '0 18px 40px rgba(0,0,0,0.11), 0 6px 16px rgba(0,0,0,0.04)',
-    '0 20px 44px rgba(0,0,0,0.11), 0 8px 18px rgba(0,0,0,0.04)',
-    '0 22px 48px rgba(0,0,0,0.12), 0 8px 20px rgba(0,0,0,0.04)',
-    '0 24px 52px rgba(0,0,0,0.12), 0 10px 22px rgba(0,0,0,0.04)',
-    '0 26px 56px rgba(0,0,0,0.13), 0 10px 24px rgba(0,0,0,0.04)',
-    '0 28px 60px rgba(0,0,0,0.13), 0 12px 26px rgba(0,0,0,0.04)',
-    '0 30px 64px rgba(0,0,0,0.14), 0 12px 28px rgba(0,0,0,0.04)',
-    '0 32px 68px rgba(0,0,0,0.14), 0 14px 30px rgba(0,0,0,0.04)',
-    '0 34px 72px rgba(0,0,0,0.15), 0 14px 32px rgba(0,0,0,0.04)',
-    '0 36px 76px rgba(0,0,0,0.15), 0 16px 34px rgba(0,0,0,0.04)',
-    '0 38px 80px rgba(0,0,0,0.16), 0 16px 36px rgba(0,0,0,0.04)',
-    '0 40px 84px rgba(0,0,0,0.16), 0 18px 38px rgba(0,0,0,0.04)',
-    '0 42px 88px rgba(0,0,0,0.17), 0 18px 40px rgba(0,0,0,0.04)',
-    '0 44px 92px rgba(0,0,0,0.17), 0 20px 42px rgba(0,0,0,0.04)',
-    '0 46px 96px rgba(0,0,0,0.18), 0 20px 44px rgba(0,0,0,0.04)',
-    '0 48px 100px rgba(0,0,0,0.18), 0 22px 46px rgba(0,0,0,0.04)',
+    '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
+    '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.03)',
+    '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.03)',
+    '0 14px 20px -3px rgba(0, 0, 0, 0.06), 0 6px 8px -4px rgba(0, 0, 0, 0.03)',
+    '0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03)',
+    '0 25px 30px -5px rgba(0, 0, 0, 0.07), 0 10px 12px -6px rgba(0, 0, 0, 0.04)',
+    '0 30px 35px -5px rgba(0, 0, 0, 0.08), 0 12px 14px -6px rgba(0, 0, 0, 0.04)',
+    '0 35px 40px -5px rgba(0, 0, 0, 0.09), 0 14px 16px -6px rgba(0, 0, 0, 0.04)',
+    '0 40px 45px -5px rgba(0, 0, 0, 0.09), 0 16px 18px -6px rgba(0, 0, 0, 0.04)',
+    '0 45px 50px -5px rgba(0, 0, 0, 0.10), 0 18px 20px -6px rgba(0, 0, 0, 0.05)',
+    '0 50px 55px -5px rgba(0, 0, 0, 0.10), 0 20px 22px -6px rgba(0, 0, 0, 0.05)',
+    '0 55px 60px -5px rgba(0, 0, 0, 0.11), 0 22px 24px -6px rgba(0, 0, 0, 0.05)',
+    '0 60px 65px -5px rgba(0, 0, 0, 0.11), 0 24px 26px -6px rgba(0, 0, 0, 0.05)',
+    '0 65px 70px -5px rgba(0, 0, 0, 0.12), 0 26px 28px -6px rgba(0, 0, 0, 0.06)',
+    '0 70px 75px -5px rgba(0, 0, 0, 0.12), 0 28px 30px -6px rgba(0, 0, 0, 0.06)',
+    '0 75px 80px -5px rgba(0, 0, 0, 0.13), 0 30px 32px -6px rgba(0, 0, 0, 0.06)',
+    '0 80px 85px -5px rgba(0, 0, 0, 0.13), 0 32px 34px -6px rgba(0, 0, 0, 0.06)',
+    '0 85px 90px -5px rgba(0, 0, 0, 0.14), 0 34px 36px -6px rgba(0, 0, 0, 0.07)',
+    '0 90px 95px -5px rgba(0, 0, 0, 0.14), 0 36px 38px -6px rgba(0, 0, 0, 0.07)',
+    '0 95px 100px -5px rgba(0, 0, 0, 0.15), 0 38px 40px -6px rgba(0, 0, 0, 0.07)',
+    '0 100px 105px -5px rgba(0, 0, 0, 0.15), 0 40px 42px -6px rgba(0, 0, 0, 0.07)',
+    '0 105px 110px -5px rgba(0, 0, 0, 0.16), 0 42px 44px -6px rgba(0, 0, 0, 0.08)',
+    '0 110px 115px -5px rgba(0, 0, 0, 0.16), 0 44px 46px -6px rgba(0, 0, 0, 0.08)',
+    '0 115px 120px -5px rgba(0, 0, 0, 0.17), 0 46px 48px -6px rgba(0, 0, 0, 0.08)',
   ],
   components: {
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          backgroundColor: '#F5F7FA',
-          color: '#1A1A2E',
+          backgroundColor: '#F8FAFC',
+          color: '#0F172A',
         },
       },
     },
@@ -167,13 +174,14 @@ export const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          border: '1px solid rgba(0, 0, 0, 0.06)',
+          borderRadius: 14,
+          border: '1px solid #E2E8F0',
           backgroundColor: '#FFFFFF',
           transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02)',
           '&:hover': {
-            borderColor: 'rgba(0, 132, 61, 0.2)',
-            boxShadow: '0 8px 28px rgba(0, 0, 0, 0.08)',
+            borderColor: '#CBD5E1',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04)',
           },
         },
       },
@@ -195,33 +203,41 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 10,
-          padding: '10px 22px',
+          padding: '9px 20px',
           fontWeight: 600,
           fontSize: '0.875rem',
           textTransform: 'none',
-          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         },
         contained: {
           '&.MuiButton-containedPrimary': {
-            background: 'linear-gradient(135deg, #00843D 0%, #00A34A 100%)',
-            boxShadow: '0 4px 14px rgba(0, 132, 61, 0.3)',
+            background: 'linear-gradient(135deg, #00843D 0%, #059669 100%)',
+            boxShadow: '0 2px 6px rgba(0, 132, 61, 0.25)',
             '&:hover': {
               background: 'linear-gradient(135deg, #006B30 0%, #00843D 100%)',
-              boxShadow: '0 6px 20px rgba(0, 132, 61, 0.4)',
+              boxShadow: '0 4px 14px rgba(0, 132, 61, 0.35)',
               transform: 'translateY(-1px)',
             },
           },
           '&.MuiButton-containedSecondary': {
-            boxShadow: '0 4px 14px rgba(21, 101, 192, 0.3)',
+            background: '#0F172A',
+            color: '#FFFFFF',
+            boxShadow: '0 2px 6px rgba(15, 23, 42, 0.2)',
             '&:hover': {
-              boxShadow: '0 6px 20px rgba(21, 101, 192, 0.4)',
+              background: '#1E293B',
+              boxShadow: '0 4px 14px rgba(15, 23, 42, 0.3)',
               transform: 'translateY(-1px)',
             },
           },
         },
         outlined: {
+          borderColor: '#E2E8F0',
+          color: '#334155',
           borderWidth: '1.5px',
           '&:hover': {
+            borderColor: '#00843D',
+            color: '#00843D',
+            backgroundColor: 'rgba(0, 132, 61, 0.04)',
             borderWidth: '1.5px',
           },
         },
@@ -233,11 +249,11 @@ export const theme = createTheme({
       },
       styleOverrides: {
         root: {
-          backgroundColor: '#FFFFFF',
-          color: '#1A1A2E',
-          borderBottom: '1px solid rgba(0, 0, 0, 0.06)',
-          backdropFilter: 'blur(20px)',
-          background: 'rgba(255, 255, 255, 0.92)',
+          backgroundColor: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(16px)',
+          color: '#0F172A',
+          borderBottom: '1px solid #E2E8F0',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)',
         },
       },
     },
@@ -245,7 +261,7 @@ export const theme = createTheme({
       styleOverrides: {
         paper: {
           backgroundColor: '#FFFFFF',
-          borderRight: '1px solid rgba(0, 0, 0, 0.06)',
+          borderRight: '1px solid #E2E8F0',
           boxShadow: 'none',
         },
       },
@@ -262,32 +278,20 @@ export const theme = createTheme({
             backgroundColor: '#FFFFFF',
             transition: 'all 0.2s ease',
             '& fieldset': {
-              borderColor: 'rgba(0, 0, 0, 0.12)',
+              borderColor: '#E2E8F0',
               borderWidth: '1.5px',
             },
             '&:hover fieldset': {
-              borderColor: 'rgba(0, 132, 61, 0.4)',
+              borderColor: '#94A3B8',
             },
             '&.Mui-focused fieldset': {
               borderColor: '#00843D',
               borderWidth: '2px',
             },
             '&.Mui-focused': {
-              boxShadow: '0 0 0 3px rgba(0, 132, 61, 0.1)',
+              boxShadow: '0 0 0 3px rgba(0, 132, 61, 0.12)',
             },
           },
-        },
-      },
-    },
-    MuiPaper: {
-      defaultProps: {
-        elevation: 0,
-      },
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          border: '1px solid rgba(0, 0, 0, 0.06)',
-          backgroundImage: 'none',
         },
       },
     },
@@ -299,17 +303,19 @@ export const theme = createTheme({
           fontSize: '0.78rem',
         },
         colorPrimary: {
-          backgroundColor: alpha('#00843D', 0.1),
+          backgroundColor: 'rgba(0, 132, 61, 0.08)',
           color: '#00843D',
+          border: '1px solid rgba(0, 132, 61, 0.2)',
           '&:hover': {
-            backgroundColor: alpha('#00843D', 0.18),
+            backgroundColor: 'rgba(0, 132, 61, 0.15)',
           },
         },
         colorSecondary: {
-          backgroundColor: alpha('#1565C0', 0.1),
-          color: '#1565C0',
+          backgroundColor: 'rgba(15, 23, 42, 0.06)',
+          color: '#0F172A',
+          border: '1px solid rgba(15, 23, 42, 0.12)',
           '&:hover': {
-            backgroundColor: alpha('#1565C0', 0.18),
+            backgroundColor: 'rgba(15, 23, 42, 0.1)',
           },
         },
       },
@@ -321,8 +327,9 @@ export const theme = createTheme({
           fontSize: '0.9rem',
         },
         colorDefault: {
-          backgroundColor: alpha('#00843D', 0.12),
+          backgroundColor: 'rgba(0, 132, 61, 0.1)',
           color: '#00843D',
+          border: '1.5px solid rgba(0, 132, 61, 0.2)',
         },
       },
     },
@@ -330,23 +337,13 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiTableCell-head': {
-            backgroundColor: '#F5F7FA',
-            color: '#5A6474',
+            backgroundColor: '#F8FAFC',
+            color: '#475569',
             fontWeight: 700,
-            fontSize: '0.75rem',
+            fontSize: '0.72rem',
             textTransform: 'uppercase',
             letterSpacing: '0.06em',
-            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-          },
-        },
-      },
-    },
-    MuiTableRow: {
-      styleOverrides: {
-        root: {
-          transition: 'background 0.2s ease',
-          '&:hover': {
-            backgroundColor: 'rgba(0, 132, 61, 0.03)',
+            borderBottom: '1px solid #E2E8F0',
           },
         },
       },
@@ -354,7 +351,7 @@ export const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid rgba(0, 0, 0, 0.05)',
+          borderBottom: '1px solid #F1F5F9',
           padding: '14px 16px',
           fontSize: '0.875rem',
         },
@@ -364,19 +361,8 @@ export const theme = createTheme({
       styleOverrides: {
         paper: {
           borderRadius: 16,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
+          border: '1px solid #E2E8F0',
           boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
-        },
-      },
-    },
-    MuiTooltip: {
-      styleOverrides: {
-        tooltip: {
-          borderRadius: 8,
-          fontSize: '0.78rem',
-          fontWeight: 500,
-          backgroundColor: '#1A1A2E',
-          boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
         },
       },
     },
@@ -384,17 +370,17 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 10,
-          marginBottom: 2,
+          marginBottom: 3,
           transition: 'all 0.2s ease',
           '&.Mui-selected': {
-            backgroundColor: alpha('#00843D', 0.1),
+            backgroundColor: 'rgba(0, 132, 61, 0.09)',
             color: '#00843D',
             '&:hover': {
-              backgroundColor: alpha('#00843D', 0.15),
+              backgroundColor: 'rgba(0, 132, 61, 0.14)',
             },
           },
           '&:hover': {
-            backgroundColor: 'rgba(0, 0, 0, 0.04)',
+            backgroundColor: '#F1F5F9',
           },
         },
       },
@@ -422,97 +408,10 @@ export const theme = createTheme({
         },
       },
     },
-    MuiLinearProgress: {
-      styleOverrides: {
-        root: {
-          borderRadius: 999,
-          height: 8,
-          backgroundColor: 'rgba(0, 132, 61, 0.1)',
-        },
-        bar: {
-          borderRadius: 999,
-          background: 'linear-gradient(90deg, #00843D, #00A34A)',
-        },
-      },
-    },
-    MuiSwitch: {
-      styleOverrides: {
-        root: {
-          '& .MuiSwitch-switchBase.Mui-checked': {
-            color: '#00843D',
-          },
-          '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-            backgroundColor: '#00843D',
-          },
-        },
-      },
-    },
-    MuiAlert: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          fontWeight: 500,
-        },
-      },
-    },
-    MuiBadge: {
-      styleOverrides: {
-        colorPrimary: {
-          backgroundColor: '#00843D',
-        },
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 10,
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            backgroundColor: 'rgba(0, 132, 61, 0.08)',
-          },
-        },
-      },
-    },
     MuiDivider: {
       styleOverrides: {
         root: {
-          borderColor: 'rgba(0, 0, 0, 0.06)',
-        },
-      },
-    },
-    MuiMenu: {
-      styleOverrides: {
-        paper: {
-          borderRadius: 12,
-          border: '1px solid rgba(0, 0, 0, 0.08)',
-          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
-        },
-      },
-    },
-    MuiMenuItem: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          margin: '2px 6px',
-          padding: '8px 14px',
-          fontSize: '0.875rem',
-          '&:hover': {
-            backgroundColor: 'rgba(0, 132, 61, 0.06)',
-          },
-          '&.Mui-selected': {
-            backgroundColor: 'rgba(0, 132, 61, 0.1)',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 132, 61, 0.14)',
-            },
-          },
-        },
-      },
-    },
-    MuiSkeleton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          backgroundColor: 'rgba(0, 0, 0, 0.06)',
+          borderColor: '#E2E8F0',
         },
       },
     },
