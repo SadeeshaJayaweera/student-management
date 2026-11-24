@@ -1,7 +1,7 @@
 <div align="center">
-  <img src="frontend/public/nsbm-logo.svg" alt="NSBM Green University Crest" width="90" />
+  <img src="frontend/public/nsbm-logo.png" alt="NSBM Green University Town" width="260" />
   <h1>NSBM EduSphere — Advanced Student Management System</h1>
-  <p><strong>Official Intelligent University Portal for NSBM Green University</strong></p>
+  <p><strong>Official Intelligent University Portal for NSBM Green University Town</strong></p>
   <p><em>Clean Modern White Theme · Material UI (MUI) · Python FastAPI · Gemini AI RAG · MCP Tools</em></p>
 </div>
 

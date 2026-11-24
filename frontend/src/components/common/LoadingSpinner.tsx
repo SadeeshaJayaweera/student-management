@@ -42,11 +42,11 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         />
         <Box
           component="img"
-          src="/nsbm-logo.svg"
+          src="/nsbm-logo-icon.png"
           alt="NSBM Logo"
           sx={{
-            width: 32,
-            height: 32,
+            width: 38,
+            height: 38,
             objectFit: 'contain',
           }}
         />

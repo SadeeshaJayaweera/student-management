@@ -94,24 +94,23 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
             gap: 1.5,
             cursor: 'pointer',
             userSelect: 'none',
-            minWidth: 220,
           }}
         >
           <Box
             component="img"
-            src="/nsbm-logo.svg"
-            alt="NSBM Logo"
+            src="/nsbm-logo.png"
+            alt="NSBM Green University Town"
             sx={{
-              width: 38,
-              height: 38,
+              height: 40,
+              maxWidth: 160,
               objectFit: 'contain',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.06))',
               transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                transform: 'scale(1.06)',
+                transform: 'scale(1.04)',
               },
             }}
           />
+          <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 26, alignSelf: 'center', bgcolor: '#E2E8F0' }} />
           <Box sx={{ display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Typography
@@ -120,38 +119,24 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                   fontWeight: 800,
                   fontFamily: "'Outfit', sans-serif",
                   lineHeight: 1.1,
-                  fontSize: '1.2rem',
+                  fontSize: '1.15rem',
                   color: '#0F172A',
                   letterSpacing: '-0.02em',
                 }}
               >
                 EduSphere
               </Typography>
-              <Chip
-                label="NSBM"
-                size="small"
-                sx={{
-                  height: 18,
-                  fontSize: '0.62rem',
-                  fontWeight: 800,
-                  bgcolor: '#00843D',
-                  color: '#FFFFFF',
-                  borderRadius: 1,
-                  letterSpacing: '0.05em',
-                  px: 0.2,
-                }}
-              />
             </Box>
             <Typography
               variant="caption"
               sx={{
-                fontSize: '0.68rem',
+                fontSize: '0.66rem',
                 color: '#64748B',
                 fontWeight: 600,
                 letterSpacing: '0.03em',
               }}
             >
-              Green University Portal
+              Academic Portal
             </Typography>
           </Box>
         </Box>

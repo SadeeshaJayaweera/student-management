@@ -123,18 +123,30 @@ export default function Login() {
           {/* Top Brand Bar */}
           <Box sx={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
-              component="img"
-              src="/nsbm-logo.svg"
-              alt="NSBM University Crest"
               sx={{
-                width: 52,
-                height: 52,
-                filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.3))',
+                display: 'inline-flex',
+                alignItems: 'center',
+                bgcolor: '#FFFFFF',
+                borderRadius: 3,
+                px: 2.2,
+                py: 1,
+                boxShadow: '0 8px 24px rgba(0,0,0,0.22)',
               }}
-            />
+            >
+              <Box
+                component="img"
+                src="/nsbm-logo.png"
+                alt="NSBM Green University Town"
+                sx={{
+                  height: 44,
+                  maxWidth: 220,
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.01em', lineHeight: 1.1 }}>
-                NSBM GREEN UNIVERSITY
+                EDUSPHERE PORTAL
               </Typography>
               <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.75)', letterSpacing: '0.08em', fontWeight: 600 }}>
                 MINISTRY OF EDUCATION • SRI LANKA
@@ -261,16 +273,16 @@ export default function Login() {
         >
           <Box sx={{ width: '100%', maxWidth: 430 }}>
             {/* Header */}
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box sx={{ textAlign: 'center', mb: 3.5 }}>
               <Box
                 component="img"
-                src="/nsbm-logo.svg"
-                alt="NSBM Logo"
+                src="/nsbm-logo.png"
+                alt="NSBM Green University Town"
                 sx={{
-                  width: 58,
-                  height: 58,
+                  height: 62,
+                  maxWidth: 240,
+                  objectFit: 'contain',
                   mb: 2,
-                  display: { xs: 'inline-block', md: 'none' },
                 }}
               />
               <Typography
